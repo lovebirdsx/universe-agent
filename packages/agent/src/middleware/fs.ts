@@ -14,22 +14,17 @@ import {
   ToolMessage,
   type AgentMiddleware as _AgentMiddleware,
   type ToolRuntime,
-} from "langchain";
-import {
-  Command,
-  isCommand,
-  StateSchema,
-  ReducedValue,
-} from "@langchain/langgraph";
-import { z } from "zod/v4";
+} from 'langchain';
+import { Command, isCommand, StateSchema, ReducedValue } from '@langchain/langgraph';
+import { z } from 'zod/v4';
 import type {
   AnyBackendProtocol,
   BackendFactory,
   BackendRuntime,
   FileData,
-} from "../backends/protocol.js";
-import { isSandboxBackend, resolveBackend } from "../backends/protocol.js";
-import { StateBackend } from "../backends/state.js";
+} from '../backends/protocol.js';
+import { isSandboxBackend, resolveBackend } from '../backends/protocol.js';
+import { StateBackend } from '../backends/state.js';
 import {
   sanitizeToolCallId,
   formatContentWithLineNumbers,
@@ -37,14 +32,14 @@ import {
   getMimeType,
   isTextMimeType,
   MAX_LINE_LENGTH,
-} from "../backends/utils.js";
+} from '../backends/utils.js';
 
-const INT_FORMATTER = new Intl.NumberFormat("en-US");
+const INT_FORMATTER = new Intl.NumberFormat('en-US');
 
 /**
  * Import langchain for type inference
  */
-import type * as _langchain from "langchain";
+import type * as _langchain from 'langchain';
 
 /**
  * Tools that should be excluded from the large result eviction logic.
@@ -75,22 +70,22 @@ import type * as _langchain from "langchain";
  * collisions with user-supplied tools at construction time.
  */
 export const FILESYSTEM_TOOL_NAMES = [
-  "ls",
-  "read_file",
-  "write_file",
-  "edit_file",
-  "glob",
-  "grep",
-  "execute",
+  'ls',
+  'read_file',
+  'write_file',
+  'edit_file',
+  'glob',
+  'grep',
+  'execute',
 ] as const;
 
 export const TOOLS_EXCLUDED_FROM_EVICTION = [
-  "ls",
-  "glob",
-  "grep",
-  "read_file",
-  "edit_file",
-  "write_file",
+  'ls',
+  'glob',
+  'grep',
+  'read_file',
+  'edit_file',
+  'write_file',
 ] as const;
 
 /**
@@ -157,16 +152,14 @@ Here is a preview showing the head and tail of the content:
 function extractTextFromMessage(message: {
   content: string | Array<Record<string, unknown>>;
 }): string {
-  if (typeof message.content === "string") {
+  if (typeof message.content === 'string') {
     return message.content;
   }
   if (Array.isArray(message.content)) {
     return message.content
-      .filter(
-        (block) => block.type === "text" && typeof block.text === "string",
-      )
+      .filter((block) => block.type === 'text' && typeof block.text === 'string')
       .map((block) => block.text as string)
-      .join("\n");
+      .join('\n');
   }
   return String(message.content);
 }
@@ -182,18 +175,17 @@ function buildEvictedHumanContent(
   message: HumanMessage,
   replacementText: string,
 ): string | Array<Record<string, unknown>> {
-  if (typeof message.content === "string") {
+  if (typeof message.content === 'string') {
     return replacementText;
   }
   if (Array.isArray(message.content)) {
     const mediaBlocks = message.content.filter(
-      (block) =>
-        typeof block === "object" && block !== null && block.type !== "text",
+      (block) => typeof block === 'object' && block !== null && block.type !== 'text',
     );
     if (mediaBlocks.length === 0) {
       return replacementText;
     }
-    return [{ type: "text", text: replacementText }, ...mediaBlocks];
+    return [{ type: 'text', text: replacementText }, ...mediaBlocks];
   }
   return replacementText;
 }
@@ -205,16 +197,13 @@ function buildEvictedHumanContent(
  * lightweight replacement the model will see. Pure string computation — no
  * backend I/O.
  */
-function buildTruncatedHumanMessage(
-  message: HumanMessage,
-  filePath: string,
-): HumanMessage {
+function buildTruncatedHumanMessage(message: HumanMessage, filePath: string): HumanMessage {
   const contentStr = extractTextFromMessage(message);
   const contentSample = createContentPreview(contentStr);
-  const replacementText = TOO_LARGE_HUMAN_MSG.replace(
-    "{file_path}",
-    filePath,
-  ).replace("{content_sample}", contentSample);
+  const replacementText = TOO_LARGE_HUMAN_MSG.replace('{file_path}', filePath).replace(
+    '{content_sample}',
+    contentSample,
+  );
   const evictedContent = buildEvictedHumanContent(message, replacementText);
   return new HumanMessage({
     content: evictedContent as any,
@@ -237,7 +226,7 @@ export function createContentPreview(
   headLines: number = 5,
   tailLines: number = 5,
 ): string {
-  const lines = contentStr.split("\n");
+  const lines = contentStr.split('\n');
 
   if (lines.length <= headLines + tailLines) {
     // If file is small enough, show all lines
@@ -251,10 +240,7 @@ export function createContentPreview(
 
   const headSample = formatContentWithLineNumbers(head, 1);
   const truncationNotice = `\n... [${lines.length - headLines - tailLines} lines truncated] ...\n`;
-  const tailSample = formatContentWithLineNumbers(
-    tail,
-    lines.length - tailLines + 1,
-  );
+  const tailSample = formatContentWithLineNumbers(tail, lines.length - tailLines + 1);
 
   return headSample + truncationNotice + tailSample;
 }
@@ -262,9 +248,9 @@ export function createContentPreview(
 /**
  * required for type inference
  */
-import type * as _zodTypes from "@langchain/core/utils/types";
-import type * as _zodMeta from "@langchain/langgraph/zod";
-import type * as _messages from "@langchain/core/messages";
+import type * as _zodTypes from '@langchain/core/utils/types';
+import type * as _zodMeta from '@langchain/langgraph/zod';
+import type * as _messages from '@langchain/core/messages';
 
 /**
  * Zod schema for legacy FileDataV1 (content as line array).
@@ -519,7 +505,7 @@ function createLsTool(
   return tool(
     async (input, runtime: ToolRuntime) => {
       const resolvedBackend = await resolveBackend(backend, runtime);
-      const path = input.path || "/";
+      const path = input.path || '/';
       const lsResult = await resolvedBackend.ls(path);
 
       if (lsResult.error) {
@@ -537,7 +523,7 @@ function createLsTool(
         if (info.is_dir) {
           lines.push(`${info.path} (directory)`);
         } else {
-          const size = info.size ? ` (${info.size} bytes)` : "";
+          const size = info.size ? ` (${info.size} bytes)` : '';
           lines.push(`${info.path}${size}`);
         }
       }
@@ -545,19 +531,15 @@ function createLsTool(
       const result = truncateIfTooLong(lines);
 
       if (Array.isArray(result)) {
-        return result.join("\n");
+        return result.join('\n');
       }
       return result;
     },
     {
-      name: "ls",
+      name: 'ls',
       description: customDescription || LS_TOOL_DESCRIPTION,
       schema: z.object({
-        path: z
-          .string()
-          .optional()
-          .default("/")
-          .describe("Directory path to list (default: /)"),
+        path: z.string().optional().default('/').describe('Directory path to list (default: /)'),
       }),
     },
   );
@@ -585,7 +567,7 @@ function createReadFileTool(
 
       const readResult = await resolvedBackend.read(file_path, offset, limit);
       if (readResult.error) {
-        return [{ type: "text", text: `Error: ${readResult.error}` }];
+        return [{ type: 'text', text: `Error: ${readResult.error}` }];
       }
 
       const mimeType = readResult.mimeType ?? getMimeType(file_path);
@@ -595,7 +577,7 @@ function createReadFileTool(
         if (!binaryContent) {
           return [
             {
-              type: "text",
+              type: 'text',
               text: `Error: expected binary content for '${file_path}'`,
             },
           ];
@@ -606,13 +588,13 @@ function createReadFileTool(
         // - string (already base64)
         // - plain object with numeric keys (Uint8Array lost through serialization)
         let base64Data: string;
-        if (typeof binaryContent === "string") {
+        if (typeof binaryContent === 'string') {
           base64Data = binaryContent;
         } else if (ArrayBuffer.isView(binaryContent)) {
-          base64Data = Buffer.from(binaryContent).toString("base64");
+          base64Data = Buffer.from(binaryContent).toString('base64');
         } else {
           const values = Object.values(binaryContent as Record<string, number>);
-          base64Data = Buffer.from(new Uint8Array(values)).toString("base64");
+          base64Data = Buffer.from(new Uint8Array(values)).toString('base64');
         }
 
         const sizeBytes = Math.ceil((base64Data.length * 3) / 4);
@@ -620,31 +602,30 @@ function createReadFileTool(
         if (sizeBytes > MAX_BINARY_READ_SIZE_BYTES) {
           return [
             {
-              type: "text",
+              type: 'text',
               text: `Error: file too large to read (${Math.round(sizeBytes / (1024 * 1024))}MB exceeds ${MAX_BINARY_READ_SIZE_BYTES / (1024 * 1024)}MB limit for binary files)`,
             },
           ];
         }
 
-        if (mimeType.startsWith("image/")) {
-          return [{ type: "image", mimeType, data: base64Data }];
+        if (mimeType.startsWith('image/')) {
+          return [{ type: 'image', mimeType, data: base64Data }];
         }
-        if (mimeType.startsWith("audio/")) {
-          return [{ type: "audio", mimeType, data: base64Data }];
+        if (mimeType.startsWith('audio/')) {
+          return [{ type: 'audio', mimeType, data: base64Data }];
         }
-        if (mimeType.startsWith("video/")) {
-          return [{ type: "video", mimeType, data: base64Data }];
+        if (mimeType.startsWith('video/')) {
+          return [{ type: 'video', mimeType, data: base64Data }];
         }
-        return [{ type: "file", mimeType, data: base64Data }];
+        return [{ type: 'file', mimeType, data: base64Data }];
       }
 
-      let content =
-        typeof readResult.content === "string" ? readResult.content : "";
+      let content = typeof readResult.content === 'string' ? readResult.content : '';
 
       // Enforce line limit on result (in case backend returns more)
-      const lines = content.split("\n");
+      const lines = content.split('\n');
       if (lines.length > limit) {
-        content = lines.slice(0, limit).join("\n");
+        content = lines.slice(0, limit).join('\n');
       }
 
       let formatted = formatContentWithLineNumbers(content, offset + 1);
@@ -655,33 +636,29 @@ function createReadFileTool(
         formatted.length >= NUM_CHARS_PER_TOKEN * toolTokenLimitBeforeEvict
       ) {
         // Calculate truncation message length to ensure final result stays under threshold
-        const truncationMsg = READ_FILE_TRUNCATION_MSG.replace(
-          "{file_path}",
-          file_path,
-        );
+        const truncationMsg = READ_FILE_TRUNCATION_MSG.replace('{file_path}', file_path);
         const maxContentLength =
-          NUM_CHARS_PER_TOKEN * toolTokenLimitBeforeEvict -
-          truncationMsg.length;
+          NUM_CHARS_PER_TOKEN * toolTokenLimitBeforeEvict - truncationMsg.length;
         formatted = formatted.substring(0, maxContentLength) + truncationMsg;
       }
 
-      return [{ type: "text", text: formatted }];
+      return [{ type: 'text', text: formatted }];
     },
     {
-      name: "read_file",
+      name: 'read_file',
       description: customDescription || READ_FILE_TOOL_DESCRIPTION,
       schema: z.object({
-        file_path: z.string().describe("Absolute path to the file to read"),
+        file_path: z.string().describe('Absolute path to the file to read'),
         offset: z.coerce
           .number()
           .optional()
           .default(DEFAULT_READ_LINE_OFFSET)
-          .describe("Line offset to start reading from (0-indexed)"),
+          .describe('Line offset to start reading from (0-indexed)'),
         limit: z.coerce
           .number()
           .optional()
           .default(DEFAULT_READ_LINE_LIMIT)
-          .describe("Maximum number of lines to read"),
+          .describe('Maximum number of lines to read'),
       }),
     },
   );
@@ -709,7 +686,7 @@ function createWriteFileTool(
       const message = new ToolMessage({
         content: `Successfully wrote to '${file_path}'`,
         tool_call_id: runtime.toolCall?.id as string,
-        name: "write_file",
+        name: 'write_file',
         metadata: result.metadata,
       });
 
@@ -722,14 +699,11 @@ function createWriteFileTool(
       return message;
     },
     {
-      name: "write_file",
+      name: 'write_file',
       description: customDescription || WRITE_FILE_TOOL_DESCRIPTION,
       schema: z.object({
-        file_path: z.string().describe("Absolute path to the file to write"),
-        content: z
-          .string()
-          .default("")
-          .describe("Content to write to the file"),
+        file_path: z.string().describe('Absolute path to the file to write'),
+        content: z.string().default('').describe('Content to write to the file'),
       }),
     },
   );
@@ -747,12 +721,7 @@ function createEditFileTool(
     async (input, runtime: ToolRuntime) => {
       const resolvedBackend = await resolveBackend(backend, runtime);
       const { file_path, old_string, new_string, replace_all = false } = input;
-      const result = await resolvedBackend.edit(
-        file_path,
-        old_string,
-        new_string,
-        replace_all,
-      );
+      const result = await resolvedBackend.edit(file_path, old_string, new_string, replace_all);
 
       if (result.error) {
         return result.error;
@@ -761,7 +730,7 @@ function createEditFileTool(
       const message = new ToolMessage({
         content: `Successfully replaced ${result.occurrences} occurrence(s) in '${file_path}'`,
         tool_call_id: runtime.toolCall?.id as string,
-        name: "edit_file",
+        name: 'edit_file',
         metadata: result.metadata,
       });
 
@@ -776,19 +745,17 @@ function createEditFileTool(
       return message;
     },
     {
-      name: "edit_file",
+      name: 'edit_file',
       description: customDescription || EDIT_FILE_TOOL_DESCRIPTION,
       schema: z.object({
-        file_path: z.string().describe("Absolute path to the file to edit"),
-        old_string: z
-          .string()
-          .describe("String to be replaced (must match exactly)"),
-        new_string: z.string().describe("String to replace with"),
+        file_path: z.string().describe('Absolute path to the file to edit'),
+        old_string: z.string().describe('String to be replaced (must match exactly)'),
+        new_string: z.string().describe('String to replace with'),
         replace_all: z
           .boolean()
           .optional()
           .default(false)
-          .describe("Whether to replace all occurrences"),
+          .describe('Whether to replace all occurrences'),
       }),
     },
   );
@@ -805,7 +772,7 @@ function createGlobTool(
   return tool(
     async (input, runtime: ToolRuntime) => {
       const resolvedBackend = await resolveBackend(backend, runtime);
-      const { pattern, path = "/" } = input;
+      const { pattern, path = '/' } = input;
       const globResult = await resolvedBackend.glob(pattern, path);
 
       if (globResult.error) {
@@ -821,20 +788,16 @@ function createGlobTool(
       const result = truncateIfTooLong(paths);
 
       if (Array.isArray(result)) {
-        return result.join("\n");
+        return result.join('\n');
       }
       return result;
     },
     {
-      name: "glob",
+      name: 'glob',
       description: customDescription || GLOB_TOOL_DESCRIPTION,
       schema: z.object({
         pattern: z.string().describe("Glob pattern (e.g., '*.py', '**/*.ts')"),
-        path: z
-          .string()
-          .optional()
-          .default("/")
-          .describe("Base path to search from (default: /)"),
+        path: z.string().optional().default('/').describe('Base path to search from (default: /)'),
       }),
     },
   );
@@ -851,7 +814,7 @@ function createGrepTool(
   return tool(
     async (input, runtime: ToolRuntime) => {
       const resolvedBackend = await resolveBackend(backend, runtime);
-      const { pattern, path = "/", glob = null } = input;
+      const { pattern, path = '/', glob = null } = input;
       const result = await resolvedBackend.grep(pattern, path, glob);
 
       // If string, it's an error
@@ -879,20 +842,16 @@ function createGrepTool(
       const truncated = truncateIfTooLong(lines);
 
       if (Array.isArray(truncated)) {
-        return truncated.join("\n");
+        return truncated.join('\n');
       }
       return truncated;
     },
     {
-      name: "grep",
+      name: 'grep',
       description: customDescription || GREP_TOOL_DESCRIPTION,
       schema: z.object({
-        pattern: z.string().describe("Regex pattern to search for"),
-        path: z
-          .string()
-          .optional()
-          .default("/")
-          .describe("Base path to search from (default: /)"),
+        pattern: z.string().describe('Regex pattern to search for'),
+        path: z.string().optional().default('/').describe('Base path to search from (default: /)'),
         glob: z
           .string()
           .optional()
@@ -920,8 +879,8 @@ function createExecuteTool(
       if (!isSandboxBackend(resolvedBackend)) {
         return (
           "Error: Execution not available. This agent's backend " +
-          "does not support command execution (SandboxBackendProtocol). " +
-          "To use the execute tool, provide a backend that implements SandboxBackendProtocol."
+          'does not support command execution (SandboxBackendProtocol). ' +
+          'To use the execute tool, provide a backend that implements SandboxBackendProtocol.'
         );
       }
 
@@ -931,21 +890,21 @@ function createExecuteTool(
       const parts = [result.output];
 
       if (result.exitCode !== null) {
-        const status = result.exitCode === 0 ? "succeeded" : "failed";
+        const status = result.exitCode === 0 ? 'succeeded' : 'failed';
         parts.push(`\n[Command ${status} with exit code ${result.exitCode}]`);
       }
 
       if (result.truncated) {
-        parts.push("\n[Output was truncated due to size limits]");
+        parts.push('\n[Output was truncated due to size limits]');
       }
 
-      return parts.join("");
+      return parts.join('');
     },
     {
-      name: "execute",
+      name: 'execute',
       description: customDescription || EXECUTE_TOOL_DESCRIPTION,
       schema: z.object({
-        command: z.string().describe("The shell command to execute"),
+        command: z.string().describe('The shell command to execute'),
       }),
     },
   );
@@ -970,9 +929,7 @@ export interface FilesystemMiddlewareOptions {
 /**
  * Create filesystem middleware with all tools and features.
  */
-export function createFilesystemMiddleware(
-  options: FilesystemMiddlewareOptions = {},
-) {
+export function createFilesystemMiddleware(options: FilesystemMiddlewareOptions = {}) {
   const {
     backend = (runtime: BackendRuntime) => new StateBackend(runtime),
     systemPrompt: customSystemPrompt = null,
@@ -1015,7 +972,7 @@ export function createFilesystemMiddleware(
   const allTools = Object.values(allToolsByName);
 
   return createMiddleware({
-    name: "FilesystemMiddleware",
+    name: 'FilesystemMiddleware',
     stateSchema: FilesystemStateSchema,
     tools: allTools,
     async beforeAgent(state) {
@@ -1047,7 +1004,7 @@ export function createFilesystemMiddleware(
         state: state || {},
       } as BackendRuntime);
 
-      const fileId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+      const fileId = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
       const filePath = `/conversation_history/${fileId}`;
       const writeResult = await resolvedBackend.write(filePath, contentStr);
 
@@ -1084,7 +1041,7 @@ export function createFilesystemMiddleware(
       // Filter tools based on backend capabilities
       let tools = request.tools;
       if (!supportsExecution) {
-        tools = tools.filter((t: { name: string }) => t.name !== "execute");
+        tools = tools.filter((t: { name: string }) => t.name !== 'execute');
       }
 
       // Build system prompt - add execution instructions if available
@@ -1099,20 +1056,12 @@ export function createFilesystemMiddleware(
       let messages = request.messages;
       if (humanMessageTokenLimitBeforeEvict && messages) {
         const hasTagged = messages.some(
-          (msg: any) =>
-            HumanMessage.isInstance(msg) &&
-            msg.additional_kwargs?.lc_evicted_to,
+          (msg: any) => HumanMessage.isInstance(msg) && msg.additional_kwargs?.lc_evicted_to,
         );
         if (hasTagged) {
           messages = messages.map((msg: any) => {
-            if (
-              HumanMessage.isInstance(msg) &&
-              msg.additional_kwargs?.lc_evicted_to
-            ) {
-              return buildTruncatedHumanMessage(
-                msg,
-                msg.additional_kwargs.lc_evicted_to as string,
-              );
+            if (HumanMessage.isInstance(msg) && msg.additional_kwargs?.lc_evicted_to) {
+              return buildTruncatedHumanMessage(msg, msg.additional_kwargs.lc_evicted_to as string);
             }
             return msg;
           });
@@ -1145,27 +1094,19 @@ export function createFilesystemMiddleware(
 
       const result = await handler(request);
 
-      async function processToolMessage(
-        msg: ToolMessage,
-        toolTokenLimitBeforeEvict: number,
-      ) {
+      async function processToolMessage(msg: ToolMessage, toolTokenLimitBeforeEvict: number) {
         if (
-          typeof msg.content === "string" &&
+          typeof msg.content === 'string' &&
           msg.content.length > toolTokenLimitBeforeEvict * NUM_CHARS_PER_TOKEN
         ) {
           const resolvedBackend = await resolveBackend(backend, {
             ...request.runtime,
             state: request.state,
           });
-          const sanitizedId = sanitizeToolCallId(
-            request.toolCall?.id || msg.tool_call_id,
-          );
+          const sanitizedId = sanitizeToolCallId(request.toolCall?.id || msg.tool_call_id);
           const evictPath = `/large_tool_results/${sanitizedId}`;
 
-          const writeResult = await resolvedBackend.write(
-            evictPath,
-            msg.content,
-          );
+          const writeResult = await resolvedBackend.write(evictPath, msg.content);
 
           if (writeResult.error) {
             return { message: msg, filesUpdate: null };
@@ -1173,12 +1114,9 @@ export function createFilesystemMiddleware(
 
           // Create preview showing head and tail of the result
           const contentSample = createContentPreview(msg.content);
-          const replacementText = TOO_LARGE_TOOL_MSG.replace(
-            "{tool_call_id}",
-            msg.tool_call_id,
-          )
-            .replace("{file_path}", evictPath)
-            .replace("{content_sample}", contentSample);
+          const replacementText = TOO_LARGE_TOOL_MSG.replace('{tool_call_id}', msg.tool_call_id)
+            .replace('{file_path}', evictPath)
+            .replace('{content_sample}', contentSample);
 
           const truncatedMessage = new ToolMessage({
             content: replacementText,
@@ -1201,10 +1139,7 @@ export function createFilesystemMiddleware(
       }
 
       if (ToolMessage.isInstance(result)) {
-        const processed = await processToolMessage(
-          result,
-          toolTokenLimitBeforeEvict,
-        );
+        const processed = await processToolMessage(result, toolTokenLimitBeforeEvict);
 
         if (processed.filesUpdate) {
           return new Command({
@@ -1225,17 +1160,12 @@ export function createFilesystemMiddleware(
         }
 
         let hasLargeResults = false;
-        const accumulatedFiles: Record<string, FileData> = update.files
-          ? { ...update.files }
-          : {};
+        const accumulatedFiles: Record<string, FileData> = update.files ? { ...update.files } : {};
         const processedMessages: ToolMessage[] = [];
 
         for (const msg of update.messages) {
           if (ToolMessage.isInstance(msg)) {
-            const processed = await processToolMessage(
-              msg,
-              toolTokenLimitBeforeEvict,
-            );
+            const processed = await processToolMessage(msg, toolTokenLimitBeforeEvict);
             processedMessages.push(processed.message);
 
             if (processed.filesUpdate) {

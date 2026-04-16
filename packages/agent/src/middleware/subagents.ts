@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from 'zod/v4';
 
 import {
   createMiddleware,
@@ -15,11 +15,11 @@ import {
   type CreateAgentParams,
   StructuredTool,
   context,
-} from "langchain";
-import { Command, getCurrentTaskInput } from "@langchain/langgraph";
-import type { LanguageModelLike } from "@langchain/core/language_models/base";
-import type { Runnable } from "@langchain/core/runnables";
-import { HumanMessage } from "@langchain/core/messages";
+} from 'langchain';
+import { Command, getCurrentTaskInput } from '@langchain/langgraph';
+import type { LanguageModelLike } from '@langchain/core/language_models/base';
+import type { Runnable } from '@langchain/core/runnables';
+import { HumanMessage } from '@langchain/core/messages';
 
 export type { AgentMiddleware };
 
@@ -28,7 +28,7 @@ export type { AgentMiddleware };
  * Provides a minimal base prompt that can be extended by specific subagent configurations.
  */
 export const DEFAULT_SUBAGENT_PROMPT =
-  "In order to complete the objective that the user asks of you, you have access to a number of standard tools.";
+  'In order to complete the objective that the user asks of you, you have access to a number of standard tools.';
 
 /**
  * State keys that are excluded when passing state to subagents and when returning
@@ -43,11 +43,11 @@ export const DEFAULT_SUBAGENT_PROMPT =
  *    independently based on its middleware configuration.
  */
 const EXCLUDED_STATE_KEYS = [
-  "messages",
-  "todos",
-  "structuredResponse",
-  "skillsMetadata",
-  "memoryContents",
+  'messages',
+  'todos',
+  'structuredResponse',
+  'skillsMetadata',
+  'memoryContents',
 ] as const;
 
 /**
@@ -55,7 +55,7 @@ const EXCLUDED_STATE_KEYS = [
  * This description is shown to the model when selecting which subagent to use.
  */
 export const DEFAULT_GENERAL_PURPOSE_DESCRIPTION =
-  "General-purpose agent for researching complex questions, searching for files and content, and executing multi-step tasks. When you are searching for a keyword or file and are not confident that you will find the right match in the first few tries use this agent to perform the search for you. This agent has access to all tools as the main agent.";
+  'General-purpose agent for researching complex questions, searching for files and content, and executing multi-step tasks. When you are searching for a keyword or file and are not confident that you will find the right match in the first few tries use this agent to perform the search for you. This agent has access to all tools as the main agent.';
 
 // Comprehensive task tool description from Python
 function getTaskToolDescription(subagentDescriptions: string[]): string {
@@ -63,7 +63,7 @@ function getTaskToolDescription(subagentDescriptions: string[]): string {
     Launch an ephemeral subagent to handle complex, multi-step independent tasks with isolated context windows.
 
     Available agent types and the tools they have access to:
-    ${subagentDescriptions.join("\n")}
+    ${subagentDescriptions.join('\n')}
 
     When using the Task tool, you must specify a subagent_type parameter to select which agent type to use.
 
@@ -333,7 +333,7 @@ export interface SubAgent {
    * };
    * ```
    */
-  responseFormat?: CreateAgentParams["responseFormat"];
+  responseFormat?: CreateAgentParams['responseFormat'];
 }
 
 /**
@@ -373,11 +373,8 @@ export interface SubAgent {
  * });
  * ```
  */
-export const GENERAL_PURPOSE_SUBAGENT: Pick<
-  SubAgent,
-  "name" | "description" | "systemPrompt"
-> = {
-  name: "general-purpose",
+export const GENERAL_PURPOSE_SUBAGENT: Pick<SubAgent, 'name' | 'description' | 'systemPrompt'> = {
+  name: 'general-purpose',
   description: DEFAULT_GENERAL_PURPOSE_DESCRIPTION,
   systemPrompt: DEFAULT_SUBAGENT_PROMPT,
 } as const;
@@ -385,9 +382,7 @@ export const GENERAL_PURPOSE_SUBAGENT: Pick<
 /**
  * Filter state to exclude certain keys when passing to subagents
  */
-function filterStateForSubagent(
-  state: Record<string, unknown>,
-): Record<string, unknown> {
+function filterStateForSubagent(state: Record<string, unknown>): Record<string, unknown> {
   const filtered: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(state)) {
     if (!EXCLUDED_STATE_KEYS.includes(key as never)) {
@@ -400,11 +395,7 @@ function filterStateForSubagent(
 /**
  * Invalid tool message block types
  */
-const INVALID_TOOL_MESSAGE_BLOCK_TYPES = [
-  "tool_use",
-  "thinking",
-  "redacted_thinking",
-];
+const INVALID_TOOL_MESSAGE_BLOCK_TYPES = ['tool_use', 'thinking', 'redacted_thinking'];
 
 /**
  * Create Command with filtered state update from subagent result
@@ -423,13 +414,11 @@ function returnCommandWithStateUpdate(
     const messages = result.messages as BaseMessage[];
     const lastMessage = messages?.[messages.length - 1];
 
-    content = lastMessage?.content || "Task completed";
+    content = lastMessage?.content || 'Task completed';
     if (Array.isArray(content)) {
-      content = content.filter(
-        (block) => !INVALID_TOOL_MESSAGE_BLOCK_TYPES.includes(block.type),
-      );
+      content = content.filter((block) => !INVALID_TOOL_MESSAGE_BLOCK_TYPES.includes(block.type));
       if (content.length === 0) {
-        content = "Task completed";
+        content = 'Task completed';
       }
     }
   }
@@ -441,7 +430,7 @@ function returnCommandWithStateUpdate(
         new ToolMessage({
           content,
           tool_call_id: toolCallId,
-          name: "task",
+          name: 'task',
         }),
       ],
     },
@@ -476,8 +465,7 @@ function getSubagents(options: {
 
   const defaultSubagentMiddleware = defaultMiddleware || [];
   // General-purpose middleware includes skills from main agent, falls back to default
-  const generalPurposeMiddlewareBase =
-    gpMiddleware || defaultSubagentMiddleware;
+  const generalPurposeMiddlewareBase = gpMiddleware || defaultSubagentMiddleware;
   const agents: Record<string, ReactAgent | Runnable> = {};
   const subagentDescriptions: string[] = [];
 
@@ -485,9 +473,7 @@ function getSubagents(options: {
   if (generalPurposeAgent) {
     const generalPurposeMiddleware = [...generalPurposeMiddlewareBase];
     if (defaultInterruptOn) {
-      generalPurposeMiddleware.push(
-        humanInTheLoopMiddleware({ interruptOn: defaultInterruptOn }),
-      );
+      generalPurposeMiddleware.push(humanInTheLoopMiddleware({ interruptOn: defaultInterruptOn }));
     }
 
     const generalPurposeSubagent = createAgent({
@@ -495,22 +481,18 @@ function getSubagents(options: {
       systemPrompt: DEFAULT_SUBAGENT_PROMPT,
       tools: defaultTools as any,
       middleware: generalPurposeMiddleware,
-      name: "general-purpose",
+      name: 'general-purpose',
     });
 
-    agents["general-purpose"] = generalPurposeSubagent;
-    subagentDescriptions.push(
-      `- general-purpose: ${DEFAULT_GENERAL_PURPOSE_DESCRIPTION}`,
-    );
+    agents['general-purpose'] = generalPurposeSubagent;
+    subagentDescriptions.push(`- general-purpose: ${DEFAULT_GENERAL_PURPOSE_DESCRIPTION}`);
   }
 
   // Process custom subagents (use defaultMiddleware WITHOUT skills)
   for (const agentParams of subagents) {
-    subagentDescriptions.push(
-      `- ${agentParams.name}: ${agentParams.description}`,
-    );
+    subagentDescriptions.push(`- ${agentParams.name}: ${agentParams.description}`);
 
-    if ("runnable" in agentParams) {
+    if ('runnable' in agentParams) {
       agents[agentParams.name] = agentParams.runnable;
     } else {
       const middleware = agentParams.middleware
@@ -518,8 +500,7 @@ function getSubagents(options: {
         : [...defaultSubagentMiddleware];
 
       const interruptOn = agentParams.interruptOn || defaultInterruptOn;
-      if (interruptOn)
-        middleware.push(humanInTheLoopMiddleware({ interruptOn }));
+      if (interruptOn) middleware.push(humanInTheLoopMiddleware({ interruptOn }));
 
       agents[agentParams.name] = createAgent({
         model: agentParams.model ?? defaultModel,
@@ -562,16 +543,15 @@ function createTaskTool(options: {
     taskDescription,
   } = options;
 
-  const { agents: subagentGraphs, descriptions: subagentDescriptions } =
-    getSubagents({
-      defaultModel,
-      defaultTools,
-      defaultMiddleware,
-      generalPurposeMiddleware,
-      defaultInterruptOn,
-      subagents,
-      generalPurposeAgent,
-    });
+  const { agents: subagentGraphs, descriptions: subagentDescriptions } = getSubagents({
+    defaultModel,
+    defaultTools,
+    defaultMiddleware,
+    generalPurposeMiddleware,
+    defaultInterruptOn,
+    subagents,
+    generalPurposeAgent,
+  });
 
   const finalTaskDescription = taskDescription
     ? taskDescription
@@ -588,7 +568,7 @@ function createTaskTool(options: {
       if (!(subagent_type in subagentGraphs)) {
         const allowedTypes = Object.keys(subagentGraphs)
           .map((k) => `\`${k}\``)
-          .join(", ");
+          .join(', ');
         throw new Error(
           `Error: invoked agent of type ${subagent_type}, the only allowed types are ${allowedTypes}`,
         );
@@ -602,10 +582,7 @@ function createTaskTool(options: {
       subagentState.messages = [new HumanMessage({ content: description })];
 
       // Invoke the subagent
-      const result = (await subagent.invoke(subagentState, config)) as Record<
-        string,
-        unknown
-      >;
+      const result = (await subagent.invoke(subagentState, config)) as Record<string, unknown>;
 
       if (!config.toolCall?.id) {
         if (result.structuredResponse != null) {
@@ -613,20 +590,17 @@ function createTaskTool(options: {
         }
         const messages = result.messages as BaseMessage[];
         const lastMessage = messages?.[messages.length - 1];
-        let content: string | ContentBlock[] =
-          lastMessage?.content || "Task completed";
+        let content: string | ContentBlock[] = lastMessage?.content || 'Task completed';
         if (Array.isArray(content)) {
           content = content.filter(
             (block) => !INVALID_TOOL_MESSAGE_BLOCK_TYPES.includes(block.type),
           );
           if (content.length === 0) {
-            return "Task completed";
+            return 'Task completed';
           }
           return content
-            .map((block) =>
-              "text" in block ? block.text : JSON.stringify(block),
-            )
-            .join("\n");
+            .map((block) => ('text' in block ? block.text : JSON.stringify(block)))
+            .join('\n');
         }
         return content;
       }
@@ -634,16 +608,14 @@ function createTaskTool(options: {
       return returnCommandWithStateUpdate(result, config.toolCall.id);
     },
     {
-      name: "task",
+      name: 'task',
       description: finalTaskDescription,
       schema: z.object({
-        description: z
-          .string()
-          .describe("The task to execute with the selected agent"),
+        description: z.string().describe('The task to execute with the selected agent'),
         subagent_type: z
           .string()
           .describe(
-            `Name of the agent to use. Available: ${Object.keys(subagentGraphs).join(", ")}`,
+            `Name of the agent to use. Available: ${Object.keys(subagentGraphs).join(', ')}`,
           ),
       }),
     },
@@ -705,15 +677,13 @@ export function createSubAgentMiddleware(options: SubAgentMiddlewareOptions) {
   });
 
   return createMiddleware({
-    name: "subAgentMiddleware",
+    name: 'subAgentMiddleware',
     tools: [taskTool],
     wrapModelCall: async (request, handler) => {
       if (systemPrompt !== null) {
         return handler({
           ...request,
-          systemMessage: request.systemMessage.concat(
-            new SystemMessage({ content: systemPrompt }),
-          ),
+          systemMessage: request.systemMessage.concat(new SystemMessage({ content: systemPrompt })),
         });
       }
       return handler(request);

@@ -48,7 +48,7 @@
  * - Architecture notes
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 import {
   context,
   createMiddleware,
@@ -57,23 +57,20 @@ import {
    * required for type inference
    */
   type AgentMiddleware as _AgentMiddleware,
-} from "langchain";
+} from 'langchain';
 
-import type {
-  AnyBackendProtocol,
-  BackendFactory,
-} from "../backends/protocol.js";
-import { resolveBackend } from "../backends/protocol.js";
-import type { StateBackend } from "../backends/state.js";
-import type { BaseStore } from "@langchain/langgraph-checkpoint";
-import { filesValue } from "../values.js";
-import { StateSchema } from "@langchain/langgraph";
-import { adaptBackendProtocol } from "../backends/utils.js";
+import type { AnyBackendProtocol, BackendFactory } from '../backends/protocol.js';
+import { resolveBackend } from '../backends/protocol.js';
+import type { StateBackend } from '../backends/state.js';
+import type { BaseStore } from '@langchain/langgraph-checkpoint';
+import { filesValue } from '../values.js';
+import { StateSchema } from '@langchain/langgraph';
+import { adaptBackendProtocol } from '../backends/utils.js';
 
 /**
  * Import @langchain/langgraph for type inference
  */
-import type * as _langgraph from "@langchain/langgraph";
+import type * as _langgraph from '@langchain/langgraph';
 
 /**
  * Options for the memory middleware.
@@ -186,12 +183,9 @@ const MEMORY_SYSTEM_PROMPT = context`
  * Format loaded memory contents for injection into prompt.
  * Pairs memory locations with their contents for clarity.
  */
-function formatMemoryContents(
-  contents: Record<string, string>,
-  sources: string[],
-): string {
+function formatMemoryContents(contents: Record<string, string>, sources: string[]): string {
   if (Object.keys(contents).length === 0) {
-    return "(No memory loaded)";
+    return '(No memory loaded)';
   }
 
   const sections: string[] = [];
@@ -202,10 +196,10 @@ function formatMemoryContents(
   }
 
   if (sections.length === 0) {
-    return "(No memory loaded)";
+    return '(No memory loaded)';
   }
 
-  return sections.join("\n\n");
+  return sections.join('\n\n');
 }
 
 /**
@@ -227,7 +221,7 @@ async function loadMemoryFromBackend(
     if (content.error) {
       return null;
     }
-    if (typeof content.content !== "string") {
+    if (typeof content.content !== 'string') {
       return null;
     }
     return content.content;
@@ -237,16 +231,14 @@ async function loadMemoryFromBackend(
 
   // Should get exactly one response for one path
   if (results.length !== 1) {
-    throw new Error(
-      `Expected 1 response for path ${path}, got ${results.length}`,
-    );
+    throw new Error(`Expected 1 response for path ${path}, got ${results.length}`);
   }
   const response = results[0];
 
   if (response.error != null) {
     // For now, memory files are treated as optional. file_not_found is expected
     // and we skip silently to allow graceful degradation.
-    if (response.error === "file_not_found") {
+    if (response.error === 'file_not_found') {
       return null;
     }
     // Other errors should be raised
@@ -285,12 +277,12 @@ export function createMemoryMiddleware(options: MemoryMiddlewareOptions) {
   const { backend, sources, addCacheControl = false } = options;
 
   return createMiddleware({
-    name: "MemoryMiddleware",
+    name: 'MemoryMiddleware',
     stateSchema: MemoryStateSchema,
 
     async beforeAgent(state) {
       // Skip if already loaded
-      if ("memoryContents" in state && state.memoryContents != null) {
+      if ('memoryContents' in state && state.memoryContents != null) {
         return undefined;
       }
 
@@ -315,20 +307,16 @@ export function createMemoryMiddleware(options: MemoryMiddlewareOptions) {
 
     wrapModelCall(request, handler) {
       // Get memory contents from state
-      const memoryContents: Record<string, string> =
-        request.state?.memoryContents || {};
+      const memoryContents: Record<string, string> = request.state?.memoryContents || {};
 
       // Format memory section
       const formattedContents = formatMemoryContents(memoryContents, sources);
-      const memorySection = MEMORY_SYSTEM_PROMPT.replace(
-        "{memory_contents}",
-        formattedContents,
-      );
+      const memorySection = MEMORY_SYSTEM_PROMPT.replace('{memory_contents}', formattedContents);
 
       const existingContent = request.systemMessage.content;
       const existingBlocks =
-        typeof existingContent === "string"
-          ? [{ type: "text" as const, text: existingContent }]
+        typeof existingContent === 'string'
+          ? [{ type: 'text' as const, text: existingContent }]
           : Array.isArray(existingContent)
             ? existingContent
             : [];
@@ -337,10 +325,10 @@ export function createMemoryMiddleware(options: MemoryMiddlewareOptions) {
         content: [
           ...existingBlocks,
           {
-            type: "text" as const,
+            type: 'text' as const,
             text: memorySection,
             ...(addCacheControl && {
-              cache_control: { type: "ephemeral" as const },
+              cache_control: { type: 'ephemeral' as const },
             }),
           },
         ],

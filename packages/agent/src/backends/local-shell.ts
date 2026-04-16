@@ -8,13 +8,13 @@
  * @module
  */
 
-import cp from "node:child_process";
-import fs from "node:fs/promises";
-import path from "node:path";
+import cp from 'node:child_process';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
-import fg from "fast-glob";
+import fg from 'fast-glob';
 
-import { FilesystemBackend } from "./filesystem.js";
+import { FilesystemBackend } from './filesystem.js';
 import type {
   EditResult,
   ExecuteResponse,
@@ -23,8 +23,8 @@ import type {
   LsResult,
   ReadResult,
   SandboxBackendProtocolV2,
-} from "./protocol.js";
-import { SandboxError } from "./protocol.js";
+} from './protocol.js';
+import { SandboxError } from './protocol.js';
 
 /**
  * Options for creating a LocalShellBackend instance.
@@ -131,10 +131,7 @@ export interface LocalShellBackendOptions {
  * });
  * ```
  */
-export class LocalShellBackend
-  extends FilesystemBackend
-  implements SandboxBackendProtocolV2
-{
+export class LocalShellBackend extends FilesystemBackend implements SandboxBackendProtocolV2 {
   #timeout: number;
   #maxOutputBytes: number;
   #env: Record<string, string>;
@@ -157,7 +154,7 @@ export class LocalShellBackend
     this.#maxOutputBytes = maxOutputBytes;
     const bytes = new Uint8Array(4);
     crypto.getRandomValues(bytes);
-    this.#sandboxId = `local-${[...bytes].map((b) => b.toString(16).padStart(2, "0")).join("")}`;
+    this.#sandboxId = `local-${[...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')}`;
 
     if (inheritEnv) {
       this.#env = { ...process.env } as Record<string, string>;
@@ -196,8 +193,8 @@ export class LocalShellBackend
   async initialize(): Promise<void> {
     if (this.#initialized) {
       throw new SandboxError(
-        "Backend is already initialized. Each LocalShellBackend instance can only be initialized once.",
-        "ALREADY_INITIALIZED",
+        'Backend is already initialized. Each LocalShellBackend instance can only be initialized once.',
+        'ALREADY_INITIALIZED',
       );
     }
     await fs.mkdir(this.cwd, { recursive: true });
@@ -223,7 +220,7 @@ export class LocalShellBackend
     limit: number = 500,
   ): Promise<ReadResult> {
     const result = await super.read(filePath, offset, limit);
-    if (result.error?.includes("ENOENT")) {
+    if (result.error?.includes('ENOENT')) {
       return { error: `File '${filePath}' not found` };
     }
     return result;
@@ -239,7 +236,7 @@ export class LocalShellBackend
     replaceAll: boolean = false,
   ): Promise<EditResult> {
     const result = await super.edit(filePath, oldString, newString, replaceAll);
-    if (result.error?.includes("ENOENT")) {
+    if (result.error?.includes('ENOENT')) {
       return { ...result, error: `Error: File '${filePath}' not found` };
     }
     return result;
@@ -258,14 +255,10 @@ export class LocalShellBackend
       return result;
     }
 
-    const cwdPrefix = this.cwd.endsWith(path.sep)
-      ? this.cwd
-      : this.cwd + path.sep;
+    const cwdPrefix = this.cwd.endsWith(path.sep) ? this.cwd : this.cwd + path.sep;
     const files = (result.files || []).map((info) => ({
       ...info,
-      path: info.path.startsWith(cwdPrefix)
-        ? info.path.slice(cwdPrefix.length)
-        : info.path,
+      path: info.path.startsWith(cwdPrefix) ? info.path.slice(cwdPrefix.length) : info.path,
     }));
     return { files };
   }
@@ -273,19 +266,16 @@ export class LocalShellBackend
   /**
    * Glob matching that returns relative paths and includes directories.
    */
-  override async glob(
-    pattern: string,
-    searchPath: string = "/",
-  ): Promise<GlobResult> {
-    if (pattern.startsWith("/")) {
+  override async glob(pattern: string, searchPath: string = '/'): Promise<GlobResult> {
+    if (pattern.startsWith('/')) {
       pattern = pattern.substring(1);
     }
 
     const resolvedSearchPath =
-      searchPath === "/" || searchPath === ""
+      searchPath === '/' || searchPath === ''
         ? this.cwd
         : this.virtualMode
-          ? path.resolve(this.cwd, searchPath.replace(/^\//, ""))
+          ? path.resolve(this.cwd, searchPath.replace(/^\//, ''))
           : path.resolve(this.cwd, searchPath);
 
     try {
@@ -342,9 +332,7 @@ export class LocalShellBackend
       Promise.all(dirMatches.map(statDir)),
     ]);
 
-    const results = [...fileInfos, ...dirInfos].filter(
-      (info): info is FileInfo => info !== null,
-    );
+    const results = [...fileInfos, ...dirInfos].filter((info): info is FileInfo => info !== null);
     results.sort((a, b) => a.path.localeCompare(b.path));
     return { files: results };
   }
@@ -364,17 +352,17 @@ export class LocalShellBackend
    * @returns ExecuteResponse containing output, exit code, and truncation flag
    */
   async execute(command: string): Promise<ExecuteResponse> {
-    if (!command || typeof command !== "string") {
+    if (!command || typeof command !== 'string') {
       return {
-        output: "Error: Command must be a non-empty string.",
+        output: 'Error: Command must be a non-empty string.',
         exitCode: 1,
         truncated: false,
       };
     }
 
     return new Promise<ExecuteResponse>((resolve) => {
-      let stdout = "";
-      let stderr = "";
+      let stdout = '';
+      let stderr = '';
       let timedOut = false;
 
       const child = cp.spawn(command, {
@@ -385,18 +373,18 @@ export class LocalShellBackend
 
       const timer = setTimeout(() => {
         timedOut = true;
-        child.kill("SIGTERM");
+        child.kill('SIGTERM');
       }, this.#timeout * 1000);
 
-      child.stdout.on("data", (data: Buffer) => {
+      child.stdout.on('data', (data: Buffer) => {
         stdout += data.toString();
       });
 
-      child.stderr.on("data", (data: Buffer) => {
+      child.stderr.on('data', (data: Buffer) => {
         stderr += data.toString();
       });
 
-      child.on("error", (err) => {
+      child.on('error', (err) => {
         clearTimeout(timer);
         resolve({
           output: `Error executing command: ${err.message}`,
@@ -405,10 +393,10 @@ export class LocalShellBackend
         });
       });
 
-      child.on("close", (code, signal) => {
+      child.on('close', (code, signal) => {
         clearTimeout(timer);
 
-        if (timedOut || signal === "SIGTERM") {
+        if (timedOut || signal === 'SIGTERM') {
           resolve({
             output: `Error: Command timed out after ${this.#timeout.toFixed(1)} seconds.`,
             exitCode: 124,
@@ -422,14 +410,11 @@ export class LocalShellBackend
           outputParts.push(stdout);
         }
         if (stderr) {
-          const stderrLines = stderr.trim().split("\n");
-          outputParts.push(
-            ...stderrLines.map((line: string) => `[stderr] ${line}`),
-          );
+          const stderrLines = stderr.trim().split('\n');
+          outputParts.push(...stderrLines.map((line: string) => `[stderr] ${line}`));
         }
 
-        let output =
-          outputParts.length > 0 ? outputParts.join("\n") : "<no output>";
+        let output = outputParts.length > 0 ? outputParts.join('\n') : '<no output>';
 
         let truncated = false;
         if (output.length > this.#maxOutputBytes) {
@@ -463,18 +448,16 @@ export class LocalShellBackend
    * @param options - Configuration options for the backend
    * @returns An initialized and ready-to-use backend
    */
-  static async create(
-    options: LocalShellBackendOptions = {},
-  ): Promise<LocalShellBackend> {
+  static async create(options: LocalShellBackendOptions = {}): Promise<LocalShellBackend> {
     const { initialFiles, ...backendOptions } = options;
     const backend = new LocalShellBackend(backendOptions);
     await backend.initialize();
 
     if (initialFiles) {
       const encoder = new TextEncoder();
-      const files: Array<[string, Uint8Array]> = Object.entries(
-        initialFiles,
-      ).map(([filePath, content]) => [filePath, encoder.encode(content)]);
+      const files: Array<[string, Uint8Array]> = Object.entries(initialFiles).map(
+        ([filePath, content]) => [filePath, encoder.encode(content)],
+      );
       await backend.uploadFiles(files);
     }
 

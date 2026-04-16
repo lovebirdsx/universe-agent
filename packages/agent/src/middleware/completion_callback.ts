@@ -75,26 +75,26 @@
  * @module
  */
 
-import * as z from "zod";
+import * as z from 'zod';
 import {
   createMiddleware,
   /**
    * required for type inference
    */
   type AgentMiddleware as _AgentMiddleware,
-} from "langchain";
-import { Client } from "@langchain/langgraph-sdk";
-import { AIMessage } from "@langchain/core/messages";
-import type { BaseMessage } from "@langchain/core/messages";
+} from 'langchain';
+import { Client } from '@langchain/langgraph-sdk';
+import { AIMessage } from '@langchain/core/messages';
+import type { BaseMessage } from '@langchain/core/messages';
 
 /** Maximum characters to include from the last message in notifications. */
 const MAX_MESSAGE_LENGTH = 500;
 
 /** Suffix appended when truncating long messages. */
-const TRUNCATION_SUFFIX = "... [full result truncated]";
+const TRUNCATION_SUFFIX = '... [full result truncated]';
 
 /** State key for the callback thread ID. */
-const CALLBACK_THREAD_ID_KEY = "callbackThreadId" as const;
+const CALLBACK_THREAD_ID_KEY = 'callbackThreadId' as const;
 
 /**
  * State extension for subagents that use completion callbacks.
@@ -141,8 +141,8 @@ export function resolveHeaders(
   headers: Record<string, string> | undefined,
 ): Record<string, string> {
   const resolved: Record<string, string> = { ...headers };
-  if (!("x-auth-scheme" in resolved)) {
-    resolved["x-auth-scheme"] = "langsmith";
+  if (!('x-auth-scheme' in resolved)) {
+    resolved['x-auth-scheme'] = 'langsmith';
   }
   return resolved;
 }
@@ -173,7 +173,7 @@ export async function notifyParent(
     });
     await client.runs.create(callbackThreadId, callbackGraphId, {
       input: {
-        messages: [{ role: "user", content: message }],
+        messages: [{ role: 'user', content: message }],
       },
     });
   } catch (e) {
@@ -196,22 +196,17 @@ export async function notifyParent(
  * @param state - The agent state dict.
  * @param taskId - Optional task ID to include in truncation hint.
  */
-export function extractLastMessage(
-  state: Record<string, unknown>,
-  taskId?: string,
-): string {
+export function extractLastMessage(state: Record<string, unknown>, taskId?: string): string {
   const messages = state.messages as BaseMessage[] | undefined;
   if (!messages || messages.length === 0) {
-    throw new Error(
-      `Expected at least one message in state ${JSON.stringify(state)}`,
-    );
+    throw new Error(`Expected at least one message in state ${JSON.stringify(state)}`);
   }
 
   const last = messages[messages.length - 1];
 
   if (!AIMessage.isInstance(last)) {
     throw new TypeError(
-      `Expected an AIMessage, got ${typeof last === "object" && last !== null ? (last.constructor?.name ?? typeof last) : typeof last} instead`,
+      `Expected an AIMessage, got ${typeof last === 'object' && last !== null ? (last.constructor?.name ?? typeof last) : typeof last} instead`,
     );
   }
 
@@ -259,18 +254,13 @@ export function extractLastMessage(
  * });
  * ```
  */
-export function createCompletionCallbackMiddleware(
-  options: CompletionCallbackOptions,
-) {
+export function createCompletionCallbackMiddleware(options: CompletionCallbackOptions) {
   const { callbackGraphId, url, headers } = options;
 
   /**
    * Send a notification to the callback destination.
    */
-  async function sendNotification(
-    callbackThreadId: string,
-    message: string,
-  ): Promise<void> {
+  async function sendNotification(callbackThreadId: string, message: string): Promise<void> {
     await notifyParent(callbackGraphId, callbackThreadId, message, {
       url,
       headers,
@@ -297,12 +287,12 @@ export function createCompletionCallbackMiddleware(
     runtime: { configurable?: { thread_id?: string } } | undefined,
   ): string {
     const taskId = getTaskId(runtime);
-    const prefix = taskId ? `[task_id=${taskId}]` : "";
+    const prefix = taskId ? `[task_id=${taskId}]` : '';
     return `${prefix}${body}`;
   }
 
   return createMiddleware({
-    name: "CompletionCallbackMiddleware",
+    name: 'CompletionCallbackMiddleware',
     stateSchema: CompletionCallbackStateSchema,
 
     /**
@@ -316,19 +306,11 @@ export function createCompletionCallbackMiddleware(
       // If callbackThreadId is not present, this will be undefined/falsy.
       // Python raises KeyError here; we match that behavior.
       if (callbackThreadId == null) {
-        throw new Error(
-          `Missing required state key '${CALLBACK_THREAD_ID_KEY}'`,
-        );
+        throw new Error(`Missing required state key '${CALLBACK_THREAD_ID_KEY}'`);
       }
       const taskId = getTaskId(runtime);
-      const summary = extractLastMessage(
-        state,
-        typeof taskId === "string" ? taskId : undefined,
-      );
-      const notification = formatNotification(
-        `Completed. Result: ${summary}`,
-        runtime,
-      );
+      const summary = extractLastMessage(state, typeof taskId === 'string' ? taskId : undefined);
+      const notification = formatNotification(`Completed. Result: ${summary}`, runtime);
       await sendNotification(callbackThreadId, notification);
       return undefined;
     },
@@ -344,12 +326,10 @@ export function createCompletionCallbackMiddleware(
       try {
         return await handler(request);
       } catch (e) {
-        const callbackThreadId = request.state[
-          CALLBACK_THREAD_ID_KEY
-        ] as string;
-        if (typeof callbackThreadId === "string") {
+        const callbackThreadId = request.state[CALLBACK_THREAD_ID_KEY] as string;
+        if (typeof callbackThreadId === 'string') {
           const notification = formatNotification(
-            "The agent encountered an error while calling the model.",
+            'The agent encountered an error while calling the model.',
             request.runtime,
           );
           await sendNotification(callbackThreadId, notification);

@@ -1,1 +1,1 @@
-export { formatMoney, cn } from './utils.js'
+export { formatMoney, cn } from './utils.js';

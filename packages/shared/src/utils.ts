@@ -5,7 +5,7 @@ export function formatMoney(amount: number, currency = 'USD'): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
-  }).format(amount)
+  }).format(amount);
 }
 
 /**
@@ -13,5 +13,5 @@ export function formatMoney(amount: number, currency = 'USD'): string {
  * 可与 Tailwind CSS 搭配使用。
  */
 export function cn(...classes: (string | undefined | false | null)[]): string {
-  return classes.filter(Boolean).join(' ')
+  return classes.filter(Boolean).join(' ');
 }

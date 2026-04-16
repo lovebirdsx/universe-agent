@@ -16,7 +16,7 @@ import type {
   GrepMatch,
   MaybePromise,
   WriteResult,
-} from "../protocol.js";
+} from '../protocol.js';
 
 /**
  * Protocol for pluggable memory backends (single, unified).
@@ -118,9 +118,7 @@ export interface BackendProtocolV1 {
    * @param files - List of [path, content] tuples to upload
    * @returns List of FileUploadResponse objects, one per input file
    */
-  uploadFiles?(
-    files: Array<[string, Uint8Array]>,
-  ): MaybePromise<FileUploadResponse[]>;
+  uploadFiles?(files: Array<[string, Uint8Array]>): MaybePromise<FileUploadResponse[]>;
 
   /**
    * Download multiple files.

@@ -1,9 +1,9 @@
-import { createMiddleware, SystemMessage } from "langchain";
+import { createMiddleware, SystemMessage } from 'langchain';
 
 /**
  * Import langchain for type inference
  */
-import type * as _langchain from "langchain";
+import type * as _langchain from 'langchain';
 
 /**
  * Creates a middleware that places a cache breakpoint at the end of the static
@@ -27,13 +27,13 @@ import type * as _langchain from "langchain";
  */
 export function createCacheBreakpointMiddleware() {
   return createMiddleware({
-    name: "CacheBreakpointMiddleware",
+    name: 'CacheBreakpointMiddleware',
 
     wrapModelCall(request, handler) {
       const existingContent = request.systemMessage.content;
       const existingBlocks =
-        typeof existingContent === "string"
-          ? [{ type: "text" as const, text: existingContent }]
+        typeof existingContent === 'string'
+          ? [{ type: 'text' as const, text: existingContent }]
           : Array.isArray(existingContent)
             ? [...existingContent]
             : [];
@@ -42,7 +42,7 @@ export function createCacheBreakpointMiddleware() {
 
       existingBlocks[existingBlocks.length - 1] = {
         ...existingBlocks[existingBlocks.length - 1],
-        cache_control: { type: "ephemeral" },
+        cache_control: { type: 'ephemeral' },
       };
 
       return handler({

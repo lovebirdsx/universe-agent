@@ -6,8 +6,8 @@
  * enable composition without fragile string parsing.
  */
 
-import micromatch from "micromatch";
-import path, { basename } from "path";
+import micromatch from 'micromatch';
+import path, { basename } from 'path';
 import type {
   AnyBackendProtocol,
   AnySandboxProtocol,
@@ -23,52 +23,50 @@ import type {
   ReadRawResult,
   ReadResult,
   SandboxBackendProtocolV2,
-} from "./protocol.js";
+} from './protocol.js';
 
 // Constants
-export const EMPTY_CONTENT_WARNING =
-  "System reminder: File exists but has empty contents";
+export const EMPTY_CONTENT_WARNING = 'System reminder: File exists but has empty contents';
 export const MAX_LINE_LENGTH = 5000;
 export const LINE_NUMBER_WIDTH = 6;
 export const TOOL_RESULT_TOKEN_LIMIT = 20000; // Same threshold as eviction
 export const TRUNCATION_GUIDANCE =
-  "... [results truncated, try being more specific with your parameters]";
+  '... [results truncated, try being more specific with your parameters]';
 
 const MIME_TYPES: Record<string, string> = {
   // images
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".gif": "image/gif",
-  ".webp": "image/webp",
-  ".svg": "image/svg+xml",
-  ".heic": "image/heic",
-  ".heif": "image/heif",
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
+  '.heic': 'image/heic',
+  '.heif': 'image/heif',
 
   // audio
-  ".mp3": "audio/mpeg",
-  ".wav": "audio/wav",
-  ".aiff": "audio/aiff",
-  ".aac": "audio/aac",
-  ".ogg": "audio/ogg",
-  ".flac": "audio/flac",
+  '.mp3': 'audio/mpeg',
+  '.wav': 'audio/wav',
+  '.aiff': 'audio/aiff',
+  '.aac': 'audio/aac',
+  '.ogg': 'audio/ogg',
+  '.flac': 'audio/flac',
 
   // video
-  ".mp4": "video/mp4",
-  ".webm": "video/webm",
-  ".mpeg": "video/mpeg",
-  ".mov": "video/quicktime",
-  ".avi": "video/x-msvideo",
-  ".flv": "video/x-flv",
-  ".mpg": "video/mpeg",
-  ".wmv": "video/x-ms-wmv",
-  ".3gpp": "video/3gpp",
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.mpeg': 'video/mpeg',
+  '.mov': 'video/quicktime',
+  '.avi': 'video/x-msvideo',
+  '.flv': 'video/x-flv',
+  '.mpg': 'video/mpeg',
+  '.wmv': 'video/x-ms-wmv',
+  '.3gpp': 'video/3gpp',
 
   // documents
-  ".pdf": "application/pdf",
-  ".ppt": "application/vnd.ms-powerpoint",
-  ".pptx":
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  '.pdf': 'application/pdf',
+  '.ppt': 'application/vnd.ms-powerpoint',
+  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 };
 
 /**
@@ -77,7 +75,7 @@ const MIME_TYPES: Record<string, string> = {
  * Replaces dangerous characters (., /, \) with underscores.
  */
 export function sanitizeToolCallId(toolCallId: string): string {
-  return toolCallId.replace(/\./g, "_").replace(/\//g, "_").replace(/\\/g, "_");
+  return toolCallId.replace(/\./g, '_').replace(/\//g, '_').replace(/\\/g, '_');
 }
 
 /**
@@ -94,9 +92,9 @@ export function formatContentWithLineNumbers(
   startLine: number = 1,
 ): string {
   let lines: string[];
-  if (typeof content === "string") {
-    lines = content.split("\n");
-    if (lines.length > 0 && lines[lines.length - 1] === "") {
+  if (typeof content === 'string') {
+    lines = content.split('\n');
+    if (lines.length > 0 && lines[lines.length - 1] === '') {
       lines = lines.slice(0, -1);
     }
   } else {
@@ -109,9 +107,7 @@ export function formatContentWithLineNumbers(
     const lineNum = i + startLine;
 
     if (line.length <= MAX_LINE_LENGTH) {
-      resultLines.push(
-        `${lineNum.toString().padStart(LINE_NUMBER_WIDTH)}\t${line}`,
-      );
+      resultLines.push(`${lineNum.toString().padStart(LINE_NUMBER_WIDTH)}\t${line}`);
     } else {
       // Split long line into chunks with continuation markers
       const numChunks = Math.ceil(line.length / MAX_LINE_LENGTH);
@@ -121,21 +117,17 @@ export function formatContentWithLineNumbers(
         const chunk = line.substring(start, end);
         if (chunkIdx === 0) {
           // First chunk: use normal line number
-          resultLines.push(
-            `${lineNum.toString().padStart(LINE_NUMBER_WIDTH)}\t${chunk}`,
-          );
+          resultLines.push(`${lineNum.toString().padStart(LINE_NUMBER_WIDTH)}\t${chunk}`);
         } else {
           // Continuation chunks: use decimal notation (e.g., 5.1, 5.2)
           const continuationMarker = `${lineNum}.${chunkIdx}`;
-          resultLines.push(
-            `${continuationMarker.padStart(LINE_NUMBER_WIDTH)}\t${chunk}`,
-          );
+          resultLines.push(`${continuationMarker.padStart(LINE_NUMBER_WIDTH)}\t${chunk}`);
         }
       }
     }
   }
 
-  return resultLines.join("\n");
+  return resultLines.join('\n');
 }
 
 /**
@@ -145,7 +137,7 @@ export function formatContentWithLineNumbers(
  * @returns Warning message if empty, null otherwise
  */
 export function checkEmptyContent(content: string): string | null {
-  if (!content || content.trim() === "") {
+  if (!content || content.trim() === '') {
     return EMPTY_CONTENT_WARNING;
   }
   return null;
@@ -159,12 +151,12 @@ export function checkEmptyContent(content: string): string | null {
  */
 export function fileDataToString(fileData: FileData): string {
   if (Array.isArray(fileData.content)) {
-    return fileData.content.join("\n");
+    return fileData.content.join('\n');
   }
-  if (typeof fileData.content === "string") {
+  if (typeof fileData.content === 'string') {
     return fileData.content;
   }
-  throw new Error("Cannot convert binary FileData to string");
+  throw new Error('Cannot convert binary FileData to string');
 }
 
 /**
@@ -173,9 +165,7 @@ export function fileDataToString(fileData: FileData): string {
  * @param data - FileData to check
  * @returns True if the content is a Uint8Array (binary)
  */
-export function isFileDataBinary(
-  data: FileData,
-): data is FileDataV2 & { content: Uint8Array } {
+export function isFileDataBinary(data: FileData): data is FileDataV2 & { content: Uint8Array } {
   return ArrayBuffer.isView(data.content);
 }
 
@@ -194,39 +184,33 @@ export function isFileDataBinary(
 export function createFileData(
   content: string | Uint8Array,
   createdAt?: string,
-  fileFormat: "v1" | "v2" = "v2",
+  fileFormat: 'v1' | 'v2' = 'v2',
   mimeType?: string,
 ): FileData {
   const now = new Date().toISOString();
 
-  if (fileFormat === "v1" && ArrayBuffer.isView(content)) {
-    throw new Error(
-      "Binary data is not supported with v1 file formats. Please use v2 file format",
-    );
+  if (fileFormat === 'v1' && ArrayBuffer.isView(content)) {
+    throw new Error('Binary data is not supported with v1 file formats. Please use v2 file format');
   }
 
-  if (fileFormat === "v2") {
+  if (fileFormat === 'v2') {
     if (ArrayBuffer.isView(content)) {
       return {
-        content: new Uint8Array(
-          content.buffer,
-          content.byteOffset,
-          content.byteLength,
-        ),
-        mimeType: mimeType ?? "application/octet-stream",
+        content: new Uint8Array(content.buffer, content.byteOffset, content.byteLength),
+        mimeType: mimeType ?? 'application/octet-stream',
         created_at: createdAt || now,
         modified_at: now,
       } as FileDataV2;
     }
     return {
       content,
-      mimeType: mimeType ?? "text/plain",
+      mimeType: mimeType ?? 'text/plain',
       created_at: createdAt || now,
       modified_at: now,
     } as FileDataV2;
   }
 
-  const lines = typeof content === "string" ? content.split("\n") : content;
+  const lines = typeof content === 'string' ? content.split('\n') : content;
   return {
     content: lines,
     created_at: createdAt || now,
@@ -245,7 +229,7 @@ export function updateFileData(fileData: FileData, content: string): FileData {
   const now = new Date().toISOString();
 
   if (isFileDataV1(fileData)) {
-    const lines = typeof content === "string" ? content.split("\n") : content;
+    const lines = typeof content === 'string' ? content.split('\n') : content;
     return {
       content: lines,
       created_at: fileData.created_at,
@@ -269,13 +253,9 @@ export function updateFileData(fileData: FileData, content: string): FileData {
  * @param limit - Maximum number of lines
  * @returns Formatted content or error message
  */
-export function formatReadResponse(
-  fileData: FileData,
-  offset: number,
-  limit: number,
-): string {
+export function formatReadResponse(fileData: FileData, offset: number, limit: number): string {
   if (isFileDataBinary(fileData)) {
-    return "Error: Cannot format binary FileData as text";
+    return 'Error: Cannot format binary FileData as text';
   }
   const content = fileDataToString(fileData);
   const emptyMsg = checkEmptyContent(content);
@@ -283,7 +263,7 @@ export function formatReadResponse(
     return emptyMsg;
   }
 
-  const lines = content.split("\n");
+  const lines = content.split('\n');
   const startIdx = offset;
   const endIdx = Math.min(startIdx + limit, lines.length);
 
@@ -315,13 +295,13 @@ export function performStringReplacement(
   replaceAll: boolean,
 ): [string, number] | string {
   // Special case: empty file with empty oldString sets initial content
-  if (content === "" && oldString === "") {
+  if (content === '' && oldString === '') {
     return [newString, 0];
   }
 
   // Validate that oldString is not empty (for non-empty files)
-  if (oldString === "") {
-    return "Error: oldString cannot be empty when file has content";
+  if (oldString === '') {
+    return 'Error: oldString cannot be empty when file has content';
   }
 
   // Use split to count occurrences (simpler than regex)
@@ -345,26 +325,18 @@ export function performStringReplacement(
 /**
  * Truncate list or string result if it exceeds token limit (rough estimate: 4 chars/token).
  */
-export function truncateIfTooLong(
-  result: string[] | string,
-): string[] | string {
+export function truncateIfTooLong(result: string[] | string): string[] | string {
   if (Array.isArray(result)) {
     const totalChars = result.reduce((sum, item) => sum + item.length, 0);
     if (totalChars > TOOL_RESULT_TOKEN_LIMIT * 4) {
-      const truncateAt = Math.floor(
-        (result.length * TOOL_RESULT_TOKEN_LIMIT * 4) / totalChars,
-      );
+      const truncateAt = Math.floor((result.length * TOOL_RESULT_TOKEN_LIMIT * 4) / totalChars);
       return [...result.slice(0, truncateAt), TRUNCATION_GUIDANCE];
     }
     return result;
   }
   // string
   if (result.length > TOOL_RESULT_TOKEN_LIMIT * 4) {
-    return (
-      result.substring(0, TOOL_RESULT_TOKEN_LIMIT * 4) +
-      "\n" +
-      TRUNCATION_GUIDANCE
-    );
+    return result.substring(0, TOOL_RESULT_TOKEN_LIMIT * 4) + '\n' + TRUNCATION_GUIDANCE;
   }
   return result;
 }
@@ -393,15 +365,15 @@ export function truncateIfTooLong(
  * ```
  */
 export function validatePath(path: string | null | undefined): string {
-  const pathStr = path || "/";
-  if (!pathStr || pathStr.trim() === "") {
-    throw new Error("Path cannot be empty");
+  const pathStr = path || '/';
+  if (!pathStr || pathStr.trim() === '') {
+    throw new Error('Path cannot be empty');
   }
 
-  let normalized = pathStr.startsWith("/") ? pathStr : "/" + pathStr;
+  let normalized = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
 
-  if (!normalized.endsWith("/")) {
-    normalized += "/";
+  if (!normalized.endsWith('/')) {
+    normalized += '/';
   }
 
   return normalized;
@@ -436,12 +408,9 @@ export function validatePath(path: string | null | undefined): string {
  * validateFilePath("/etc/file.txt", ["/data/"])  // Throws: Path must start with...
  * ```
  */
-export function validateFilePath(
-  path: string,
-  allowedPrefixes?: string[],
-): string {
+export function validateFilePath(path: string, allowedPrefixes?: string[]): string {
   // Check for path traversal
-  if (path.includes("..") || path.startsWith("~")) {
+  if (path.includes('..') || path.startsWith('~')) {
     throw new Error(`Path traversal not allowed: ${path}`);
   }
 
@@ -454,26 +423,21 @@ export function validateFilePath(
   }
 
   // Normalize path separators and remove redundant slashes
-  let normalized = path.replace(/\\/g, "/");
+  let normalized = path.replace(/\\/g, '/');
 
   // Remove redundant path components (./foo becomes foo, foo//bar becomes foo/bar)
   const parts: string[] = [];
-  for (const part of normalized.split("/")) {
-    if (part === "." || part === "") {
+  for (const part of normalized.split('/')) {
+    if (part === '.' || part === '') {
       continue;
     }
     parts.push(part);
   }
-  normalized = "/" + parts.join("/");
+  normalized = '/' + parts.join('/');
 
   // Check allowed prefixes if provided
-  if (
-    allowedPrefixes &&
-    !allowedPrefixes.some((prefix) => normalized.startsWith(prefix))
-  ) {
-    throw new Error(
-      `Path must start with one of ${JSON.stringify(allowedPrefixes)}: ${path}`,
-    );
+  if (allowedPrefixes && !allowedPrefixes.some((prefix) => normalized.startsWith(prefix))) {
+    throw new Error(`Path must start with one of ${JSON.stringify(allowedPrefixes)}: ${path}`);
   }
 
   return normalized;
@@ -498,13 +462,13 @@ export function validateFilePath(
 export function globSearchFiles(
   files: Record<string, FileData>,
   pattern: string,
-  path: string = "/",
+  path: string = '/',
 ): string {
   let normalizedPath: string;
   try {
     normalizedPath = validatePath(path);
   } catch {
-    return "No files found";
+    return 'No files found';
   }
 
   const filtered = Object.fromEntries(
@@ -520,12 +484,12 @@ export function globSearchFiles(
   const matches: Array<[string, string]> = [];
   for (const [filePath, fileData] of Object.entries(filtered)) {
     let relative = filePath.substring(normalizedPath.length);
-    if (relative.startsWith("/")) {
+    if (relative.startsWith('/')) {
       relative = relative.substring(1);
     }
     if (!relative) {
-      const parts = filePath.split("/");
-      relative = parts[parts.length - 1] || "";
+      const parts = filePath.split('/');
+      relative = parts[parts.length - 1] || '';
     }
 
     if (
@@ -541,10 +505,10 @@ export function globSearchFiles(
   matches.sort((a, b) => b[1].localeCompare(a[1])); // Sort by modified_at descending
 
   if (matches.length === 0) {
-    return "No files found";
+    return 'No files found';
   }
 
-  return matches.map(([fp]) => fp).join("\n");
+  return matches.map(([fp]) => fp).join('\n');
 }
 
 /**
@@ -556,18 +520,18 @@ export function globSearchFiles(
  */
 export function formatGrepResults(
   results: Record<string, Array<[number, string]>>,
-  outputMode: "files_with_matches" | "content" | "count",
+  outputMode: 'files_with_matches' | 'content' | 'count',
 ): string {
-  if (outputMode === "files_with_matches") {
-    return Object.keys(results).sort().join("\n");
+  if (outputMode === 'files_with_matches') {
+    return Object.keys(results).sort().join('\n');
   }
-  if (outputMode === "count") {
+  if (outputMode === 'count') {
     const lines: string[] = [];
     for (const filePath of Object.keys(results).sort()) {
       const count = results[filePath].length;
       lines.push(`${filePath}: ${count}`);
     }
-    return lines.join("\n");
+    return lines.join('\n');
   }
   // content mode
   const lines: string[] = [];
@@ -577,7 +541,7 @@ export function formatGrepResults(
       lines.push(`  ${lineNum}: ${line}`);
     }
   }
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 /**
@@ -604,13 +568,13 @@ export function grepSearchFiles(
   pattern: string,
   path: string | null = null,
   glob: string | null = null,
-  outputMode: "files_with_matches" | "content" | "count" = "files_with_matches",
+  outputMode: 'files_with_matches' | 'content' | 'count' = 'files_with_matches',
 ): string {
   let normalizedPath: string;
   try {
     normalizedPath = validatePath(path);
   } catch {
-    return "No matches found";
+    return 'No matches found';
   }
 
   let filtered = Object.fromEntries(
@@ -633,7 +597,7 @@ export function grepSearchFiles(
     }
 
     const content = fileDataToString(fileData);
-    const lines = content.split("\n");
+    const lines = content.split('\n');
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -649,7 +613,7 @@ export function grepSearchFiles(
   }
 
   if (Object.keys(results).length === 0) {
-    return "No matches found";
+    return 'No matches found';
   }
   return formatGrepResults(results, outputMode);
 }
@@ -693,7 +657,7 @@ export function grepMatchesFromFiles(
     }
 
     const content = fileDataToString(fileData);
-    const lines = content.split("\n");
+    const lines = content.split('\n');
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -729,10 +693,10 @@ export function buildGrepResultsDict(
  */
 export function formatGrepMatches(
   matches: GrepMatch[],
-  outputMode: "files_with_matches" | "content" | "count",
+  outputMode: 'files_with_matches' | 'content' | 'count',
 ): string {
   if (matches.length === 0) {
-    return "No matches found";
+    return 'No matches found';
   }
   return formatGrepResults(buildGrepResultsDict(matches), outputMode);
 }
@@ -747,7 +711,7 @@ export function formatGrepMatches(
  */
 export function getMimeType(filePath: string): string {
   const ext = path.extname(filePath).toLocaleLowerCase();
-  return MIME_TYPES[ext] || "text/plain";
+  return MIME_TYPES[ext] || 'text/plain';
 }
 
 /**
@@ -758,10 +722,10 @@ export function getMimeType(filePath: string): string {
  */
 export function isTextMimeType(mimeType: string): boolean {
   return (
-    mimeType.startsWith("text/") ||
-    mimeType === "application/json" ||
-    mimeType === "application/javascript" ||
-    mimeType === "image/svg+xml"
+    mimeType.startsWith('text/') ||
+    mimeType === 'application/json' ||
+    mimeType === 'application/javascript' ||
+    mimeType === 'image/svg+xml'
   );
 }
 
@@ -783,19 +747,16 @@ export function isFileDataV1(data: FileData): data is FileDataV1 {
  * @param data - FileData in either format
  * @returns FileDataV2 with content as string (text) or Uint8Array (binary)
  */
-export function migrateToFileDataV2(
-  data: FileDataV1 | FileDataV2,
-  filePath: string,
-): FileDataV2 {
+export function migrateToFileDataV2(data: FileDataV1 | FileDataV2, filePath: string): FileDataV2 {
   if (isFileDataV1(data)) {
     return {
-      content: data.content.join("\n"),
+      content: data.content.join('\n'),
       mimeType: getMimeType(filePath),
       created_at: data.created_at,
       modified_at: data.modified_at,
     };
   }
-  if (!("mimeType" in data) || !data.mimeType) {
+  if (!('mimeType' in data) || !data.mimeType) {
     return { ...data, mimeType: getMimeType(filePath) };
   }
   return data;
@@ -817,12 +778,10 @@ export function migrateToFileDataV2(
  * @param backend - Backend instance (v1 or v2)
  * @returns BackendProtocolV2-compatible backend
  */
-export function adaptBackendProtocol(
-  backend: AnyBackendProtocol,
-): BackendProtocolV2 {
+export function adaptBackendProtocol(backend: AnyBackendProtocol): BackendProtocolV2 {
   const adapted: BackendProtocolV2 = {
     async ls(path): Promise<LsResult> {
-      const result = await ("ls" in backend
+      const result = await ('ls' in backend
         ? (backend as BackendProtocolV2).ls(path)
         : (backend as BackendProtocolV1).lsInfo(path));
       if (Array.isArray(result)) return { files: result };
@@ -830,13 +789,13 @@ export function adaptBackendProtocol(
     },
     async readRaw(filePath): Promise<ReadRawResult> {
       const result = await backend.readRaw(filePath);
-      if ("data" in result || "error" in result) {
+      if ('data' in result || 'error' in result) {
         return result as ReadRawResult;
       }
       return { data: migrateToFileDataV2(result as FileData, filePath) };
     },
     async glob(pattern, path): Promise<GlobResult> {
-      const result = await ("glob" in backend
+      const result = await ('glob' in backend
         ? (backend as BackendProtocolV2).glob(pattern, path)
         : (backend as BackendProtocolV1).globInfo(pattern, path));
       if (Array.isArray(result)) return { files: result };
@@ -845,23 +804,19 @@ export function adaptBackendProtocol(
     write: (filePath, content) => backend.write(filePath, content),
     edit: (filePath, oldString, newString, replaceAll) =>
       backend.edit(filePath, oldString, newString, replaceAll),
-    uploadFiles: backend.uploadFiles
-      ? (files) => backend.uploadFiles!(files)
-      : undefined,
-    downloadFiles: backend.downloadFiles
-      ? (paths) => backend.downloadFiles!(paths)
-      : undefined,
+    uploadFiles: backend.uploadFiles ? (files) => backend.uploadFiles!(files) : undefined,
+    downloadFiles: backend.downloadFiles ? (paths) => backend.downloadFiles!(paths) : undefined,
     async read(filePath, offset, limit): Promise<ReadResult> {
       const result = await backend.read(filePath, offset, limit);
-      if (typeof result === "string") return { content: result };
+      if (typeof result === 'string') return { content: result };
       return result as ReadResult;
     },
     async grep(pattern, path, glob): Promise<GrepResult> {
-      const result = await ("grep" in backend
+      const result = await ('grep' in backend
         ? (backend as BackendProtocolV2).grep(pattern, path, glob)
         : (backend as BackendProtocolV1).grepRaw(pattern, path, glob));
       if (Array.isArray(result)) return { matches: result };
-      if (typeof result === "string") return { error: result };
+      if (typeof result === 'string') return { error: result };
       return result as GrepResult;
     },
   };
@@ -878,17 +833,14 @@ export function adaptBackendProtocol(
  * @param sandbox - Sandbox backend (v1 or v2)
  * @returns SandboxBackendProtocolV2-compatible sandbox
  */
-export function adaptSandboxProtocol(
-  sandbox: AnySandboxProtocol,
-): SandboxBackendProtocolV2 {
+export function adaptSandboxProtocol(sandbox: AnySandboxProtocol): SandboxBackendProtocolV2 {
   // First adapt the backend protocol methods to v2
   const adapted = adaptBackendProtocol(sandbox);
 
   // Preserve sandbox protocol properties (execute, id)
   // Both SandboxBackendProtocol and SandboxBackendProtocolV2 have these
-  (adapted as SandboxBackendProtocolV2).execute = (cmd: string) =>
-    sandbox.execute(cmd);
-  Object.defineProperty(adapted, "id", {
+  (adapted as SandboxBackendProtocolV2).execute = (cmd: string) => sandbox.execute(cmd);
+  Object.defineProperty(adapted, 'id', {
     value: sandbox.id,
     enumerable: true,
     configurable: true,

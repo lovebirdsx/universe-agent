@@ -40,7 +40,7 @@
  * from `langchain` directly.
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 import {
   createMiddleware,
   countTokensApproximately,
@@ -51,38 +51,38 @@ import {
   BaseMessage,
   type AgentMiddleware as _AgentMiddleware,
   context,
-} from "langchain";
-import { getBufferString } from "@langchain/core/messages";
-import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
-import type { BaseLanguageModel } from "@langchain/core/language_models/base";
-import type { ClientTool, ServerTool } from "@langchain/core/tools";
-import { ContextOverflowError } from "@langchain/core/errors";
-import { initChatModel } from "langchain/chat_models/universal";
-import { Command } from "@langchain/langgraph";
+} from 'langchain';
+import { getBufferString } from '@langchain/core/messages';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { BaseLanguageModel } from '@langchain/core/language_models/base';
+import type { ClientTool, ServerTool } from '@langchain/core/tools';
+import { ContextOverflowError } from '@langchain/core/errors';
+import { initChatModel } from 'langchain/chat_models/universal';
+import { Command } from '@langchain/langgraph';
 
 import type {
   AnyBackendProtocol,
   BackendFactory,
   BackendProtocolV2,
-} from "../backends/protocol.js";
-import { resolveBackend } from "../backends/protocol.js";
-import type { StateBackend } from "../backends/state.js";
-import type { BaseStore } from "@langchain/langgraph-checkpoint";
+} from '../backends/protocol.js';
+import { resolveBackend } from '../backends/protocol.js';
+import type { StateBackend } from '../backends/state.js';
+import type { BaseStore } from '@langchain/langgraph-checkpoint';
 
 // Re-export the base summarization middleware from langchain for users who don't need backend offloading
-export { summarizationMiddleware } from "langchain";
+export { summarizationMiddleware } from 'langchain';
 
 /**
  * import @langchain/core/messages for type inference
  */
-import type * as _core from "@langchain/core/messages";
+import type * as _core from '@langchain/core/messages';
 
 /**
  * Context size specification for summarization triggers and retention policies.
  */
 export interface ContextSize {
   /** Type of context measurement */
-  type: "messages" | "tokens" | "fraction";
+  type: 'messages' | 'tokens' | 'fraction';
   /** Threshold value */
   value: number;
 }
@@ -176,19 +176,19 @@ const DEFAULT_MESSAGES_TO_KEEP = 20;
 const DEFAULT_TRIM_TOKEN_LIMIT = 4000;
 
 // Fallback defaults when model has no profile (matches Python's fallback)
-const FALLBACK_TRIGGER: ContextSize = { type: "tokens", value: 170_000 };
-const FALLBACK_KEEP: ContextSize = { type: "messages", value: 6 };
+const FALLBACK_TRIGGER: ContextSize = { type: 'tokens', value: 170_000 };
+const FALLBACK_KEEP: ContextSize = { type: 'messages', value: 6 };
 const FALLBACK_TRUNCATE_ARGS: TruncateArgsSettings = {
-  trigger: { type: "messages", value: 20 },
-  keep: { type: "messages", value: 20 },
+  trigger: { type: 'messages', value: 20 },
+  keep: { type: 'messages', value: 20 },
 };
 
 // Profile-based defaults (when model has max_input_tokens in profile)
-const PROFILE_TRIGGER: ContextSize = { type: "fraction", value: 0.85 };
-const PROFILE_KEEP: ContextSize = { type: "fraction", value: 0.1 };
+const PROFILE_TRIGGER: ContextSize = { type: 'fraction', value: 0.85 };
+const PROFILE_KEEP: ContextSize = { type: 'fraction', value: 0.1 };
 const PROFILE_TRUNCATE_ARGS: TruncateArgsSettings = {
-  trigger: { type: "fraction", value: 0.85 },
-  keep: { type: "fraction", value: 0.1 },
+  trigger: { type: 'fraction', value: 0.85 },
+  keep: { type: 'fraction', value: 0.1 },
 };
 
 /**
@@ -207,9 +207,9 @@ export function computeSummarizationDefaults(resolvedModel: BaseChatModel): {
 } {
   const hasProfile =
     resolvedModel.profile &&
-    typeof resolvedModel.profile === "object" &&
-    "maxInputTokens" in resolvedModel.profile &&
-    typeof resolvedModel.profile.maxInputTokens === "number";
+    typeof resolvedModel.profile === 'object' &&
+    'maxInputTokens' in resolvedModel.profile &&
+    typeof resolvedModel.profile.maxInputTokens === 'number';
 
   if (hasProfile) {
     return {
@@ -279,7 +279,7 @@ function isSummaryMessage(msg: BaseMessage): boolean {
   if (!HumanMessage.isInstance(msg)) {
     return false;
   }
-  return msg.additional_kwargs?.lc_source === "summarization";
+  return msg.additional_kwargs?.lc_source === 'summarization';
 }
 
 /**
@@ -294,15 +294,13 @@ function isSummaryMessage(msg: BaseMessage): boolean {
  * @param options - Configuration options
  * @returns AgentMiddleware for summarization and history offloading
  */
-export function createSummarizationMiddleware(
-  options: SummarizationMiddlewareOptions,
-) {
+export function createSummarizationMiddleware(options: SummarizationMiddlewareOptions) {
   const {
     model,
     backend,
     summaryPrompt = DEFAULT_SUMMARY_PROMPT,
     trimTokensToSummarize = DEFAULT_TRIM_TOKEN_LIMIT,
-    historyPathPrefix = "/conversation_history",
+    historyPathPrefix = '/conversation_history',
   } = options;
 
   // Mutable config that may be lazily computed from model profile.
@@ -311,7 +309,7 @@ export function createSummarizationMiddleware(
   // Python's `_compute_summarization_defaults` behavior.
   let trigger = options.trigger;
   let keep: ContextSize = options.keep ?? {
-    type: "messages",
+    type: 'messages',
     value: DEFAULT_MESSAGES_TO_KEEP,
   };
   let truncateArgsSettings = options.truncateArgsSettings;
@@ -320,12 +318,11 @@ export function createSummarizationMiddleware(
   // Parse truncate settings (will be re-parsed after defaults are computed)
   let truncateTrigger = truncateArgsSettings?.trigger;
   let truncateKeep: ContextSize = truncateArgsSettings?.keep ?? {
-    type: "messages" as const,
+    type: 'messages' as const,
     value: 20,
   };
   let maxArgLength = truncateArgsSettings?.maxLength ?? 2000;
-  let truncationText =
-    truncateArgsSettings?.truncationText ?? "...(argument truncated)";
+  let truncationText = truncateArgsSettings?.truncationText ?? '...(argument truncated)';
 
   /**
    * Lazily compute defaults from model profile when trigger was not provided.
@@ -346,13 +343,11 @@ export function createSummarizationMiddleware(
       truncateArgsSettings = defaults.truncateArgsSettings;
       truncateTrigger = defaults.truncateArgsSettings.trigger;
       truncateKeep = defaults.truncateArgsSettings.keep ?? {
-        type: "messages" as const,
+        type: 'messages' as const,
         value: 20,
       };
       maxArgLength = defaults.truncateArgsSettings.maxLength ?? 2000;
-      truncationText =
-        defaults.truncateArgsSettings.truncationText ??
-        "...(argument truncated)";
+      truncationText = defaults.truncateArgsSettings.truncationText ?? '...(argument truncated)';
     }
   }
 
@@ -404,11 +399,11 @@ export function createSummarizationMiddleware(
 
     if (!model) {
       throw new Error(
-        "Summarization middleware could not resolve a model. Provide `options.model` or ensure `request.model` is present.",
+        'Summarization middleware could not resolve a model. Provide `options.model` or ensure `request.model` is present.',
       );
     }
 
-    if (typeof model === "string") {
+    if (typeof model === 'string') {
       cachedModel = await initChatModel(model);
     } else {
       cachedModel = model as BaseChatModel;
@@ -429,9 +424,9 @@ export function createSummarizationMiddleware(
     const profile = resolvedModel.profile;
     if (
       profile &&
-      typeof profile === "object" &&
-      "maxInputTokens" in profile &&
-      typeof profile.maxInputTokens === "number"
+      typeof profile === 'object' &&
+      'maxInputTokens' in profile &&
+      typeof profile.maxInputTokens === 'number'
     ) {
       return profile.maxInputTokens;
     }
@@ -454,13 +449,13 @@ export function createSummarizationMiddleware(
     const triggers = Array.isArray(trigger) ? trigger : [trigger];
 
     for (const t of triggers) {
-      if (t.type === "messages" && messages.length >= t.value) {
+      if (t.type === 'messages' && messages.length >= t.value) {
         return true;
       }
-      if (t.type === "tokens" && adjustedTokens >= t.value) {
+      if (t.type === 'tokens' && adjustedTokens >= t.value) {
         return true;
       }
-      if (t.type === "fraction" && maxInputTokens) {
+      if (t.type === 'fraction' && maxInputTokens) {
         const threshold = Math.floor(maxInputTokens * t.value);
         if (adjustedTokens >= threshold) {
           return true;
@@ -485,23 +480,14 @@ export function createSummarizationMiddleware(
    *    pair into the summarized set. Used when moving backward would preserve
    *    too many messages (e.g., a single AIMessage made 20+ tool calls).
    */
-  function findSafeCutoffPoint(
-    messages: BaseMessage[],
-    cutoffIndex: number,
-  ): number {
-    if (
-      cutoffIndex >= messages.length ||
-      !ToolMessage.isInstance(messages[cutoffIndex])
-    ) {
+  function findSafeCutoffPoint(messages: BaseMessage[], cutoffIndex: number): number {
+    if (cutoffIndex >= messages.length || !ToolMessage.isInstance(messages[cutoffIndex])) {
       return cutoffIndex;
     }
 
     // Advance past all consecutive ToolMessages at the cutoff point
     let forwardIdx = cutoffIndex;
-    while (
-      forwardIdx < messages.length &&
-      ToolMessage.isInstance(messages[forwardIdx])
-    ) {
+    while (forwardIdx < messages.length && ToolMessage.isInstance(messages[forwardIdx])) {
       forwardIdx++;
     }
 
@@ -520,9 +506,7 @@ export function createSummarizationMiddleware(
       const msg = messages[i];
       if (AIMessage.isInstance(msg) && msg.tool_calls) {
         const aiToolCallIds = new Set(
-          msg.tool_calls
-            .map((tc) => tc.id)
-            .filter((id): id is string => id != null),
+          msg.tool_calls.map((tc) => tc.id).filter((id): id is string => id != null),
         );
         for (const id of toolCallIds) {
           if (aiToolCallIds.has(id)) {
@@ -558,20 +542,17 @@ export function createSummarizationMiddleware(
    *
    * Uses findSafeCutoffPoint to ensure tool call/result pairs stay together.
    */
-  function determineCutoffIndex(
-    messages: BaseMessage[],
-    maxInputTokens?: number,
-  ): number {
+  function determineCutoffIndex(messages: BaseMessage[], maxInputTokens?: number): number {
     let rawCutoff: number;
 
-    if (keep.type === "messages") {
+    if (keep.type === 'messages') {
       if (messages.length <= keep.value) {
         return 0;
       }
       rawCutoff = messages.length - keep.value;
-    } else if (keep.type === "tokens" || keep.type === "fraction") {
+    } else if (keep.type === 'tokens' || keep.type === 'fraction') {
       const targetTokenCount =
-        keep.type === "fraction" && maxInputTokens
+        keep.type === 'fraction' && maxInputTokens
           ? Math.floor(maxInputTokens * keep.value)
           : keep.value;
 
@@ -605,13 +586,13 @@ export function createSummarizationMiddleware(
     }
 
     const adjustedTokens = totalTokens * tokenEstimationMultiplier;
-    if (truncateTrigger.type === "messages") {
+    if (truncateTrigger.type === 'messages') {
       return messages.length >= truncateTrigger.value;
     }
-    if (truncateTrigger.type === "tokens") {
+    if (truncateTrigger.type === 'tokens') {
       return adjustedTokens >= truncateTrigger.value;
     }
-    if (truncateTrigger.type === "fraction" && maxInputTokens) {
+    if (truncateTrigger.type === 'fraction' && maxInputTokens) {
       const threshold = Math.floor(maxInputTokens * truncateTrigger.value);
       return adjustedTokens >= threshold;
     }
@@ -623,23 +604,17 @@ export function createSummarizationMiddleware(
    * Determine cutoff index for argument truncation.
    * Uses findSafeCutoffPoint to ensure tool call/result pairs stay together.
    */
-  function determineTruncateCutoffIndex(
-    messages: BaseMessage[],
-    maxInputTokens?: number,
-  ): number {
+  function determineTruncateCutoffIndex(messages: BaseMessage[], maxInputTokens?: number): number {
     let rawCutoff: number;
 
-    if (truncateKeep.type === "messages") {
+    if (truncateKeep.type === 'messages') {
       if (messages.length <= truncateKeep.value) {
         return messages.length;
       }
       rawCutoff = messages.length - truncateKeep.value;
-    } else if (
-      truncateKeep.type === "tokens" ||
-      truncateKeep.type === "fraction"
-    ) {
+    } else if (truncateKeep.type === 'tokens' || truncateKeep.type === 'fraction') {
       const targetTokenCount =
-        truncateKeep.type === "fraction" && maxInputTokens
+        truncateKeep.type === 'fraction' && maxInputTokens
           ? Math.floor(maxInputTokens * truncateKeep.value)
           : truncateKeep.value;
 
@@ -711,18 +686,12 @@ export function createSummarizationMiddleware(
     }
 
     const nonToolMessages = messages.filter((m) => !ToolMessage.isInstance(m));
-    const overheadTokens = countTotalTokens(
-      nonToolMessages,
-      systemMessage,
-      tools,
-    );
+    const overheadTokens = countTotalTokens(nonToolMessages, systemMessage, tools);
 
     // Target: fit within maxInputTokens / multiplier, leaving 30% headroom
     const adjustedMax = maxInputTokens / tokenEstimationMultiplier;
     const budgetForTools = Math.max(adjustedMax * 0.7 - overheadTokens, 1000);
-    const perToolBudgetTokens = Math.floor(
-      budgetForTools / toolMessageIndices.length,
-    );
+    const perToolBudgetTokens = Math.floor(budgetForTools / toolMessageIndices.length);
     const perToolBudgetChars = perToolBudgetTokens * 4;
 
     let modified = false;
@@ -730,16 +699,11 @@ export function createSummarizationMiddleware(
 
     for (const idx of toolMessageIndices) {
       const msg = messages[idx] as InstanceType<typeof ToolMessage>;
-      const content =
-        typeof msg.content === "string"
-          ? msg.content
-          : JSON.stringify(msg.content);
+      const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
 
       if (content.length > perToolBudgetChars) {
         result[idx] = new ToolMessage({
-          content:
-            content.substring(0, perToolBudgetChars) +
-            "\n...(result truncated)",
+          content: content.substring(0, perToolBudgetChars) + '\n...(result truncated)',
           tool_call_id: msg.tool_call_id,
           name: msg.name,
         });
@@ -783,9 +747,9 @@ export function createSummarizationMiddleware(
 
           for (const [key, value] of Object.entries(args)) {
             if (
-              typeof value === "string" &&
+              typeof value === 'string' &&
               value.length > maxArgLength &&
-              (toolCall.name === "write_file" || toolCall.name === "edit_file")
+              (toolCall.name === 'write_file' || toolCall.name === 'edit_file')
             ) {
               truncatedArgs[key] = value.substring(0, 20) + truncationText;
               toolModified = true;
@@ -853,11 +817,7 @@ export function createSummarizationMiddleware(
       if (resolvedBackend.downloadFiles) {
         try {
           const responses = await resolvedBackend.downloadFiles([filePath]);
-          if (
-            responses.length > 0 &&
-            responses[0].content &&
-            !responses[0].error
-          ) {
+          if (responses.length > 0 && responses[0].content && !responses[0].error) {
             existingBytes = responses[0].content;
           }
         } catch {
@@ -868,18 +828,12 @@ export function createSummarizationMiddleware(
       let result: { error?: string; path?: string };
       if (existingBytes && resolvedBackend.uploadFiles) {
         // Append: concatenate raw bytes and upload directly
-        const combined = new Uint8Array(
-          existingBytes.byteLength + sectionBytes.byteLength,
-        );
+        const combined = new Uint8Array(existingBytes.byteLength + sectionBytes.byteLength);
         combined.set(existingBytes, 0);
         combined.set(sectionBytes, existingBytes.byteLength);
 
-        const uploadResults = await resolvedBackend.uploadFiles([
-          [filePath, combined],
-        ]);
-        result = uploadResults[0].error
-          ? { error: uploadResults[0].error }
-          : { path: filePath };
+        const uploadResults = await resolvedBackend.uploadFiles([[filePath, combined]]);
+        result = uploadResults[0].error ? { error: uploadResults[0].error } : { path: filePath };
       } else if (!existingBytes) {
         result = await resolvedBackend.write(filePath, newSection);
       } else {
@@ -894,19 +848,14 @@ export function createSummarizationMiddleware(
 
       if (result.error) {
         // oxlint-disable-next-line no-console
-        console.warn(
-          `Failed to offload conversation history to ${filePath}: ${result.error}`,
-        );
+        console.warn(`Failed to offload conversation history to ${filePath}: ${result.error}`);
         return null;
       }
 
       return filePath;
     } catch (e) {
       // oxlint-disable-next-line no-console
-      console.warn(
-        `Exception offloading conversation history to ${filePath}:`,
-        e,
-      );
+      console.warn(`Exception offloading conversation history to ${filePath}:`, e);
       return null;
     }
   }
@@ -914,10 +863,7 @@ export function createSummarizationMiddleware(
   /**
    * Create summary of messages.
    */
-  async function createSummary(
-    messages: BaseMessage[],
-    chatModel: BaseChatModel,
-  ): Promise<string> {
+  async function createSummary(messages: BaseMessage[], chatModel: BaseChatModel): Promise<string> {
     // Trim messages if too long
     let messagesToSummarize = messages;
     const tokens = countTokensApproximately(messages);
@@ -937,13 +883,11 @@ export function createSummarizationMiddleware(
     }
 
     const conversation = getBufferString(messagesToSummarize);
-    const prompt = summaryPrompt.replace("{conversation}", conversation);
+    const prompt = summaryPrompt.replace('{conversation}', conversation);
 
-    const response = await chatModel.invoke([
-      new HumanMessage({ content: prompt }),
-    ]);
+    const response = await chatModel.invoke([new HumanMessage({ content: prompt })]);
 
-    return typeof response.content === "string"
+    return typeof response.content === 'string'
       ? response.content
       : JSON.stringify(response.content);
   }
@@ -951,10 +895,7 @@ export function createSummarizationMiddleware(
   /**
    * Build the summary message with file path reference.
    */
-  function buildSummaryMessage(
-    summary: string,
-    filePath: string | null,
-  ): HumanMessage {
+  function buildSummaryMessage(summary: string, filePath: string | null): HumanMessage {
     let content: string;
     if (filePath) {
       content = context`
@@ -974,7 +915,7 @@ export function createSummarizationMiddleware(
 
     return new HumanMessage({
       content,
-      additional_kwargs: { lc_source: "summarization" },
+      additional_kwargs: { lc_source: 'summarization' },
     });
   }
 
@@ -1019,11 +960,7 @@ export function createSummarizationMiddleware(
     stateCutoffIndex: number;
   }> {
     const resolvedBackend = await resolveBackend(backend, { state });
-    const filePath = await offloadToBackend(
-      resolvedBackend,
-      messagesToSummarize,
-      state,
-    );
+    const filePath = await offloadToBackend(resolvedBackend, messagesToSummarize, state);
 
     if (filePath === null) {
       // oxlint-disable-next-line no-console
@@ -1036,9 +973,7 @@ export function createSummarizationMiddleware(
     const summaryMessage = buildSummaryMessage(summary, filePath);
 
     const stateCutoffIndex =
-      previousCutoffIndex != null
-        ? previousCutoffIndex + cutoffIndex - 1
-        : cutoffIndex;
+      previousCutoffIndex != null ? previousCutoffIndex + cutoffIndex - 1 : cutoffIndex;
 
     return { summaryMessage, filePath, stateCutoffIndex };
   }
@@ -1057,7 +992,7 @@ export function createSummarizationMiddleware(
         return true;
       }
       cause =
-        typeof cause === "object" && "cause" in cause
+        typeof cause === 'object' && 'cause' in cause
           ? (cause as { cause?: unknown }).cause
           : undefined;
     }
@@ -1113,25 +1048,18 @@ export function createSummarizationMiddleware(
 
     const previousEvent = request.state._summarizationEvent;
     const previousCutoffIndex =
-      previousEvent != null
-        ? (previousEvent as SummarizationEvent).cutoffIndex
-        : undefined;
+      previousEvent != null ? (previousEvent as SummarizationEvent).cutoffIndex : undefined;
 
-    const { summaryMessage, filePath, stateCutoffIndex } =
-      await summarizeMessages(
-        messagesToSummarize,
-        resolvedModel,
-        request.state,
-        previousCutoffIndex,
-        cutoffIndex,
-      );
+    const { summaryMessage, filePath, stateCutoffIndex } = await summarizeMessages(
+      messagesToSummarize,
+      resolvedModel,
+      request.state,
+      previousCutoffIndex,
+      cutoffIndex,
+    );
 
     let modifiedMessages = [summaryMessage, ...preservedMessages];
-    const modifiedTokens = countTotalTokens(
-      modifiedMessages,
-      request.systemMessage,
-      request.tools,
-    );
+    const modifiedTokens = countTotalTokens(modifiedMessages, request.systemMessage, request.tools);
 
     let finalStateCutoffIndex = stateCutoffIndex;
     let finalSummaryMessage = summaryMessage;
@@ -1182,15 +1110,12 @@ export function createSummarizationMiddleware(
   }
 
   return createMiddleware({
-    name: "SummarizationMiddleware",
+    name: 'SummarizationMiddleware',
     stateSchema: SummarizationStateSchema,
 
     async wrapModelCall(request, handler) {
       // Get effective messages based on previous summarization events
-      const effectiveMessages = getEffectiveMessages(
-        request.messages ?? [],
-        request.state,
-      );
+      const effectiveMessages = getEffectiveMessages(request.messages ?? [], request.state);
 
       if (effectiveMessages.length === 0) {
         return handler(request);
@@ -1220,17 +1145,9 @@ export function createSummarizationMiddleware(
        * Count tokens including system message and tools to match what's
        * actually sent to the model (matching Python implementation).
        */
-      const totalTokens = countTotalTokens(
-        truncatedMessages,
-        request.systemMessage,
-        request.tools,
-      );
+      const totalTokens = countTotalTokens(truncatedMessages, request.systemMessage, request.tools);
 
-      const shouldDoSummarization = shouldSummarize(
-        truncatedMessages,
-        totalTokens,
-        maxInputTokens,
-      );
+      const shouldDoSummarization = shouldSummarize(truncatedMessages, totalTokens, maxInputTokens);
 
       /**
        * If no summarization needed, try passing through.

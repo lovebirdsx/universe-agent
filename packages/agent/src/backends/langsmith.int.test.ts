@@ -15,17 +15,17 @@
  *   pnpm test:int --reporter=verbose
  */
 
-import { sandboxStandardTests } from "@langchain/sandbox-standard-tests/vitest";
-import { SandboxClient } from "langsmith/experimental/sandbox";
-import { LangSmithSandbox } from "./langsmith.js";
+import { sandboxStandardTests } from '@langchain/sandbox-standard-tests/vitest';
+import { SandboxClient } from 'langsmith/experimental/sandbox';
+import { LangSmithSandbox } from './langsmith.js';
 
 const LANGSMITH_API_KEY = process.env.LANGSMITH_API_KEY;
 const hasCredentials = !!LANGSMITH_API_KEY;
-const TEMPLATE_NAME = "deepagents-cli";
+const TEMPLATE_NAME = 'deepagents-cli';
 const TEST_TIMEOUT = 180_000; // 3 minutes
 
 sandboxStandardTests({
-  name: "LangSmithSandbox",
+  name: 'LangSmithSandbox',
   skip: !hasCredentials,
   timeout: TEST_TIMEOUT,
   sequential: true,

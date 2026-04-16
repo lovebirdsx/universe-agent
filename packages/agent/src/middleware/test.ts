@@ -1,4 +1,4 @@
-import { vi } from "vitest";
+import { vi } from 'vitest';
 
 import type {
   BackendProtocolV2,
@@ -6,7 +6,7 @@ import type {
   LsResult,
   WriteResult,
   EditResult,
-} from "../backends/protocol.js";
+} from '../backends/protocol.js';
 
 /**
  * Mock backend that returns specified files and directory listings
@@ -16,10 +16,7 @@ import type {
 export function createMockBackend(
   config: {
     files?: Record<string, string>;
-    directories?: Record<
-      string,
-      Array<{ name: string; type: "file" | "directory" }>
-    >;
+    directories?: Record<string, Array<{ name: string; type: 'file' | 'directory' }>>;
     writeError?: string;
   } = {},
 ): BackendProtocolV2 {
@@ -32,7 +29,7 @@ export function createMockBackend(
       return paths.map((path) => {
         const content = files[path];
         if (content === null || content === undefined) {
-          return { path, error: "file_not_found", content: null };
+          return { path, error: 'file_not_found', content: null };
         }
         return {
           path,
@@ -49,8 +46,8 @@ export function createMockBackend(
       // Convert test format to FileInfo format
       return {
         files: entries.map((entry) => ({
-          path: entry.name + (entry.type === "directory" ? "/" : ""),
-          is_dir: entry.type === "directory",
+          path: entry.name + (entry.type === 'directory' ? '/' : ''),
+          is_dir: entry.type === 'directory',
         })),
       };
     },
@@ -63,11 +60,7 @@ export function createMockBackend(
       writtenFiles[path] = content;
       return { path };
     },
-    async edit(
-      path: string,
-      _oldString: string,
-      newString: string,
-    ): Promise<EditResult> {
+    async edit(path: string, _oldString: string, newString: string): Promise<EditResult> {
       if (writeError) {
         return { error: writeError };
       }

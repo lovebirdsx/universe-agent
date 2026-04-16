@@ -25,14 +25,14 @@ import {
   LangSmithResourceNotFoundError,
   LangSmithSandboxError,
   SandboxClient,
-} from "langsmith/experimental/sandbox";
-import { BaseSandbox } from "./sandbox.js";
+} from 'langsmith/experimental/sandbox';
+import { BaseSandbox } from './sandbox.js';
 import type {
   ExecuteResponse,
   FileDownloadResponse,
   FileOperationError,
   FileUploadResponse,
-} from "./protocol.js";
+} from './protocol.js';
 
 /** Options for constructing a LangSmithSandbox from an existing Sandbox instance. */
 export interface LangSmithSandboxOptions {
@@ -48,7 +48,7 @@ export interface LangSmithSandboxOptions {
 /** Options for the `LangSmithSandbox.create()` static factory. */
 export interface LangSmithSandboxCreateOptions extends Omit<
   CreateSandboxOptions,
-  "name" | "timeout" | "waitForReady"
+  'name' | 'timeout' | 'waitForReady'
 > {
   /**
    * Name of the LangSmith sandbox template to use.
@@ -104,10 +104,7 @@ export class LangSmithSandbox extends BaseSandbox {
    * @param command - Shell command string to execute
    * @param options.timeout - Override timeout in seconds; 0 disables timeout
    */
-  async execute(
-    command: string,
-    options?: { timeout?: number },
-  ): Promise<ExecuteResponse> {
+  async execute(command: string, options?: { timeout?: number }): Promise<ExecuteResponse> {
     const effectiveTimeout =
       options?.timeout !== undefined ? options.timeout : this.#defaultTimeout;
 
@@ -115,12 +112,8 @@ export class LangSmithSandbox extends BaseSandbox {
       timeout: effectiveTimeout,
     });
 
-    const out = result.stdout ?? "";
-    const combined = result.stderr
-      ? out
-        ? `${out}\n${result.stderr}`
-        : result.stderr
-      : out;
+    const out = result.stdout ?? '';
+    const combined = result.stderr ? (out ? `${out}\n${result.stderr}` : result.stderr) : out;
 
     return {
       output: combined,
@@ -144,16 +137,16 @@ export class LangSmithSandbox extends BaseSandbox {
       } catch (err) {
         // oxlint-disable-next-line no-instanceof/no-instanceof
         if (err instanceof LangSmithResourceNotFoundError) {
-          responses.push({ path, content: null, error: "file_not_found" });
+          responses.push({ path, content: null, error: 'file_not_found' });
           // oxlint-disable-next-line no-instanceof/no-instanceof
         } else if (err instanceof LangSmithSandboxError) {
           const msg = String(err.message).toLowerCase();
-          const error: FileOperationError = msg.includes("is a directory")
-            ? "is_directory"
-            : "file_not_found";
+          const error: FileOperationError = msg.includes('is a directory')
+            ? 'is_directory'
+            : 'file_not_found';
           responses.push({ path, content: null, error });
         } else {
-          responses.push({ path, content: null, error: "invalid_path" });
+          responses.push({ path, content: null, error: 'invalid_path' });
         }
       }
     }
@@ -166,9 +159,7 @@ export class LangSmithSandbox extends BaseSandbox {
    * @param files - List of [path, content] tuples to upload
    * @returns List of FileUploadResponse objects, one per input file
    */
-  async uploadFiles(
-    files: Array<[string, Uint8Array]>,
-  ): Promise<FileUploadResponse[]> {
+  async uploadFiles(files: Array<[string, Uint8Array]>): Promise<FileUploadResponse[]> {
     const responses: FileUploadResponse[] = [];
 
     for (const [path, content] of files) {
@@ -176,7 +167,7 @@ export class LangSmithSandbox extends BaseSandbox {
         await this.#sandbox.write(path, content);
         responses.push({ path, error: null });
       } catch {
-        responses.push({ path, error: "permission_denied" });
+        responses.push({ path, error: 'permission_denied' });
       }
     }
 
@@ -211,21 +202,16 @@ export class LangSmithSandbox extends BaseSandbox {
    * }
    * ```
    */
-  static async create(
-    options: LangSmithSandboxCreateOptions = {},
-  ): Promise<LangSmithSandbox> {
+  static async create(options: LangSmithSandboxCreateOptions = {}): Promise<LangSmithSandbox> {
     const {
-      templateName = "deepagents",
+      templateName = 'deepagents',
       apiKey = process.env.LANGSMITH_API_KEY,
       defaultTimeout,
       ...createSandboxOptions
     } = options;
 
     const client = new SandboxClient({ apiKey });
-    const sandbox = await client.createSandbox(
-      templateName,
-      createSandboxOptions,
-    );
+    const sandbox = await client.createSandbox(templateName, createSandboxOptions);
     return new LangSmithSandbox({ sandbox, defaultTimeout });
   }
 }

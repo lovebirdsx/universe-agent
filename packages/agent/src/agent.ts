@@ -6,12 +6,8 @@ import {
   SystemMessage,
   type AgentMiddleware,
   context,
-} from "langchain";
-import type {
-  ClientTool,
-  ServerTool,
-  StructuredTool,
-} from "@langchain/core/tools";
+} from 'langchain';
+import type { ClientTool, ServerTool, StructuredTool } from '@langchain/core/tools';
 
 import {
   createFilesystemMiddleware,
@@ -25,16 +21,13 @@ import {
   type SubAgent,
   createAsyncSubAgentMiddleware,
   isAsyncSubAgent,
-} from "./middleware/index.js";
-import { StateBackend } from "./backends/index.js";
-import { ConfigurationError } from "./errors.js";
-import { InteropZodObject } from "@langchain/core/utils/types";
-import { createCacheBreakpointMiddleware } from "./middleware/cache.js";
-import {
-  GENERAL_PURPOSE_SUBAGENT,
-  type CompiledSubAgent,
-} from "./middleware/subagents.js";
-import type { AsyncSubAgent } from "./middleware/async_subagents.js";
+} from './middleware/index.js';
+import { StateBackend } from './backends/index.js';
+import { ConfigurationError } from './errors.js';
+import { InteropZodObject } from '@langchain/core/utils/types';
+import { createCacheBreakpointMiddleware } from './middleware/cache.js';
+import { GENERAL_PURPOSE_SUBAGENT, type CompiledSubAgent } from './middleware/subagents.js';
+import type { AsyncSubAgent } from './middleware/async_subagents.js';
 import type {
   AnySubAgent,
   CreateDeepAgentParams,
@@ -43,14 +36,14 @@ import type {
   FlattenSubAgentMiddleware,
   InferStructuredResponse,
   SupportedResponseFormat,
-} from "./types.js";
+} from './types.js';
 
 /**
  * required for type inference
  */
-import type * as _messages from "@langchain/core/messages";
-import type * as _langgraph from "@langchain/langgraph";
-import type { BaseLanguageModel } from "@langchain/core/language_models/base";
+import type * as _messages from '@langchain/core/messages';
+import type * as _langgraph from '@langchain/langgraph';
+import type { BaseLanguageModel } from '@langchain/core/language_models/base';
 
 const BASE_AGENT_PROMPT = context`
   You are a Deep Agent, an AI assistant that helps users accomplish tasks using tools. You respond with text and tool calls. The user can see your responses and tool outputs in real time.
@@ -91,8 +84,8 @@ const BASE_AGENT_PROMPT = context`
 const BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   ...FILESYSTEM_TOOL_NAMES,
   ...ASYNC_TASK_TOOL_NAMES,
-  "task",
-  "write_todos",
+  'task',
+  'write_todos',
 ]);
 
 /**
@@ -100,14 +93,14 @@ const BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
  * Used to gate Anthropic-specific prompt caching optimizations (cache_control breakpoints).
  */
 export function isAnthropicModel(model: BaseLanguageModel | string): boolean {
-  if (typeof model === "string") {
-    if (model.includes(":")) return model.split(":")[0] === "anthropic";
-    return model.startsWith("claude");
+  if (typeof model === 'string') {
+    if (model.includes(':')) return model.split(':')[0] === 'anthropic';
+    return model.startsWith('claude');
   }
-  if (model.getName() === "ConfigurableModel") {
-    return (model as any)._defaultConfig?.modelProvider === "anthropic";
+  if (model.getName() === 'ConfigurableModel') {
+    return (model as any)._defaultConfig?.modelProvider === 'anthropic';
   }
-  return model.getName() === "ChatAnthropic";
+  return model.getName() === 'ChatAnthropic';
 }
 
 /**
@@ -153,16 +146,10 @@ export function createDeepAgent<
     TMiddleware,
     TSubagents,
     TTools
-  > = {} as CreateDeepAgentParams<
-    TResponse,
-    ContextSchema,
-    TMiddleware,
-    TSubagents,
-    TTools
-  >,
+  > = {} as CreateDeepAgentParams<TResponse, ContextSchema, TMiddleware, TSubagents, TTools>,
 ) {
   const {
-    model = "anthropic:claude-sonnet-4-6",
+    model = 'anthropic:claude-sonnet-4-6',
     tools = [],
     systemPrompt,
     middleware: customMiddleware = [],
@@ -180,13 +167,13 @@ export function createDeepAgent<
 
   const collidingTools = tools
     .map((t) => t.name)
-    .filter((n) => typeof n === "string" && BUILTIN_TOOL_NAMES.has(n));
+    .filter((n) => typeof n === 'string' && BUILTIN_TOOL_NAMES.has(n));
 
   if (collidingTools.length > 0) {
     throw new ConfigurationError(
-      `Tool name(s) [${collidingTools.join(", ")}] conflict with built-in tools. ` +
+      `Tool name(s) [${collidingTools.join(', ')}] conflict with built-in tools. ` +
         `Rename your custom tools to avoid this.`,
-      "TOOL_NAME_COLLISION",
+      'TOOL_NAME_COLLISION',
     );
   }
 
@@ -194,7 +181,7 @@ export function createDeepAgent<
   const cacheMiddleware = anthropicModel
     ? [
         anthropicPromptCachingMiddleware({
-          unsupportedModelBehavior: "ignore",
+          unsupportedModelBehavior: 'ignore',
           minMessagesToCache: 1,
         }),
         createCacheBreakpointMiddleware(),
@@ -251,16 +238,10 @@ export function createDeepAgent<
   // - CompiledSubAgent: use as-is (already has its own middleware baked in)
   // - SubAgent: apply the default deep-agent subagent middleware stack
   const inlineSubagents = allSubagents
-    .filter(
-      (item): item is SubAgent | CompiledSubAgent => !isAsyncSubAgent(item),
-    )
-    .map((item) => ("runnable" in item ? item : normalizeSubagentSpec(item)));
+    .filter((item): item is SubAgent | CompiledSubAgent => !isAsyncSubAgent(item))
+    .map((item) => ('runnable' in item ? item : normalizeSubagentSpec(item)));
 
-  if (
-    !inlineSubagents.some(
-      (item) => item.name === GENERAL_PURPOSE_SUBAGENT["name"],
-    )
-  ) {
+  if (!inlineSubagents.some((item) => item.name === GENERAL_PURPOSE_SUBAGENT['name'])) {
     const generalPurposeSpec = normalizeSubagentSpec({
       ...GENERAL_PURPOSE_SUBAGENT,
       model,
@@ -319,9 +300,7 @@ export function createDeepAgent<
     summarizationMiddleware,
     patchToolCallsMiddleware,
     // Optional async subagent bridge.
-    ...(asyncSubAgents.length > 0
-      ? [createAsyncSubAgentMiddleware({ asyncSubAgents })]
-      : []),
+    ...(asyncSubAgents.length > 0 ? [createAsyncSubAgentMiddleware({ asyncSubAgents })] : []),
     // User-provided middleware.
     ...customMiddleware,
     // Optional Anthropic cache controls.
@@ -342,22 +321,22 @@ export function createDeepAgent<
 
   // Combine system prompt parameter with BASE_AGENT_PROMPT
   const finalSystemPrompt =
-    typeof systemPrompt === "string"
+    typeof systemPrompt === 'string'
       ? new SystemMessage({
           contentBlocks: [
-            { type: "text", text: systemPrompt },
-            { type: "text", text: BASE_AGENT_PROMPT },
+            { type: 'text', text: systemPrompt },
+            { type: 'text', text: BASE_AGENT_PROMPT },
           ],
         })
       : SystemMessage.isInstance(systemPrompt)
         ? new SystemMessage({
             contentBlocks: [
               ...systemPrompt.contentBlocks,
-              { type: "text", text: BASE_AGENT_PROMPT },
+              { type: 'text', text: BASE_AGENT_PROMPT },
             ],
           })
         : new SystemMessage({
-            contentBlocks: [{ type: "text", text: BASE_AGENT_PROMPT }],
+            contentBlocks: [{ type: 'text', text: BASE_AGENT_PROMPT }],
           });
 
   const agent = createAgent({
@@ -373,7 +352,7 @@ export function createDeepAgent<
   }).withConfig({
     recursionLimit: 10_000,
     metadata: {
-      ls_integration: "deepagents",
+      ls_integration: 'deepagents',
       lc_agent_name: name,
     },
   });

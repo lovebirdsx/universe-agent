@@ -39,8 +39,8 @@
  * ```
  */
 
-import { z } from "zod";
-import yaml from "yaml";
+import { z } from 'zod';
+import yaml from 'yaml';
 import {
   context,
   createMiddleware,
@@ -48,19 +48,16 @@ import {
    * required for type inference
    */
   type AgentMiddleware as _AgentMiddleware,
-} from "langchain";
-import { StateSchema, ReducedValue } from "@langchain/langgraph";
+} from 'langchain';
+import { StateSchema, ReducedValue } from '@langchain/langgraph';
 
-import type {
-  AnyBackendProtocol,
-  BackendFactory,
-} from "../backends/protocol.js";
-import { resolveBackend } from "../backends/protocol.js";
-import type { StateBackend } from "../backends/state.js";
-import type { BaseStore } from "@langchain/langgraph-checkpoint";
-import { filesValue } from "../values.js";
-import { adaptBackendProtocol } from "../backends/utils.js";
-import { DEFAULT_READ_LINE_LIMIT } from "./fs.js";
+import type { AnyBackendProtocol, BackendFactory } from '../backends/protocol.js';
+import { resolveBackend } from '../backends/protocol.js';
+import type { StateBackend } from '../backends/state.js';
+import type { BaseStore } from '@langchain/langgraph-checkpoint';
+import { filesValue } from '../values.js';
+import { adaptBackendProtocol } from '../backends/utils.js';
+import { DEFAULT_READ_LINE_LIMIT } from './fs.js';
 
 // Security: Maximum size for SKILL.md files to prevent DoS attacks (10MB)
 export const MAX_SKILL_FILE_SIZE = 10 * 1024 * 1024;
@@ -295,23 +292,23 @@ export function validateSkillName(
   directoryName: string,
 ): { valid: boolean; error: string } {
   if (!name) {
-    return { valid: false, error: "name is required" };
+    return { valid: false, error: 'name is required' };
   }
   if (name.length > MAX_SKILL_NAME_LENGTH) {
-    return { valid: false, error: "name exceeds 64 characters" };
+    return { valid: false, error: 'name exceeds 64 characters' };
   }
-  if (name.startsWith("-") || name.endsWith("-") || name.includes("--")) {
+  if (name.startsWith('-') || name.endsWith('-') || name.includes('--')) {
     return {
       valid: false,
-      error: "name must be lowercase alphanumeric with single hyphens only",
+      error: 'name must be lowercase alphanumeric with single hyphens only',
     };
   }
   for (const c of name) {
-    if (c === "-") continue;
+    if (c === '-') continue;
     if (/\p{Ll}/u.test(c) || /\p{Nd}/u.test(c)) continue;
     return {
       valid: false,
-      error: "name must be lowercase alphanumeric with single hyphens only",
+      error: 'name must be lowercase alphanumeric with single hyphens only',
     };
   }
   if (name !== directoryName) {
@@ -320,7 +317,7 @@ export function validateSkillName(
       error: `name '${name}' must match directory name '${directoryName}'`,
     };
   }
-  return { valid: true, error: "" };
+  return { valid: true, error: '' };
 }
 
 /**
@@ -334,15 +331,10 @@ export function validateSkillName(
  * @param skillPath - Path to the `SKILL.md` file (for warning messages).
  * @returns A validated `Record<string, string>`.
  */
-export function validateMetadata(
-  raw: unknown,
-  skillPath: string,
-): Record<string, string> {
-  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+export function validateMetadata(raw: unknown, skillPath: string): Record<string, string> {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
     if (raw) {
-      console.warn(
-        `Ignoring non-object metadata in ${skillPath} (got ${typeof raw})`,
-      );
+      console.warn(`Ignoring non-object metadata in ${skillPath} (got ${typeof raw})`);
     }
     return {};
   }
@@ -371,7 +363,7 @@ export function formatSkillAnnotations(skill: SkillMetadata): string {
   if (skill.compatibility) {
     parts.push(`Compatibility: ${skill.compatibility}`);
   }
-  return parts.join(", ");
+  return parts.join(', ');
 }
 
 /**
@@ -392,9 +384,7 @@ export function parseSkillMetadataFromContent(
   directoryName: string,
 ): SkillMetadata | null {
   if (content.length > MAX_SKILL_FILE_SIZE) {
-    console.warn(
-      `Skipping ${skillPath}: content too large (${content.length} bytes)`,
-    );
+    console.warn(`Skipping ${skillPath}: content too large (${content.length} bytes)`);
     return null;
   }
 
@@ -418,19 +408,17 @@ export function parseSkillMetadataFromContent(
     return null;
   }
 
-  if (!frontmatterData || typeof frontmatterData !== "object") {
+  if (!frontmatterData || typeof frontmatterData !== 'object') {
     console.warn(`Skipping ${skillPath}: frontmatter is not a mapping`);
     return null;
   }
 
   // Validate required fields - coerce and strip whitespace
-  const name = String(frontmatterData.name ?? "").trim();
-  const description = String(frontmatterData.description ?? "").trim();
+  const name = String(frontmatterData.name ?? '').trim();
+  const description = String(frontmatterData.description ?? '').trim();
 
   if (!name || !description) {
-    console.warn(
-      `Skipping ${skillPath}: missing required 'name' or 'description'`,
-    );
+    console.warn(`Skipping ${skillPath}: missing required 'name' or 'description'`);
     return null;
   }
 
@@ -452,7 +440,7 @@ export function parseSkillMetadataFromContent(
   }
 
   // Parse allowed-tools: support both YAML list and space-delimited string
-  const rawTools = frontmatterData["allowed-tools"];
+  const rawTools = frontmatterData['allowed-tools'];
   let allowedTools: string[];
   if (rawTools) {
     if (Array.isArray(rawTools)) {
@@ -466,19 +454,12 @@ export function parseSkillMetadataFromContent(
   }
 
   // Validate and truncate compatibility length
-  let compatibilityStr =
-    String(frontmatterData.compatibility ?? "").trim() || null;
-  if (
-    compatibilityStr &&
-    compatibilityStr.length > MAX_SKILL_COMPATIBILITY_LENGTH
-  ) {
+  let compatibilityStr = String(frontmatterData.compatibility ?? '').trim() || null;
+  if (compatibilityStr && compatibilityStr.length > MAX_SKILL_COMPATIBILITY_LENGTH) {
     console.warn(
       `Compatibility exceeds ${MAX_SKILL_COMPATIBILITY_LENGTH} characters in ${skillPath}, truncating`,
     );
-    compatibilityStr = compatibilityStr.slice(
-      0,
-      MAX_SKILL_COMPATIBILITY_LENGTH,
-    );
+    compatibilityStr = compatibilityStr.slice(0, MAX_SKILL_COMPATIBILITY_LENGTH);
   }
 
   return {
@@ -486,7 +467,7 @@ export function parseSkillMetadataFromContent(
     description: descriptionStr,
     path: skillPath,
     metadata: validateMetadata(frontmatterData.metadata ?? {}, skillPath),
-    license: String(frontmatterData.license ?? "").trim() || null,
+    license: String(frontmatterData.license ?? '').trim() || null,
     compatibility: compatibilityStr,
     allowedTools,
   };
@@ -503,13 +484,11 @@ async function listSkillsFromBackend(
   const skills: SkillMetadata[] = [];
 
   // Detect path separator (Windows uses \, Unix uses /)
-  const pathSep = sourcePath.includes("\\") ? "\\" : "/";
+  const pathSep = sourcePath.includes('\\') ? '\\' : '/';
 
   // Normalize path to ensure it ends with the appropriate separator
   const normalizedPath =
-    sourcePath.endsWith("/") || sourcePath.endsWith("\\")
-      ? sourcePath
-      : `${sourcePath}${pathSep}`;
+    sourcePath.endsWith('/') || sourcePath.endsWith('\\') ? sourcePath : `${sourcePath}${pathSep}`;
 
   // List directories in the source path using ls
   let fileInfos: { path: string; is_dir?: boolean }[];
@@ -530,15 +509,15 @@ async function listSkillsFromBackend(
   const entries = fileInfos.map((info) => ({
     name:
       info.path
-        .replace(/[/\\]$/, "") // Remove trailing slash or backslash
+        .replace(/[/\\]$/, '') // Remove trailing slash or backslash
         .split(/[/\\]/) // Split on either separator
-        .pop() || "",
-    type: (info.is_dir ? "directory" : "file") as "file" | "directory",
+        .pop() || '',
+    type: (info.is_dir ? 'directory' : 'file') as 'file' | 'directory',
   }));
 
   // Look for subdirectories containing SKILL.md
   for (const entry of entries) {
-    if (entry.type !== "directory") {
+    if (entry.type !== 'directory') {
       continue;
     }
 
@@ -565,16 +544,12 @@ async function listSkillsFromBackend(
       if (readResult.error) {
         continue;
       }
-      if (typeof readResult.content !== "string") {
+      if (typeof readResult.content !== 'string') {
         continue;
       }
       content = readResult.content;
     }
-    const metadata = parseSkillMetadataFromContent(
-      content,
-      skillMdPath,
-      entry.name,
-    );
+    const metadata = parseSkillMetadataFromContent(content, skillMdPath, entry.name);
 
     if (metadata) {
       skills.push(metadata);
@@ -590,7 +565,7 @@ async function listSkillsFromBackend(
  */
 function formatSkillsLocations(sources: string[]): string {
   if (sources.length === 0) {
-    return "**Skills Sources:** None configured";
+    return '**Skills Sources:** None configured';
   }
 
   const lines: string[] = [];
@@ -600,27 +575,24 @@ function formatSkillsLocations(sources: string[]): string {
     // Handle both Unix (/) and Windows (\) path separators
     const name =
       sourcePath
-        .replace(/[/\\]$/, "")
+        .replace(/[/\\]$/, '')
         .split(/[/\\]/)
         .filter(Boolean)
         .pop()
-        ?.replace(/^./, (c) => c.toUpperCase()) || "Skills";
-    const suffix = i === sources.length - 1 ? " (higher priority)" : "";
+        ?.replace(/^./, (c) => c.toUpperCase()) || 'Skills';
+    const suffix = i === sources.length - 1 ? ' (higher priority)' : '';
     lines.push(`**${name} Skills**: \`${sourcePath}\`${suffix}`);
   }
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 /**
  * Format skills metadata for display in system prompt.
  * Shows allowed tools for each skill if specified.
  */
-export function formatSkillsList(
-  skills: SkillMetadata[],
-  sources: string[],
-): string {
+export function formatSkillsList(skills: SkillMetadata[], sources: string[]): string {
   if (skills.length === 0) {
-    const paths = sources.map((s) => `\`${s}\``).join(" or ");
+    const paths = sources.map((s) => `\`${s}\``).join(' or ');
     return `(No skills available yet. You can create skills in ${paths})`;
   }
 
@@ -633,12 +605,12 @@ export function formatSkillsList(
     }
     lines.push(descLine);
     if (skill.allowedTools && skill.allowedTools.length > 0) {
-      lines.push(`  → Allowed tools: ${skill.allowedTools.join(", ")}`);
+      lines.push(`  → Allowed tools: ${skill.allowedTools.join(', ')}`);
     }
     lines.push(`  → Read \`${skill.path}\` for full instructions`);
   }
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 /**
@@ -668,7 +640,7 @@ export function createSkillsMiddleware(options: SkillsMiddlewareOptions) {
   let loadedSkills: SkillMetadata[] = [];
 
   return createMiddleware({
-    name: "SkillsMiddleware",
+    name: 'SkillsMiddleware',
     stateSchema: SkillsStateSchema,
 
     async beforeAgent(state) {
@@ -678,7 +650,7 @@ export function createSkillsMiddleware(options: SkillsMiddlewareOptions) {
       }
       // Check if skills were restored from checkpoint (non-empty array in state)
       if (
-        "skillsMetadata" in state &&
+        'skillsMetadata' in state &&
         Array.isArray(state.skillsMetadata) &&
         state.skillsMetadata.length > 0
       ) {
@@ -695,10 +667,7 @@ export function createSkillsMiddleware(options: SkillsMiddlewareOptions) {
       // Load skills from each source in order (later sources override earlier)
       for (const sourcePath of sources) {
         try {
-          const skills = await listSkillsFromBackend(
-            resolvedBackend,
-            sourcePath,
-          );
+          const skills = await listSkillsFromBackend(resolvedBackend, sourcePath);
           for (const skill of skills) {
             allSkills.set(skill.name, skill);
           }
@@ -730,9 +699,9 @@ export function createSkillsMiddleware(options: SkillsMiddlewareOptions) {
       const skillsList = formatSkillsList(skillsMetadata, sources);
 
       const skillsSection = SKILLS_SYSTEM_PROMPT.replace(
-        "{skills_locations}",
+        '{skills_locations}',
         skillsLocations,
-      ).replace("{skills_list}", skillsList);
+      ).replace('{skills_list}', skillsList);
 
       // Combine with existing system message
       const newSystemMessage = request.systemMessage.concat(skillsSection);

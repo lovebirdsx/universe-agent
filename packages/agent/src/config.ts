@@ -5,9 +5,9 @@
  * for skills and agent memory middleware.
  */
 
-import fs from "node:fs";
-import path from "node:path";
-import os from "node:os";
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
 /**
  * Options for creating a Settings instance.
@@ -112,7 +112,7 @@ export function findProjectRoot(startPath?: string): string | null {
 
   // Walk up the directory tree
   while (current !== path.dirname(current)) {
-    const gitDir = path.join(current, ".git");
+    const gitDir = path.join(current, '.git');
     if (fs.existsSync(gitDir)) {
       return current;
     }
@@ -120,7 +120,7 @@ export function findProjectRoot(startPath?: string): string | null {
   }
 
   // Check root directory as well
-  const rootGitDir = path.join(current, ".git");
+  const rootGitDir = path.join(current, '.git');
   if (fs.existsSync(rootGitDir)) {
     return current;
   }
@@ -150,7 +150,7 @@ function isValidAgentName(agentName: string): boolean {
  */
 export function createSettings(options: SettingsOptions = {}): Settings {
   const projectRoot = findProjectRoot(options.startPath);
-  const userDeepagentsDir = path.join(os.homedir(), ".deepagents");
+  const userDeepagentsDir = path.join(os.homedir(), '.deepagents');
 
   return {
     projectRoot,
@@ -161,7 +161,7 @@ export function createSettings(options: SettingsOptions = {}): Settings {
       if (!isValidAgentName(agentName)) {
         throw new Error(
           `Invalid agent name: ${JSON.stringify(agentName)}. ` +
-            "Agent names can only contain letters, numbers, hyphens, underscores, and spaces.",
+            'Agent names can only contain letters, numbers, hyphens, underscores, and spaces.',
         );
       }
       return path.join(userDeepagentsDir, agentName);
@@ -174,18 +174,18 @@ export function createSettings(options: SettingsOptions = {}): Settings {
     },
 
     getUserAgentMdPath(agentName: string): string {
-      return path.join(this.getAgentDir(agentName), "agent.md");
+      return path.join(this.getAgentDir(agentName), 'agent.md');
     },
 
     getProjectAgentMdPath(): string | null {
       if (!projectRoot) {
         return null;
       }
-      return path.join(projectRoot, ".deepagents", "agent.md");
+      return path.join(projectRoot, '.deepagents', 'agent.md');
     },
 
     getUserSkillsDir(agentName: string): string {
-      return path.join(this.getAgentDir(agentName), "skills");
+      return path.join(this.getAgentDir(agentName), 'skills');
     },
 
     ensureUserSkillsDir(agentName: string): string {
@@ -198,7 +198,7 @@ export function createSettings(options: SettingsOptions = {}): Settings {
       if (!projectRoot) {
         return null;
       }
-      return path.join(projectRoot, ".deepagents", "skills");
+      return path.join(projectRoot, '.deepagents', 'skills');
     },
 
     ensureProjectSkillsDir(): string | null {
@@ -214,7 +214,7 @@ export function createSettings(options: SettingsOptions = {}): Settings {
       if (!projectRoot) {
         return null;
       }
-      const deepagentsDir = path.join(projectRoot, ".deepagents");
+      const deepagentsDir = path.join(projectRoot, '.deepagents');
       fs.mkdirSync(deepagentsDir, { recursive: true });
       return deepagentsDir;
     },

@@ -4,7 +4,7 @@
  * This module provides shared helpers used across middleware implementations.
  */
 
-import { SystemMessage } from "@langchain/core/messages";
+import { SystemMessage } from '@langchain/core/messages';
 
 /**
  * Append text to a system message.
@@ -34,7 +34,7 @@ export function appendToSystemMessage(
   // Handle both string and array content formats
   const existingContent = systemMessage.content;
 
-  if (typeof existingContent === "string") {
+  if (typeof existingContent === 'string') {
     const newContent = existingContent ? `${existingContent}\n\n${text}` : text;
     return new SystemMessage({ content: newContent });
   }
@@ -43,7 +43,7 @@ export function appendToSystemMessage(
   if (Array.isArray(existingContent)) {
     const newContent = [...existingContent];
     const textToAdd = newContent.length > 0 ? `\n\n${text}` : text;
-    newContent.push({ type: "text", text: textToAdd });
+    newContent.push({ type: 'text', text: textToAdd });
     return new SystemMessage({ content: newContent });
   }
 
@@ -79,7 +79,7 @@ export function prependToSystemMessage(
   // Handle both string and array content formats
   const existingContent = systemMessage.content;
 
-  if (typeof existingContent === "string") {
+  if (typeof existingContent === 'string') {
     const newContent = existingContent ? `${text}\n\n${existingContent}` : text;
     return new SystemMessage({ content: newContent });
   }
@@ -87,7 +87,7 @@ export function prependToSystemMessage(
   // For array content (content blocks), prepend as a new text block
   if (Array.isArray(existingContent)) {
     const textToAdd = existingContent.length > 0 ? `${text}\n\n` : text;
-    const newContent = [{ type: "text", text: textToAdd }, ...existingContent];
+    const newContent = [{ type: 'text', text: textToAdd }, ...existingContent];
     return new SystemMessage({ content: newContent });
   }
 

@@ -1,31 +1,31 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from 'vitest';
 
-import { MemorySaver, Command } from "@langchain/langgraph";
+import { MemorySaver, Command } from '@langchain/langgraph';
 import {
   AIMessage,
   HITLRequest,
   HumanMessage,
   ToolMessage,
   type InterruptOnConfig,
-} from "langchain";
+} from 'langchain';
 
-import { createDeepAgent } from "../index.js";
+import { createDeepAgent } from '../index.js';
 import {
   assertAllDeepAgentQualities,
   sampleTool,
   getWeather,
   getSoccerScores,
-} from "../testing/utils.js";
+} from '../testing/utils.js';
 
 const SAMPLE_TOOL_CONFIG: Record<string, boolean | InterruptOnConfig> = {
   sample_tool: true,
   get_weather: false,
-  get_soccer_scores: { allowedDecisions: ["approve", "reject"] },
+  get_soccer_scores: { allowedDecisions: ['approve', 'reject'] },
 };
 
-describe("Human-in-the-Loop (HITL) Integration Tests", () => {
+describe('Human-in-the-Loop (HITL) Integration Tests', () => {
   it.concurrent(
-    "should interrupt agent execution for tool approval",
+    'should interrupt agent execution for tool approval',
     { timeout: 120000 },
     async () => {
       const checkpointer = new MemorySaver();
@@ -43,9 +43,9 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
         {
           messages: [
             {
-              role: "user",
+              role: 'user',
               content:
-                "Call the sample tool, get the weather in New York and get scores for the latest soccer games in parallel",
+                'Call the sample tool, get the weather in New York and get scores for the latest soccer games in parallel',
             },
           ],
         },
@@ -56,11 +56,9 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
       const agentMessages = result.messages.filter(AIMessage.isInstance);
       const toolCalls = agentMessages.flatMap((msg) => msg.tool_calls || []);
 
-      expect(toolCalls.some((tc) => tc.name === "sample_tool")).toBe(true);
-      expect(toolCalls.some((tc) => tc.name === "get_weather")).toBe(true);
-      expect(toolCalls.some((tc) => tc.name === "get_soccer_scores")).toBe(
-        true,
-      );
+      expect(toolCalls.some((tc) => tc.name === 'sample_tool')).toBe(true);
+      expect(toolCalls.some((tc) => tc.name === 'get_weather')).toBe(true);
+      expect(toolCalls.some((tc) => tc.name === 'get_soccer_scores')).toBe(true);
 
       // Check interrupts
       expect(result.__interrupt__).toBeDefined();
@@ -70,28 +68,26 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
       const actionRequests = interrupts.actionRequests;
 
       expect(actionRequests).toHaveLength(2);
-      expect(actionRequests.some((ar) => ar.name === "sample_tool")).toBe(true);
-      expect(actionRequests.some((ar) => ar.name === "get_soccer_scores")).toBe(
-        true,
-      );
+      expect(actionRequests.some((ar) => ar.name === 'sample_tool')).toBe(true);
+      expect(actionRequests.some((ar) => ar.name === 'get_soccer_scores')).toBe(true);
 
       // Check review configs
       const reviewConfigs = interrupts.reviewConfigs;
       expect(
         reviewConfigs.some(
           (rc) =>
-            rc.actionName === "sample_tool" &&
-            rc.allowedDecisions.includes("approve") &&
-            rc.allowedDecisions.includes("edit") &&
-            rc.allowedDecisions.includes("reject"),
+            rc.actionName === 'sample_tool' &&
+            rc.allowedDecisions.includes('approve') &&
+            rc.allowedDecisions.includes('edit') &&
+            rc.allowedDecisions.includes('reject'),
         ),
       ).toBe(true);
       expect(
         reviewConfigs.some(
           (rc) =>
-            rc.actionName === "get_soccer_scores" &&
-            rc.allowedDecisions.includes("approve") &&
-            rc.allowedDecisions.includes("reject"),
+            rc.actionName === 'get_soccer_scores' &&
+            rc.allowedDecisions.includes('approve') &&
+            rc.allowedDecisions.includes('reject'),
         ),
       ).toBe(true);
 
@@ -99,7 +95,7 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
       const result2 = await agent.invoke(
         new Command({
           resume: {
-            decisions: [{ type: "approve" }, { type: "approve" }],
+            decisions: [{ type: 'approve' }, { type: 'approve' }],
           },
         }),
         config,
@@ -107,81 +103,75 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
 
       // Check tool results are present
       const toolResults = result2.messages.filter(ToolMessage.isInstance);
-      expect(toolResults.some((tr) => tr.name === "sample_tool")).toBe(true);
-      expect(toolResults.some((tr) => tr.name === "get_weather")).toBe(true);
-      expect(toolResults.some((tr) => tr.name === "get_soccer_scores")).toBe(
-        true,
-      );
+      expect(toolResults.some((tr) => tr.name === 'sample_tool')).toBe(true);
+      expect(toolResults.some((tr) => tr.name === 'get_weather')).toBe(true);
+      expect(toolResults.some((tr) => tr.name === 'get_soccer_scores')).toBe(true);
 
       // No more interrupts
       expect(result2.__interrupt__).toBeUndefined();
     },
   );
 
-  it.concurrent(
-    "should handle HITL with subagents",
-    { timeout: 120000 },
-    async () => {
-      const checkpointer = new MemorySaver();
-      const agent = createDeepAgent({
-        tools: [sampleTool, getWeather, getSoccerScores],
-        interruptOn: SAMPLE_TOOL_CONFIG,
-        checkpointer,
-      });
+  it.concurrent('should handle HITL with subagents', { timeout: 120000 }, async () => {
+    const checkpointer = new MemorySaver();
+    const agent = createDeepAgent({
+      tools: [sampleTool, getWeather, getSoccerScores],
+      interruptOn: SAMPLE_TOOL_CONFIG,
+      checkpointer,
+    });
 
-      const config = { configurable: { thread_id: crypto.randomUUID() } };
-      assertAllDeepAgentQualities(agent);
+    const config = { configurable: { thread_id: crypto.randomUUID() } };
+    assertAllDeepAgentQualities(agent);
 
-      // First invocation - use subagent which should also interrupt
-      const result = await agent.invoke(
-        {
-          messages: [
-            {
-              role: "user",
-              content:
-                "Use the task tool to kick off the general-purpose subagent. Tell it to call the sample tool, get the weather in New York and get scores for the latest soccer games in parallel",
-            },
-          ],
-        },
-        config,
-      );
+    // First invocation - use subagent which should also interrupt
+    const result = await agent.invoke(
+      {
+        messages: [
+          {
+            role: 'user',
+            content:
+              'Use the task tool to kick off the general-purpose subagent. Tell it to call the sample tool, get the weather in New York and get scores for the latest soccer games in parallel',
+          },
+        ],
+      },
+      config,
+    );
 
-      // Check that task tool was called
-      const agentMessages = result.messages.filter(AIMessage.isInstance);
-      const toolCalls = agentMessages.flatMap((msg) => msg.tool_calls || []);
-      expect(toolCalls.some((tc) => tc.name === "task")).toBe(true);
+    // Check that task tool was called
+    const agentMessages = result.messages.filter(AIMessage.isInstance);
+    const toolCalls = agentMessages.flatMap((msg) => msg.tool_calls || []);
+    expect(toolCalls.some((tc) => tc.name === 'task')).toBe(true);
 
-      // Subagent should have interrupts too
-      expect(result.__interrupt__).toBeDefined();
+    // Subagent should have interrupts too
+    expect(result.__interrupt__).toBeDefined();
 
-      // Resume with approvals
-      const toolResultNames: string[] = [];
+    // Resume with approvals
+    const toolResultNames: string[] = [];
 
-      for await (const chunk of await agent.graph.stream(
-        new Command({
-          resume: { decisions: [{ type: "approve" }, { type: "approve" }] },
-        }),
-        {
-          ...config,
-          streamMode: ["updates"],
-          subgraphs: true,
-        } as any,
-      )) {
-        const update = chunk[2] ?? {};
-        if (!("tools" in update)) continue;
+    for await (const chunk of await agent.graph.stream(
+      new Command({
+        resume: { decisions: [{ type: 'approve' }, { type: 'approve' }] },
+      }),
+      {
+        ...config,
+        streamMode: ['updates'],
+        subgraphs: true,
+      } as any,
+    )) {
+      const update = chunk[2] ?? {};
+      if (!('tools' in update)) continue;
 
-        const tools = update.tools as { messages: ToolMessage[] };
-        toolResultNames.push(...tools.messages.map((msg) => msg.name!));
-      }
+      const tools = update.tools as { messages: ToolMessage[] };
+      toolResultNames.push(...tools.messages.map((msg) => msg.name!));
+    }
 
-      expect(toolResultNames).toContain("sample_tool");
-      expect(toolResultNames).toContain("get_weather");
-      expect(toolResultNames).toContain("get_soccer_scores");
-    },
-  );
+    expect(toolResultNames).toContain('sample_tool');
+    expect(toolResultNames).toContain('get_weather');
+    expect(toolResultNames).toContain('get_soccer_scores');
+  });
 
   it.concurrent(
-    "should use custom interrupt_on config for subagents",
+    'should use custom interrupt_on config for subagents',
     { timeout: 120000 },
     async () => {
       const checkpointer = new MemorySaver();
@@ -191,9 +181,9 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
         checkpointer,
         subagents: [
           {
-            name: "custom_weather_agent",
-            description: "Agent that gets weather with custom interrupt config",
-            systemPrompt: "Use get_weather tool to get weather information",
+            name: 'custom_weather_agent',
+            description: 'Agent that gets weather with custom interrupt config',
+            systemPrompt: 'Use get_weather tool to get weather information',
             tools: [getWeather],
             // Different config for subagent
             interruptOn: { get_weather: true },
@@ -205,9 +195,7 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
       const result = await agent.invoke(
         {
           messages: [
-            new HumanMessage(
-              "Use the custom_weather_agent subagent to get weather in Tokyo",
-            ),
+            new HumanMessage('Use the custom_weather_agent subagent to get weather in Tokyo'),
           ],
         },
         config,
@@ -215,12 +203,8 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
 
       // Check that task tool was called
       expect(
-        result.messages
-          .filter(AIMessage.isInstance)
-          .flatMap((msg) => msg.tool_calls || []),
-      ).toMatchObject([
-        { name: "task", args: { subagent_type: "custom_weather_agent" } },
-      ]);
+        result.messages.filter(AIMessage.isInstance).flatMap((msg) => msg.tool_calls || []),
+      ).toMatchObject([{ name: 'task', args: { subagent_type: 'custom_weather_agent' } }]);
 
       // Subagent should have different interrupt config
       // The get_weather tool should now trigger an interrupt in the subagent
@@ -229,7 +213,7 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
       await agent.invoke(
         new Command({
           resume: {
-            decisions: [{ type: "approve" }],
+            decisions: [{ type: 'approve' }],
           },
         }),
         config,
@@ -239,7 +223,7 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
   );
 
   it.concurrent(
-    "should properly propagate HITL interrupts from subagents without TypeError",
+    'should properly propagate HITL interrupts from subagents without TypeError',
     { timeout: 120000 },
     async () => {
       // This test specifically verifies the fix for the issue where
@@ -262,7 +246,7 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
         {
           messages: [
             new HumanMessage(
-              "Use the task tool with the general-purpose subagent to call the sample_tool",
+              'Use the task tool with the general-purpose subagent to call the sample_tool',
             ),
           ],
         },
@@ -272,7 +256,7 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
       // Verify the agent called the task tool
       const aiMessages = result.messages.filter(AIMessage.isInstance);
       const toolCalls = aiMessages.flatMap((msg) => msg.tool_calls || []);
-      expect(toolCalls.some((tc) => tc.name === "task")).toBe(true);
+      expect(toolCalls.some((tc) => tc.name === 'task')).toBe(true);
 
       // Verify interrupt was properly propagated from the subagent
       expect(result.__interrupt__).toBeDefined();
@@ -293,7 +277,7 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
       const resumeResult = await agent.invoke(
         new Command({
           resume: {
-            decisions: [{ type: "approve" }],
+            decisions: [{ type: 'approve' }],
           },
         }),
         config,
@@ -309,7 +293,7 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
   );
 
   it.concurrent(
-    "should not leave dangling tool_call_id when rejecting an interrupted tool call with parallel tools (issue #150)",
+    'should not leave dangling tool_call_id when rejecting an interrupted tool call with parallel tools (issue #150)',
     { timeout: 120000 },
     async () => {
       // This test reproduces issue #150: When a single user request causes the agent
@@ -340,7 +324,7 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
         {
           messages: [
             {
-              role: "user",
+              role: 'user',
               content:
                 "Call the sample tool with 'test', get the weather in New York, and get soccer scores for Manchester United - do all three in parallel",
             },
@@ -353,11 +337,9 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
       const agentMessages = result.messages.filter(AIMessage.isInstance);
       const toolCalls = agentMessages.flatMap((msg) => msg.tool_calls || []);
 
-      expect(toolCalls.some((tc) => tc.name === "sample_tool")).toBe(true);
-      expect(toolCalls.some((tc) => tc.name === "get_weather")).toBe(true);
-      expect(toolCalls.some((tc) => tc.name === "get_soccer_scores")).toBe(
-        true,
-      );
+      expect(toolCalls.some((tc) => tc.name === 'sample_tool')).toBe(true);
+      expect(toolCalls.some((tc) => tc.name === 'get_weather')).toBe(true);
+      expect(toolCalls.some((tc) => tc.name === 'get_soccer_scores')).toBe(true);
 
       // Check interrupts exist for the tools that require approval
       expect(result.__interrupt__).toBeDefined();
@@ -378,7 +360,7 @@ describe("Human-in-the-Loop (HITL) Integration Tests", () => {
         new Command({
           resume: {
             // Reject all pending tool calls
-            decisions: actionRequests.map(() => ({ type: "reject" as const })),
+            decisions: actionRequests.map(() => ({ type: 'reject' as const })),
           },
         }),
         config,

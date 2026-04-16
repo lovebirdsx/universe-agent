@@ -1,4 +1,4 @@
-import type { Runtime } from "langchain";
+import type { Runtime } from 'langchain';
 
 type PromiseOrValue<T> = T | Promise<T>;
 

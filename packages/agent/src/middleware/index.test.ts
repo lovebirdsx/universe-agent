@@ -1,28 +1,20 @@
-import { describe, it, expect } from "vitest";
-import { createAgent } from "langchain";
-import {
-  SystemMessage,
-  HumanMessage,
-  AIMessage,
-  ToolMessage,
-} from "@langchain/core/messages";
-import type { StructuredTool } from "@langchain/core/tools";
-import { messagesStateReducer as addMessages } from "@langchain/langgraph";
+import { describe, it, expect } from 'vitest';
+import { createAgent } from 'langchain';
+import { SystemMessage, HumanMessage, AIMessage, ToolMessage } from '@langchain/core/messages';
+import type { StructuredTool } from '@langchain/core/tools';
+import { messagesStateReducer as addMessages } from '@langchain/langgraph';
 import {
   createFilesystemMiddleware,
   createSubAgentMiddleware,
   createPatchToolCallsMiddleware,
   createAsyncSubAgentMiddleware,
-} from "../index.js";
+} from '../index.js';
 
-import { SAMPLE_MODEL } from "../testing/utils.js";
-import {
-  isSandboxBackend,
-  type SandboxBackendProtocol,
-} from "../backends/protocol.js";
+import { SAMPLE_MODEL } from '../testing/utils.js';
+import { isSandboxBackend, type SandboxBackendProtocol } from '../backends/protocol.js';
 
-describe("Middleware Integration", () => {
-  it("should add filesystem middleware to agent", () => {
+describe('Middleware Integration', () => {
+  it('should add filesystem middleware to agent', () => {
     const middleware = [createFilesystemMiddleware()];
     const agent = createAgent({
       model: SAMPLE_MODEL,
@@ -30,16 +22,16 @@ describe("Middleware Integration", () => {
       tools: [],
     });
     const channels = Object.keys((agent as any).graph?.channels || {});
-    expect(channels).toContain("files");
+    expect(channels).toContain('files');
     const tools = (agent as any).graph?.nodes?.tools?.bound?.tools || [];
     const toolNames = tools.map((t: any) => t.name);
-    expect(toolNames).toContain("ls");
-    expect(toolNames).toContain("read_file");
-    expect(toolNames).toContain("write_file");
-    expect(toolNames).toContain("edit_file");
+    expect(toolNames).toContain('ls');
+    expect(toolNames).toContain('read_file');
+    expect(toolNames).toContain('write_file');
+    expect(toolNames).toContain('edit_file');
   });
 
-  it("should add subagent middleware to agent", () => {
+  it('should add subagent middleware to agent', () => {
     const middleware = [
       createSubAgentMiddleware({
         defaultModel: SAMPLE_MODEL,
@@ -55,10 +47,10 @@ describe("Middleware Integration", () => {
 
     const tools = (agent as any).graph?.nodes?.tools?.bound?.tools || [];
     const toolNames = tools.map((t: any) => t.name);
-    expect(toolNames).toContain("task");
+    expect(toolNames).toContain('task');
   });
 
-  it("should add multiple middleware to agent", () => {
+  it('should add multiple middleware to agent', () => {
     const middleware = [
       createFilesystemMiddleware(),
       createSubAgentMiddleware({
@@ -73,50 +65,50 @@ describe("Middleware Integration", () => {
       tools: [],
     });
     const channels = Object.keys((agent as any).graph?.channels || {});
-    expect(channels).toContain("files");
+    expect(channels).toContain('files');
     const tools = (agent as any).graph?.nodes?.tools?.bound?.tools || [];
     const toolNames = tools.map((t: any) => t.name);
-    expect(toolNames).toContain("ls");
-    expect(toolNames).toContain("read_file");
-    expect(toolNames).toContain("write_file");
-    expect(toolNames).toContain("edit_file");
-    expect(toolNames).toContain("task");
+    expect(toolNames).toContain('ls');
+    expect(toolNames).toContain('read_file');
+    expect(toolNames).toContain('write_file');
+    expect(toolNames).toContain('edit_file');
+    expect(toolNames).toContain('task');
   });
 });
 
-describe("FilesystemMiddleware", () => {
-  it("should initialize with default backend (StateBackend)", () => {
+describe('FilesystemMiddleware', () => {
+  it('should initialize with default backend (StateBackend)', () => {
     const middleware = createFilesystemMiddleware();
     expect(middleware).toBeDefined();
-    expect(middleware.name).toBe("FilesystemMiddleware");
+    expect(middleware.name).toBe('FilesystemMiddleware');
     const tools = middleware.tools || [];
     expect(tools.length).toBeGreaterThanOrEqual(6); // ls, read, write, edit, glob, grep
-    expect(tools.map((t) => t.name)).toContain("ls");
-    expect(tools.map((t) => t.name)).toContain("read_file");
-    expect(tools.map((t) => t.name)).toContain("write_file");
-    expect(tools.map((t) => t.name)).toContain("edit_file");
-    expect(tools.map((t) => t.name)).toContain("glob");
-    expect(tools.map((t) => t.name)).toContain("grep");
+    expect(tools.map((t) => t.name)).toContain('ls');
+    expect(tools.map((t) => t.name)).toContain('read_file');
+    expect(tools.map((t) => t.name)).toContain('write_file');
+    expect(tools.map((t) => t.name)).toContain('edit_file');
+    expect(tools.map((t) => t.name)).toContain('glob');
+    expect(tools.map((t) => t.name)).toContain('grep');
   });
 
-  it("should include execute tool in tools list", () => {
+  it('should include execute tool in tools list', () => {
     const middleware = createFilesystemMiddleware();
     const tools = middleware.tools || [];
-    expect(tools.map((t) => t.name)).toContain("execute");
+    expect(tools.map((t) => t.name)).toContain('execute');
   });
 
-  it("should initialize with custom backend", () => {
+  it('should initialize with custom backend', () => {
     const middleware = createFilesystemMiddleware({
       backend: undefined, // Will use default StateBackend
     });
     expect(middleware).toBeDefined();
-    expect(middleware.name).toBe("FilesystemMiddleware");
+    expect(middleware.name).toBe('FilesystemMiddleware');
     const tools = middleware.tools || [];
     expect(tools.length).toBeGreaterThanOrEqual(6);
   });
 
-  it("should use custom tool descriptions", () => {
-    const customDesc = "Custom ls tool description";
+  it('should use custom tool descriptions', () => {
+    const customDesc = 'Custom ls tool description';
     const middleware = createFilesystemMiddleware({
       customToolDescriptions: {
         ls: customDesc,
@@ -124,13 +116,13 @@ describe("FilesystemMiddleware", () => {
     });
     expect(middleware).toBeDefined();
     const tools = middleware.tools || [];
-    const lsTool = tools.find((t: StructuredTool) => t.name === "ls");
+    const lsTool = tools.find((t: StructuredTool) => t.name === 'ls');
     expect(lsTool).toBeDefined();
     expect(lsTool?.description).toBe(customDesc);
   });
 
-  it("should use custom tool descriptions with backend factory", () => {
-    const customDesc = "Custom ls tool description";
+  it('should use custom tool descriptions with backend factory', () => {
+    const customDesc = 'Custom ls tool description';
     const middleware = createFilesystemMiddleware({
       backend: undefined, // Will use default
       customToolDescriptions: {
@@ -139,26 +131,26 @@ describe("FilesystemMiddleware", () => {
     });
     expect(middleware).toBeDefined();
     const tools = middleware.tools || [];
-    const lsTool = tools.find((t: StructuredTool) => t.name === "ls");
+    const lsTool = tools.find((t: StructuredTool) => t.name === 'ls');
     expect(lsTool).toBeDefined();
     expect(lsTool?.description).toBe(customDesc);
   });
 });
 
-describe("SubAgentMiddleware", () => {
-  it("should initialize with default settings", () => {
+describe('SubAgentMiddleware', () => {
+  it('should initialize with default settings', () => {
     const middleware = createSubAgentMiddleware({
       defaultModel: SAMPLE_MODEL,
     });
     expect(middleware).toBeDefined();
-    expect(middleware.name).toBe("subAgentMiddleware");
+    expect(middleware.name).toBe('subAgentMiddleware');
     const tools = middleware.tools || [];
     expect(tools).toHaveLength(1);
-    expect(tools[0]?.name).toBe("task");
-    expect(tools[0]?.description).toContain("general-purpose");
+    expect(tools[0]?.name).toBe('task');
+    expect(tools[0]?.description).toContain('general-purpose');
   });
 
-  it("should initialize with default tools", () => {
+  it('should initialize with default tools', () => {
     const middleware = createSubAgentMiddleware({
       defaultModel: SAMPLE_MODEL,
       defaultTools: [],
@@ -166,40 +158,40 @@ describe("SubAgentMiddleware", () => {
     expect(middleware).toBeDefined();
     const tools = middleware.tools || [];
     expect(tools).toHaveLength(1);
-    expect(tools[0]?.name).toBe("task");
+    expect(tools[0]?.name).toBe('task');
   });
 });
 
-describe("Execute Tool", () => {
-  it("should include execute tool description", () => {
+describe('Execute Tool', () => {
+  it('should include execute tool description', () => {
     const middleware = createFilesystemMiddleware();
     const tools = middleware.tools || [];
-    const executeTool = tools.find((t: StructuredTool) => t.name === "execute");
+    const executeTool = tools.find((t: StructuredTool) => t.name === 'execute');
     expect(executeTool).toBeDefined();
-    expect(executeTool?.description).toContain("sandbox");
-    expect(executeTool?.description).toContain("command");
+    expect(executeTool?.description).toContain('sandbox');
+    expect(executeTool?.description).toContain('command');
   });
 
-  it("should export EXECUTE_TOOL_DESCRIPTION constant", async () => {
-    const { EXECUTE_TOOL_DESCRIPTION } = await import("./fs.js");
+  it('should export EXECUTE_TOOL_DESCRIPTION constant', async () => {
+    const { EXECUTE_TOOL_DESCRIPTION } = await import('./fs.js');
     expect(EXECUTE_TOOL_DESCRIPTION).toBeDefined();
-    expect(EXECUTE_TOOL_DESCRIPTION).toContain("sandbox");
+    expect(EXECUTE_TOOL_DESCRIPTION).toContain('sandbox');
   });
 
-  it("should export EXECUTION_SYSTEM_PROMPT constant", async () => {
-    const { EXECUTION_SYSTEM_PROMPT } = await import("./fs.js");
+  it('should export EXECUTION_SYSTEM_PROMPT constant', async () => {
+    const { EXECUTION_SYSTEM_PROMPT } = await import('./fs.js');
     expect(EXECUTION_SYSTEM_PROMPT).toBeDefined();
-    expect(EXECUTION_SYSTEM_PROMPT).toContain("execute");
+    expect(EXECUTION_SYSTEM_PROMPT).toContain('execute');
   });
 });
 
-describe("isSandboxBackend type guard", () => {
-  it("should return true for backends with execute and id", async () => {
+describe('isSandboxBackend type guard', () => {
+  it('should return true for backends with execute and id', async () => {
     const mockSandbox = {
-      execute: () => ({ output: "", exitCode: 0, truncated: false }),
-      id: "test-sandbox",
+      execute: () => ({ output: '', exitCode: 0, truncated: false }),
+      id: 'test-sandbox',
       ls: () => [],
-      read: () => ({ content: "" }),
+      read: () => ({ content: '' }),
       grep: () => ({ matches: [] }),
       glob: () => [],
       write: () => ({}),
@@ -211,9 +203,9 @@ describe("isSandboxBackend type guard", () => {
     expect(isSandboxBackend(mockSandbox)).toBe(true);
   });
 
-  it("should return false for backends without execute", async () => {
-    const { isSandboxBackend } = await import("../backends/protocol.js");
-    const { StateBackend } = await import("../backends/state.js");
+  it('should return false for backends without execute', async () => {
+    const { isSandboxBackend } = await import('../backends/protocol.js');
+    const { StateBackend } = await import('../backends/state.js');
 
     const runtime = { state: { files: {} }, store: undefined };
     const stateBackend = new StateBackend(runtime);
@@ -221,12 +213,12 @@ describe("isSandboxBackend type guard", () => {
     expect(isSandboxBackend(stateBackend)).toBe(false);
   });
 
-  it("should return false for backends without id", async () => {
+  it('should return false for backends without id', async () => {
     const mockBackend = {
-      execute: () => ({ output: "", exitCode: 0, truncated: false }),
+      execute: () => ({ output: '', exitCode: 0, truncated: false }),
       // Missing id
       ls: () => [],
-      read: () => ({ content: "" }),
+      read: () => ({ content: '' }),
       grep: () => ({ matches: [] }),
       glob: () => [],
       write: () => ({}),
@@ -239,11 +231,11 @@ describe("isSandboxBackend type guard", () => {
   });
 });
 
-describe("PatchToolCallsMiddleware", () => {
-  it("should pass through messages without tool calls", async () => {
+describe('PatchToolCallsMiddleware', () => {
+  it('should pass through messages without tool calls', async () => {
     const inputMessages = [
-      new SystemMessage({ content: "You are a helpful assistant.", id: "1" }),
-      new HumanMessage({ content: "Hello, how are you?", id: "2" }),
+      new SystemMessage({ content: 'You are a helpful assistant.', id: '1' }),
+      new HumanMessage({ content: 'Hello, how are you?', id: '2' }),
     ];
     const middleware = createPatchToolCallsMiddleware();
     const beforeAgentHook = (middleware as any).beforeAgent;
@@ -253,22 +245,22 @@ describe("PatchToolCallsMiddleware", () => {
     expect(stateUpdate).toBeUndefined();
   });
 
-  it("should patch a single missing tool call", async () => {
+  it('should patch a single missing tool call', async () => {
     const inputMessages = [
-      new SystemMessage({ content: "You are a helpful assistant.", id: "1" }),
-      new HumanMessage({ content: "Hello, how are you?", id: "2" }),
+      new SystemMessage({ content: 'You are a helpful assistant.', id: '1' }),
+      new HumanMessage({ content: 'Hello, how are you?', id: '2' }),
       new AIMessage({
         content: "I'm doing well, thank you!",
         tool_calls: [
           {
-            id: "123",
-            name: "get_events_for_days",
-            args: { date_str: "2025-01-01" },
+            id: '123',
+            name: 'get_events_for_days',
+            args: { date_str: '2025-01-01' },
           },
         ],
-        id: "3",
+        id: '3',
       }),
-      new HumanMessage({ content: "What is the weather in Tokyo?", id: "4" }),
+      new HumanMessage({ content: 'What is the weather in Tokyo?', id: '4' }),
     ];
 
     const middleware = createPatchToolCallsMiddleware();
@@ -278,14 +270,14 @@ describe("PatchToolCallsMiddleware", () => {
     });
     expect(stateUpdate).toBeDefined();
     expect(stateUpdate.messages).toHaveLength(6);
-    expect(stateUpdate.messages[0]._getType()).toBe("remove");
+    expect(stateUpdate.messages[0]._getType()).toBe('remove');
     expect(stateUpdate.messages[1]).toBe(inputMessages[0]);
     expect(stateUpdate.messages[2]).toBe(inputMessages[1]);
     expect(stateUpdate.messages[3]).toBe(inputMessages[2]);
-    expect(stateUpdate.messages[4]._getType()).toBe("tool");
-    expect((stateUpdate.messages[4] as any).tool_call_id).toBe("123");
-    expect((stateUpdate.messages[4] as any).name).toBe("get_events_for_days");
-    expect((stateUpdate.messages[4] as any).content).toContain("cancelled");
+    expect(stateUpdate.messages[4]._getType()).toBe('tool');
+    expect((stateUpdate.messages[4] as any).tool_call_id).toBe('123');
+    expect((stateUpdate.messages[4] as any).name).toBe('get_events_for_days');
+    expect((stateUpdate.messages[4] as any).content).toContain('cancelled');
     expect(stateUpdate.messages[5]).toBe(inputMessages[3]);
 
     const updatedMessages = addMessages(inputMessages, stateUpdate.messages);
@@ -293,32 +285,32 @@ describe("PatchToolCallsMiddleware", () => {
     expect(updatedMessages[0]).toBe(inputMessages[0]);
     expect(updatedMessages[1]).toBe(inputMessages[1]);
     expect(updatedMessages[2]).toBe(inputMessages[2]);
-    expect(updatedMessages[3]._getType()).toBe("tool");
-    expect((updatedMessages[3] as any).tool_call_id).toBe("123");
+    expect(updatedMessages[3]._getType()).toBe('tool');
+    expect((updatedMessages[3] as any).tool_call_id).toBe('123');
     expect(updatedMessages[4]).toBe(inputMessages[3]);
   });
 
-  it("should not patch when tool message exists", async () => {
+  it('should not patch when tool message exists', async () => {
     const inputMessages = [
-      new SystemMessage({ content: "You are a helpful assistant.", id: "1" }),
-      new HumanMessage({ content: "Hello, how are you?", id: "2" }),
+      new SystemMessage({ content: 'You are a helpful assistant.', id: '1' }),
+      new HumanMessage({ content: 'Hello, how are you?', id: '2' }),
       new AIMessage({
         content: "I'm doing well, thank you!",
         tool_calls: [
           {
-            id: "123",
-            name: "get_events_for_days",
-            args: { date_str: "2025-01-01" },
+            id: '123',
+            name: 'get_events_for_days',
+            args: { date_str: '2025-01-01' },
           },
         ],
-        id: "3",
+        id: '3',
       }),
       new ToolMessage({
-        content: "I have no events for that date.",
-        tool_call_id: "123",
-        id: "4",
+        content: 'I have no events for that date.',
+        tool_call_id: '123',
+        id: '4',
       }),
-      new HumanMessage({ content: "What is the weather in Tokyo?", id: "5" }),
+      new HumanMessage({ content: 'What is the weather in Tokyo?', id: '5' }),
     ];
 
     const middleware = createPatchToolCallsMiddleware();
@@ -330,34 +322,34 @@ describe("PatchToolCallsMiddleware", () => {
     expect(stateUpdate).toBeUndefined();
   });
 
-  it("should patch multiple missing tool calls", async () => {
+  it('should patch multiple missing tool calls', async () => {
     const inputMessages = [
-      new SystemMessage({ content: "You are a helpful assistant.", id: "1" }),
-      new HumanMessage({ content: "Hello, how are you?", id: "2" }),
+      new SystemMessage({ content: 'You are a helpful assistant.', id: '1' }),
+      new HumanMessage({ content: 'Hello, how are you?', id: '2' }),
       new AIMessage({
         content: "I'm doing well, thank you!",
         tool_calls: [
           {
-            id: "123",
-            name: "get_events_for_days",
-            args: { date_str: "2025-01-01" },
+            id: '123',
+            name: 'get_events_for_days',
+            args: { date_str: '2025-01-01' },
           },
         ],
-        id: "3",
+        id: '3',
       }),
-      new HumanMessage({ content: "What is the weather in Tokyo?", id: "4" }),
+      new HumanMessage({ content: 'What is the weather in Tokyo?', id: '4' }),
       new AIMessage({
         content: "I'm doing well, thank you!",
         tool_calls: [
           {
-            id: "456",
-            name: "get_events_for_days",
-            args: { date_str: "2025-01-01" },
+            id: '456',
+            name: 'get_events_for_days',
+            args: { date_str: '2025-01-01' },
           },
         ],
-        id: "5",
+        id: '5',
       }),
-      new HumanMessage({ content: "What is the weather in Tokyo?", id: "6" }),
+      new HumanMessage({ content: 'What is the weather in Tokyo?', id: '6' }),
     ];
     const middleware = createPatchToolCallsMiddleware();
     const beforeAgentHook = (middleware as any).beforeAgent;
@@ -367,16 +359,16 @@ describe("PatchToolCallsMiddleware", () => {
 
     expect(stateUpdate).toBeDefined();
     expect(stateUpdate.messages).toHaveLength(9);
-    expect(stateUpdate.messages[0]._getType()).toBe("remove");
+    expect(stateUpdate.messages[0]._getType()).toBe('remove');
     expect(stateUpdate.messages[1]).toBe(inputMessages[0]);
     expect(stateUpdate.messages[2]).toBe(inputMessages[1]);
     expect(stateUpdate.messages[3]).toBe(inputMessages[2]);
-    expect(stateUpdate.messages[4]._getType()).toBe("tool");
-    expect((stateUpdate.messages[4] as any).tool_call_id).toBe("123");
+    expect(stateUpdate.messages[4]._getType()).toBe('tool');
+    expect((stateUpdate.messages[4] as any).tool_call_id).toBe('123');
     expect(stateUpdate.messages[5]).toBe(inputMessages[3]);
     expect(stateUpdate.messages[6]).toBe(inputMessages[4]);
-    expect(stateUpdate.messages[7]._getType()).toBe("tool");
-    expect((stateUpdate.messages[7] as any).tool_call_id).toBe("456");
+    expect(stateUpdate.messages[7]._getType()).toBe('tool');
+    expect((stateUpdate.messages[7] as any).tool_call_id).toBe('456');
     expect(stateUpdate.messages[8]).toBe(inputMessages[5]);
 
     const updatedMessages = addMessages(inputMessages, stateUpdate.messages);
@@ -384,30 +376,30 @@ describe("PatchToolCallsMiddleware", () => {
     expect(updatedMessages[0]).toBe(inputMessages[0]);
     expect(updatedMessages[1]).toBe(inputMessages[1]);
     expect(updatedMessages[2]).toBe(inputMessages[2]);
-    expect(updatedMessages[3].type).toBe("tool");
-    expect((updatedMessages[3] as any).tool_call_id).toBe("123");
+    expect(updatedMessages[3].type).toBe('tool');
+    expect((updatedMessages[3] as any).tool_call_id).toBe('123');
     expect(updatedMessages[4]).toBe(inputMessages[3]);
     expect(updatedMessages[5]).toBe(inputMessages[4]);
-    expect(updatedMessages[6].type).toBe("tool");
-    expect((updatedMessages[6] as any).tool_call_id).toBe("456");
+    expect(updatedMessages[6].type).toBe('tool');
+    expect((updatedMessages[6] as any).tool_call_id).toBe('456');
     expect(updatedMessages[7]).toBe(inputMessages[5]);
   });
 });
 
-describe("AsyncSubAgentMiddleware", () => {
+describe('AsyncSubAgentMiddleware', () => {
   const sampleAgent = {
-    name: "researcher",
-    description: "A research agent",
-    graphId: "research_graph",
-    url: "https://example.langsmith.dev",
+    name: 'researcher',
+    description: 'A research agent',
+    graphId: 'research_graph',
+    url: 'https://example.langsmith.dev',
   };
 
-  it("should be importable and callable from the package index", () => {
+  it('should be importable and callable from the package index', () => {
     expect(createAsyncSubAgentMiddleware).toBeDefined();
-    expect(typeof createAsyncSubAgentMiddleware).toBe("function");
+    expect(typeof createAsyncSubAgentMiddleware).toBe('function');
   });
 
-  it("should add asyncTasks channel to the agent graph", () => {
+  it('should add asyncTasks channel to the agent graph', () => {
     const middleware = createAsyncSubAgentMiddleware({
       asyncSubAgents: [sampleAgent],
     });
@@ -417,10 +409,10 @@ describe("AsyncSubAgentMiddleware", () => {
       tools: [],
     });
     const channels = Object.keys((agent as any).graph?.channels || {});
-    expect(channels).toContain("asyncTasks");
+    expect(channels).toContain('asyncTasks');
   });
 
-  it("should register all 5 async subagent tools on the agent", () => {
+  it('should register all 5 async subagent tools on the agent', () => {
     const middleware = createAsyncSubAgentMiddleware({
       asyncSubAgents: [sampleAgent],
     });
@@ -431,14 +423,14 @@ describe("AsyncSubAgentMiddleware", () => {
     });
     const tools = (agent as any).graph?.nodes?.tools?.bound?.tools || [];
     const toolNames = tools.map((t: any) => t.name);
-    expect(toolNames).toContain("start_async_task");
-    expect(toolNames).toContain("check_async_task");
-    expect(toolNames).toContain("update_async_task");
-    expect(toolNames).toContain("cancel_async_task");
-    expect(toolNames).toContain("list_async_tasks");
+    expect(toolNames).toContain('start_async_task');
+    expect(toolNames).toContain('check_async_task');
+    expect(toolNames).toContain('update_async_task');
+    expect(toolNames).toContain('cancel_async_task');
+    expect(toolNames).toContain('list_async_tasks');
   });
 
-  it("should compose with other middleware without conflicts", () => {
+  it('should compose with other middleware without conflicts', () => {
     const asyncMiddleware = createAsyncSubAgentMiddleware({
       asyncSubAgents: [sampleAgent],
     });
@@ -449,12 +441,12 @@ describe("AsyncSubAgentMiddleware", () => {
       tools: [],
     });
     const channels = Object.keys((agent as any).graph?.channels || {});
-    expect(channels).toContain("asyncTasks");
-    expect(channels).toContain("files");
+    expect(channels).toContain('asyncTasks');
+    expect(channels).toContain('files');
 
     const tools = (agent as any).graph?.nodes?.tools?.bound?.tools || [];
     const toolNames = tools.map((t: any) => t.name);
-    expect(toolNames).toContain("start_async_task");
-    expect(toolNames).toContain("ls");
+    expect(toolNames).toContain('start_async_task');
+    expect(toolNames).toContain('ls');
   });
 });

@@ -4,9 +4,9 @@
  * Each code represents a distinct misconfiguration that can be detected at
  * agent-construction time. Add new codes here as new validations are added.
  */
-export type ConfigurationErrorCode = "TOOL_NAME_COLLISION";
+export type ConfigurationErrorCode = 'TOOL_NAME_COLLISION';
 
-const CONFIGURATION_ERROR_SYMBOL = Symbol.for("deepagents.configuration_error");
+const CONFIGURATION_ERROR_SYMBOL = Symbol.for('deepagents.configuration_error');
 
 /**
  * Thrown when `createDeepAgent` receives invalid configuration.
@@ -33,7 +33,7 @@ const CONFIGURATION_ERROR_SYMBOL = Symbol.for("deepagents.configuration_error");
 export class ConfigurationError extends Error {
   [CONFIGURATION_ERROR_SYMBOL] = true as const;
 
-  override readonly name: string = "ConfigurationError";
+  override readonly name: string = 'ConfigurationError';
 
   constructor(
     message: string,
@@ -46,7 +46,7 @@ export class ConfigurationError extends Error {
 
   static isInstance(error: unknown): error is ConfigurationError {
     return (
-      typeof error === "object" &&
+      typeof error === 'object' &&
       error !== null &&
       (error as Record<symbol, unknown>)[CONFIGURATION_ERROR_SYMBOL] === true
     );

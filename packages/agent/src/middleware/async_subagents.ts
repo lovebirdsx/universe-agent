@@ -1,14 +1,8 @@
-import { Command, ReducedValue, StateSchema } from "@langchain/langgraph";
-import { Client, type DefaultValues, type Run } from "@langchain/langgraph-sdk";
-import {
-  createMiddleware,
-  tool,
-  ToolMessage,
-  SystemMessage,
-  type ToolRuntime,
-} from "langchain";
-import { z } from "zod/v4";
-import type { AnySubAgent } from "../types.js";
+import { Command, ReducedValue, StateSchema } from '@langchain/langgraph';
+import { Client, type DefaultValues, type Run } from '@langchain/langgraph-sdk';
+import { createMiddleware, tool, ToolMessage, SystemMessage, type ToolRuntime } from 'langchain';
+import { z } from 'zod/v4';
+import type { AnySubAgent } from '../types.js';
 
 /**
  * Specification for an async subagent running on a remote [Agent Protocol](https://github.com/langchain-ai/agent-protocol)
@@ -47,13 +41,13 @@ export interface AsyncSubAgent {
  * Statuses that may be returned by the remote server: `"pending"`, `"timeout"`, `"interrupted"`.
  */
 export type AsyncTaskStatus =
-  | "pending"
-  | "running"
-  | "success"
-  | "error"
-  | "cancelled"
-  | "timeout"
-  | "interrupted";
+  | 'pending'
+  | 'running'
+  | 'success'
+  | 'error'
+  | 'cancelled'
+  | 'timeout'
+  | 'interrupted';
 
 /**
  * A tracked async subagent task persisted in agent state.
@@ -105,7 +99,7 @@ type AsyncTaskState = {
 };
 
 function toolCallIdFromRuntime(runtime: ToolRuntime<AsyncTaskState>): string {
-  return runtime.toolCall?.id ?? runtime.toolCallId ?? "";
+  return runtime.toolCall?.id ?? runtime.toolCallId ?? '';
 }
 
 /**
@@ -258,19 +252,19 @@ You have access to async subagent tools that launch background tasks on remote s
  * surface a `ConfigurationError` if a user-provided tool collides.
  */
 export const ASYNC_TASK_TOOL_NAMES = [
-  "start_async_task",
-  "check_async_task",
-  "update_async_task",
-  "cancel_async_task",
-  "list_async_tasks",
+  'start_async_task',
+  'check_async_task',
+  'update_async_task',
+  'cancel_async_task',
+  'list_async_tasks',
 ] as const;
 
 export const TERMINAL_STATUSES = new Set<AsyncTaskStatus>([
-  "cancelled",
-  "success",
-  "error",
-  "timeout",
-  "interrupted",
+  'cancelled',
+  'success',
+  'error',
+  'timeout',
+  'interrupted',
 ]);
 
 /**
@@ -280,10 +274,7 @@ export const TERMINAL_STATUSES = new Set<AsyncTaskStatus>([
  * @param state - The current agent state containing `asyncTasks`.
  * @returns The tracked task on success, or an error string.
  */
-function resolveTrackedTask(
-  taskId: string,
-  state: AsyncTaskState,
-): AsyncTask | string {
+function resolveTrackedTask(taskId: string, state: AsyncTaskState): AsyncTask | string {
   const tasks = state.asyncTasks ?? {};
   const tracked = tasks[taskId.trim()];
   if (!tracked) {
@@ -302,34 +293,27 @@ function resolveTrackedTask(
  * @param threadId - The thread ID for the run.
  * @param threadValues - The `values` from `ThreadState` (the remote subagent's state).
  */
-function buildCheckResult(
-  run: Run,
-  threadId: string,
-  threadValues: DefaultValues,
-): CheckResult {
+function buildCheckResult(run: Run, threadId: string, threadValues: DefaultValues): CheckResult {
   const checkResult: CheckResult = {
     status: run.status as AsyncTaskStatus,
     threadId,
   };
 
-  if (run.status === "success") {
+  if (run.status === 'success') {
     const values = Array.isArray(threadValues) ? {} : threadValues;
     const messages = (values?.messages ?? []) as unknown[];
     if (messages.length > 0) {
       const last = messages[messages.length - 1];
       const rawContent =
-        typeof last === "object" && last !== null && "content" in last
+        typeof last === 'object' && last !== null && 'content' in last
           ? (last as Record<string, unknown>).content
           : last;
-      checkResult.result =
-        typeof rawContent === "string"
-          ? rawContent
-          : JSON.stringify(rawContent);
+      checkResult.result = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
     } else {
-      checkResult.result = "Completed with no output messages.";
+      checkResult.result = 'Completed with no output messages.';
     }
-  } else if (run.status === "error") {
-    checkResult.error = "The async subagent encountered an error.";
+  } else if (run.status === 'error') {
+    checkResult.error = 'The async subagent encountered an error.';
   }
 
   return checkResult;
@@ -345,11 +329,8 @@ function buildCheckResult(
  * @param statusFilter - If nullish or `'all'`, return all tasks.
  *   Otherwise return only tasks whose cached status matches.
  */
-function filterTasks(
-  tasks: Record<string, AsyncTask>,
-  statusFilter?: string,
-): AsyncTask[] {
-  if (!statusFilter || statusFilter === "all") {
+function filterTasks(tasks: Record<string, AsyncTask>, statusFilter?: string): AsyncTask[] {
+  if (!statusFilter || statusFilter === 'all') {
     return Object.values(tasks);
   }
   return Object.values(tasks).filter((task) => task.status === statusFilter);
@@ -408,8 +389,8 @@ export class ClientCache {
    */
   private resolveHeaders(spec: AsyncSubAgent): Record<string, string> {
     const headers = { ...(spec.headers || {}) };
-    if (!("x-auth-scheme" in headers)) {
-      headers["x-auth-scheme"] = "langsmith";
+    if (!('x-auth-scheme' in headers)) {
+      headers['x-auth-scheme'] = 'langsmith';
     }
     return headers;
   }
@@ -419,8 +400,8 @@ export class ClientCache {
    */
   private cacheKey(spec: AsyncSubAgent): string {
     const headers = this.resolveHeaders(spec);
-    const headerStr = Object.entries(headers).sort().flat().join(":");
-    return `${spec.url ?? ""}|${headerStr}`;
+    const headerStr = Object.entries(headers).sort().flat().join(':');
+    return `${spec.url ?? ''}|${headerStr}`;
   }
 
   /**
@@ -456,11 +437,9 @@ export class ClientCache {
 export function extractCallbackContext(
   runtime: ToolRuntime<AsyncTaskState>,
 ): Record<string, string> {
-  const configurable = runtime.config?.configurable as
-    | Record<string, unknown>
-    | undefined;
+  const configurable = runtime.config?.configurable as Record<string, unknown> | undefined;
   const threadId = configurable?.thread_id;
-  if (typeof threadId === "string" && threadId) {
+  if (typeof threadId === 'string' && threadId) {
     return { callbackThreadId: threadId };
   }
   return {};
@@ -478,14 +457,11 @@ export function buildStartTool(
   toolDescription: string,
 ) {
   return tool(
-    async (
-      input,
-      runtime: ToolRuntime<AsyncTaskState>,
-    ): Promise<Command | string> => {
+    async (input, runtime: ToolRuntime<AsyncTaskState>): Promise<Command | string> => {
       if (!(input.agentName in agentMap)) {
         const allowed = Object.keys(agentMap)
           .map((k) => `\`${k}\``)
-          .join(", ");
+          .join(', ');
         return `Unknown async subagent type \`${input.agentName}\`. Available types: ${allowed}`;
       }
 
@@ -496,7 +472,7 @@ export function buildStartTool(
         const thread = await client.threads.create();
         const run = await client.runs.create(thread.thread_id, spec.graphId, {
           input: {
-            messages: [{ role: "user", content: input.description }],
+            messages: [{ role: 'user', content: input.description }],
             ...callbackContext,
           },
         });
@@ -507,7 +483,7 @@ export function buildStartTool(
           agentName: input.agentName,
           threadId: taskId,
           runId: run.run_id,
-          status: "running",
+          status: 'running',
           createdAt: new Date().toISOString(),
           description: input.description,
         };
@@ -528,18 +504,16 @@ export function buildStartTool(
       }
     },
     {
-      name: "start_async_task",
+      name: 'start_async_task',
       description: toolDescription,
       schema: z.object({
         description: z
           .string()
-          .describe(
-            "A detailed description of the task for the async subagent to perform.",
-          ),
+          .describe('A detailed description of the task for the async subagent to perform.'),
         agentName: z
           .string()
           .describe(
-            "The type of async subagent to use. Must be one of the available types listed in the tool description.",
+            'The type of async subagent to use. Must be one of the available types listed in the tool description.',
           ),
       }),
     },
@@ -554,12 +528,9 @@ export function buildStartTool(
  */
 export function buildCheckTool(clients: ClientCache) {
   return tool(
-    async (
-      input,
-      runtime: ToolRuntime<AsyncTaskState>,
-    ): Promise<Command | string> => {
+    async (input, runtime: ToolRuntime<AsyncTaskState>): Promise<Command | string> => {
       const task = resolveTrackedTask(input.taskId, runtime.state);
-      if (typeof task === "string") return task;
+      if (typeof task === 'string') return task;
 
       const client = clients.getClient(task.agentName);
       let run: Run;
@@ -570,7 +541,7 @@ export function buildCheckTool(clients: ClientCache) {
       }
 
       let threadValues: DefaultValues = {};
-      if (run.status === "success") {
+      if (run.status === 'success') {
         try {
           const threadState = await client.threads.getState(task.threadId);
           threadValues = (threadState.values as DefaultValues) || {};
@@ -587,10 +558,7 @@ export function buildCheckTool(clients: ClientCache) {
         runId: task.runId,
         status: result.status,
         createdAt: task.createdAt,
-        updatedAt:
-          result.status !== task.status
-            ? new Date().toISOString()
-            : task.updatedAt,
+        updatedAt: result.status !== task.status ? new Date().toISOString() : task.updatedAt,
         checkedAt: new Date().toISOString(),
       };
 
@@ -607,15 +575,13 @@ export function buildCheckTool(clients: ClientCache) {
       });
     },
     {
-      name: "check_async_task",
+      name: 'check_async_task',
       description:
-        "Check the status of an async subagent task. Returns the current status and, if complete, the result.",
+        'Check the status of an async subagent task. Returns the current status and, if complete, the result.',
       schema: z.object({
         taskId: z
           .string()
-          .describe(
-            "The exact taskId string returned by start_async_task. Pass it verbatim.",
-          ),
+          .describe('The exact taskId string returned by start_async_task. Pass it verbatim.'),
       }),
     },
   );
@@ -629,26 +595,20 @@ export function buildCheckTool(clients: ClientCache) {
  * sees the full conversation history plus the new message. The `taskId`
  * remains the same; only the internal `runId` is updated.
  */
-export function buildUpdateTool(
-  agentMap: Record<string, AsyncSubAgent>,
-  clients: ClientCache,
-) {
+export function buildUpdateTool(agentMap: Record<string, AsyncSubAgent>, clients: ClientCache) {
   return tool(
-    async (
-      input,
-      runtime: ToolRuntime<AsyncTaskState>,
-    ): Promise<Command | string> => {
+    async (input, runtime: ToolRuntime<AsyncTaskState>): Promise<Command | string> => {
       const tracked = resolveTrackedTask(input.taskId, runtime.state);
-      if (typeof tracked === "string") return tracked;
+      if (typeof tracked === 'string') return tracked;
 
       const spec = agentMap[tracked.agentName];
       try {
         const client = clients.getClient(tracked.agentName);
         const run = await client.runs.create(tracked.threadId, spec.graphId, {
           input: {
-            messages: [{ role: "user", content: input.message }],
+            messages: [{ role: 'user', content: input.message }],
           },
-          multitaskStrategy: "interrupt",
+          multitaskStrategy: 'interrupt',
         });
 
         const task: AsyncTask = {
@@ -656,7 +616,7 @@ export function buildUpdateTool(
           agentName: tracked.agentName,
           threadId: tracked.threadId,
           runId: run.run_id,
-          status: "running",
+          status: 'running',
           createdAt: tracked.createdAt,
           description: input.message,
           updatedAt: new Date().toISOString(),
@@ -679,20 +639,14 @@ export function buildUpdateTool(
       }
     },
     {
-      name: "update_async_task",
+      name: 'update_async_task',
       description:
-        "send updated instructions to an async subagent. Interrupts the current run and starts a new one on the same thread so the subagent sees the full conversation history plus your new message. The taskId remains the same.",
+        'send updated instructions to an async subagent. Interrupts the current run and starts a new one on the same thread so the subagent sees the full conversation history plus your new message. The taskId remains the same.',
       schema: z.object({
         taskId: z
           .string()
-          .describe(
-            "The exact taskId string returned by start_async_task. Pass it verbatim.",
-          ),
-        message: z
-          .string()
-          .describe(
-            "Follow-up instructions or context to send to the subagent",
-          ),
+          .describe('The exact taskId string returned by start_async_task. Pass it verbatim.'),
+        message: z.string().describe('Follow-up instructions or context to send to the subagent'),
       }),
     },
   );
@@ -706,12 +660,9 @@ export function buildUpdateTool(
  */
 export function buildCancelTool(clients: ClientCache) {
   return tool(
-    async (
-      input,
-      runtime: ToolRuntime<AsyncTaskState>,
-    ): Promise<Command | string> => {
+    async (input, runtime: ToolRuntime<AsyncTaskState>): Promise<Command | string> => {
       const tracked = resolveTrackedTask(input.taskId, runtime.state);
-      if (typeof tracked === "string") return tracked;
+      if (typeof tracked === 'string') return tracked;
 
       const client = clients.getClient(tracked.agentName);
       try {
@@ -725,7 +676,7 @@ export function buildCancelTool(clients: ClientCache) {
         agentName: tracked.agentName,
         threadId: tracked.threadId,
         runId: tracked.runId,
-        status: "cancelled",
+        status: 'cancelled',
         createdAt: tracked.createdAt,
         updatedAt: new Date().toISOString(),
         checkedAt: tracked.checkedAt,
@@ -744,15 +695,13 @@ export function buildCancelTool(clients: ClientCache) {
       });
     },
     {
-      name: "cancel_async_task",
+      name: 'cancel_async_task',
       description:
-        "Cancel a running async subagent task. Use this to stop a task that is no longer needed.",
+        'Cancel a running async subagent task. Use this to stop a task that is no longer needed.',
       schema: z.object({
         taskId: z
           .string()
-          .describe(
-            "The exact taskId string returned by start_async_task. Pass it verbatim.",
-          ),
+          .describe('The exact taskId string returned by start_async_task. Pass it verbatim.'),
       }),
     },
   );
@@ -766,15 +715,12 @@ export function buildCancelTool(clients: ClientCache) {
  */
 export function buildListTool(clients: ClientCache) {
   return tool(
-    async (
-      input,
-      runtime: ToolRuntime<AsyncTaskState>,
-    ): Promise<Command | string> => {
+    async (input, runtime: ToolRuntime<AsyncTaskState>): Promise<Command | string> => {
       const tasks = runtime.state.asyncTasks ?? {};
       const filtered = filterTasks(tasks, input.statusFilter ?? undefined);
 
       if (filtered.length === 0) {
-        return "No async subagent tasks tracked";
+        return 'No async subagent tasks tracked';
       }
 
       const statuses = await Promise.all(
@@ -797,8 +743,7 @@ export function buildListTool(clients: ClientCache) {
           runId: task.runId,
           status,
           createdAt: task.createdAt,
-          updatedAt:
-            status !== task.status ? new Date().toISOString() : task.updatedAt,
+          updatedAt: status !== task.status ? new Date().toISOString() : task.updatedAt,
           checkedAt: task.checkedAt,
         };
       }
@@ -807,7 +752,7 @@ export function buildListTool(clients: ClientCache) {
         update: {
           messages: [
             new ToolMessage({
-              content: `${entries.length} tracked task(s):\n${entries.join("\n")}`,
+              content: `${entries.length} tracked task(s):\n${entries.join('\n')}`,
               tool_call_id: toolCallIdFromRuntime(runtime),
             }),
           ],
@@ -816,7 +761,7 @@ export function buildListTool(clients: ClientCache) {
       });
     },
     {
-      name: "list_async_tasks",
+      name: 'list_async_tasks',
       description:
         "List tracked async subagent tasks with their current live statuses. Be default shows all tasks. Use `statusFilter` to narrow by status (e.g., 'running', 'success', 'error', 'cancelled'). Use `check_async_task` to get the full result of a specific completed task.",
       schema: z.object({
@@ -873,37 +818,29 @@ export interface AsyncSubAgentMiddlewareOptions {
  * Uses the presence of the `graphId` field as the runtime discriminant —
  * `AsyncSubAgent` requires it, while `SubAgent` and `CompiledSubAgent` do not have it.
  */
-export function isAsyncSubAgent(
-  subAgent: AnySubAgent,
-): subAgent is AsyncSubAgent {
-  return "graphId" in subAgent;
+export function isAsyncSubAgent(subAgent: AnySubAgent): subAgent is AsyncSubAgent {
+  return 'graphId' in subAgent;
 }
 
-export function createAsyncSubAgentMiddleware(
-  options: AsyncSubAgentMiddlewareOptions,
-) {
+export function createAsyncSubAgentMiddleware(options: AsyncSubAgentMiddlewareOptions) {
   const { asyncSubAgents, systemPrompt = ASYNC_TASK_SYSTEM_PROMPT } = options;
 
   if (!asyncSubAgents || asyncSubAgents.length === 0) {
-    throw new Error("At least one async subagent must be specified");
+    throw new Error('At least one async subagent must be specified');
   }
 
   const names = asyncSubAgents.map((a) => a.name);
   const duplicates = names.filter((n, i) => names.indexOf(n) !== i);
   if (duplicates.length > 0) {
-    throw new Error(
-      `Duplicate async subagent names: ${[...new Set(duplicates)].join(", ")}`,
-    );
+    throw new Error(`Duplicate async subagent names: ${[...new Set(duplicates)].join(', ')}`);
   }
 
   const agentMap = Object.fromEntries(asyncSubAgents.map((a) => [a.name, a]));
   const clients = new ClientCache(agentMap);
 
-  const agentsDescription = asyncSubAgents
-    .map((a) => `- ${a.name}: ${a.description}`)
-    .join("\n");
+  const agentsDescription = asyncSubAgents.map((a) => `- ${a.name}: ${a.description}`).join('\n');
   const launchDescription = ASYNC_TASK_TOOL_DESCRIPTION.replace(
-    "{available_agents}",
+    '{available_agents}',
     agentsDescription,
   );
 
@@ -920,7 +857,7 @@ export function createAsyncSubAgentMiddleware(
     : null;
 
   return createMiddleware({
-    name: "asyncSubAgentMiddleware",
+    name: 'asyncSubAgentMiddleware',
     stateSchema: AsyncTaskStateSchema,
     tools,
     wrapModelCall: async (request, handler) => {

@@ -5,7 +5,7 @@
  * V1 backends can be adapted using {@link adaptBackendProtocol} from utils.
  */
 
-import type { BackendProtocolV1 } from "../v1/protocol.js";
+import type { BackendProtocolV1 } from '../v1/protocol.js';
 import type {
   ExecuteResponse,
   GlobResult,
@@ -14,7 +14,7 @@ import type {
   MaybePromise,
   ReadRawResult,
   ReadResult,
-} from "../protocol.js";
+} from '../protocol.js';
 
 /**
  * Updated protocol for pluggable memory backends.
@@ -31,7 +31,7 @@ import type {
  */
 export interface BackendProtocolV2 extends Omit<
   BackendProtocolV1,
-  "read" | "readRaw" | "grepRaw" | "lsInfo" | "globInfo"
+  'read' | 'readRaw' | 'grepRaw' | 'lsInfo' | 'globInfo'
 > {
   /**
    * Structured listing with file metadata.
@@ -55,11 +55,7 @@ export interface BackendProtocolV2 extends Omit<
    * @param limit - Maximum number of lines to read, default 500
    * @returns ReadResult with content on success or error on failure
    */
-  read(
-    filePath: string,
-    offset?: number,
-    limit?: number,
-  ): MaybePromise<ReadResult>;
+  read(filePath: string, offset?: number, limit?: number): MaybePromise<ReadResult>;
 
   /**
    * Read file content as raw FileData.
@@ -79,11 +75,7 @@ export interface BackendProtocolV2 extends Omit<
    * @param glob - Optional glob pattern to filter files (e.g., "*.py")
    * @returns GrepResult with matches on success or error on failure
    */
-  grep(
-    pattern: string,
-    path?: string | null,
-    glob?: string | null,
-  ): MaybePromise<GrepResult>;
+  grep(pattern: string, path?: string | null, glob?: string | null): MaybePromise<GrepResult>;
 
   /**
    * Structured glob matching returning FileInfo objects.

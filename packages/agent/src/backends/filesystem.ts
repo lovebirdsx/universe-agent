@@ -8,13 +8,13 @@
  *   and optional glob include filtering, while preserving virtual path behavior
  */
 
-import fs from "node:fs/promises";
-import fsSync from "node:fs";
-import path from "node:path";
-import { spawn } from "node:child_process";
+import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
+import path from 'node:path';
+import { spawn } from 'node:child_process';
 
-import fg from "fast-glob";
-import micromatch from "micromatch";
+import fg from 'fast-glob';
+import micromatch from 'micromatch';
 import type {
   BackendProtocolV2,
   EditResult,
@@ -28,13 +28,13 @@ import type {
   ReadRawResult,
   ReadResult,
   WriteResult,
-} from "./protocol.js";
+} from './protocol.js';
 import {
   checkEmptyContent,
   getMimeType,
   isTextMimeType,
   performStringReplacement,
-} from "./utils.js";
+} from './utils.js';
 
 const SUPPORTS_NOFOLLOW = fsSync.constants.O_NOFOLLOW !== undefined;
 
@@ -77,13 +77,13 @@ export class FilesystemBackend implements BackendProtocolV2 {
    */
   private resolvePath(key: string): string {
     if (this.virtualMode) {
-      const vpath = key.startsWith("/") ? key : "/" + key;
-      if (vpath.includes("..") || vpath.startsWith("~")) {
-        throw new Error("Path traversal not allowed");
+      const vpath = key.startsWith('/') ? key : '/' + key;
+      if (vpath.includes('..') || vpath.startsWith('~')) {
+        throw new Error('Path traversal not allowed');
       }
       const full = path.resolve(this.cwd, vpath.substring(1));
       const relative = path.relative(this.cwd, full);
-      if (relative.startsWith("..") || path.isAbsolute(relative)) {
+      if (relative.startsWith('..') || path.isAbsolute(relative)) {
         throw new Error(`Path: ${full} outside root directory: ${this.cwd}`);
       }
       return full;
@@ -114,9 +114,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
       const entries = await fs.readdir(resolvedPath, { withFileTypes: true });
       const results: FileInfo[] = [];
 
-      const cwdStr = this.cwd.endsWith(path.sep)
-        ? this.cwd
-        : this.cwd + path.sep;
+      const cwdStr = this.cwd.endsWith(path.sep) ? this.cwd : this.cwd + path.sep;
 
       for (const entry of entries) {
         const fullPath = path.join(resolvedPath, entry.name);
@@ -148,15 +146,13 @@ export class FilesystemBackend implements BackendProtocolV2 {
             if (fullPath.startsWith(cwdStr)) {
               relativePath = fullPath.substring(cwdStr.length);
             } else if (fullPath.startsWith(this.cwd)) {
-              relativePath = fullPath
-                .substring(this.cwd.length)
-                .replace(/^[/\\]/, "");
+              relativePath = fullPath.substring(this.cwd.length).replace(/^[/\\]/, '');
             } else {
               relativePath = fullPath;
             }
 
-            relativePath = relativePath.split(path.sep).join("/");
-            const virtPath = "/" + relativePath;
+            relativePath = relativePath.split(path.sep).join('/');
+            const virtPath = '/' + relativePath;
 
             if (isFile) {
               results.push({
@@ -167,7 +163,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
               });
             } else if (isDir) {
               results.push({
-                path: virtPath + "/",
+                path: virtPath + '/',
                 is_dir: true,
                 size: 0,
                 modified_at: entryStat.mtime.toISOString(),
@@ -195,11 +191,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
    * @param limit - Maximum number of lines to read
    * @returns Formatted file content with line numbers, or error message
    */
-  async read(
-    filePath: string,
-    offset: number = 0,
-    limit: number = 500,
-  ): Promise<ReadResult> {
+  async read(filePath: string, offset: number = 0, limit: number = 500): Promise<ReadResult> {
     try {
       const resolvedPath = this.resolvePath(filePath);
 
@@ -221,7 +213,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
             const buffer = await fd.readFile();
             return { content: new Uint8Array(buffer), mimeType };
           }
-          content = await fd.readFile({ encoding: "utf-8" });
+          content = await fd.readFile({ encoding: 'utf-8' });
         } finally {
           await fd.close();
         }
@@ -237,7 +229,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
           const buffer = await fs.readFile(resolvedPath);
           return { content: new Uint8Array(buffer), mimeType };
         }
-        content = await fs.readFile(resolvedPath, "utf-8");
+        content = await fs.readFile(resolvedPath, 'utf-8');
       }
 
       const emptyMsg = checkEmptyContent(content);
@@ -245,7 +237,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
         return { content: emptyMsg, mimeType };
       }
 
-      const lines = content.split("\n");
+      const lines = content.split('\n');
       const startIdx = offset;
       const endIdx = Math.min(startIdx + limit, lines.length);
 
@@ -256,7 +248,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
       }
 
       const selectedLines = lines.slice(startIdx, endIdx);
-      return { content: selectedLines.join("\n"), mimeType };
+      return { content: selectedLines.join('\n'), mimeType };
     } catch (e: any) {
       return { error: `Error reading file '${filePath}': ${e.message}` };
     }
@@ -298,7 +290,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
             },
           };
         }
-        content = await fd.readFile({ encoding: "utf-8" });
+        content = await fd.readFile({ encoding: 'utf-8' });
       } finally {
         await fd.close();
       }
@@ -321,7 +313,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
           },
         };
       }
-      content = await fs.readFile(resolvedPath, "utf-8");
+      content = await fs.readFile(resolvedPath, 'utf-8');
     }
 
     return {
@@ -371,20 +363,20 @@ export class FilesystemBackend implements BackendProtocolV2 {
         const fd = await fs.open(resolvedPath, flags, 0o644);
         try {
           if (isBinary) {
-            const buffer = Buffer.from(content, "base64");
+            const buffer = Buffer.from(content, 'base64');
             await fd.writeFile(buffer);
           } else {
-            await fd.writeFile(content, "utf-8");
+            await fd.writeFile(content, 'utf-8');
           }
         } finally {
           await fd.close();
         }
       } else {
         if (isBinary) {
-          const buffer = Buffer.from(content, "base64");
+          const buffer = Buffer.from(content, 'base64');
           await fs.writeFile(resolvedPath, buffer);
         } else {
-          await fs.writeFile(resolvedPath, content, "utf-8");
+          await fs.writeFile(resolvedPath, content, 'utf-8');
         }
       }
 
@@ -420,7 +412,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
           fsSync.constants.O_RDONLY | fsSync.constants.O_NOFOLLOW,
         );
         try {
-          content = await fd.readFile({ encoding: "utf-8" });
+          content = await fd.readFile({ encoding: 'utf-8' });
         } finally {
           await fd.close();
         }
@@ -432,17 +424,12 @@ export class FilesystemBackend implements BackendProtocolV2 {
         if (!stat.isFile()) {
           return { error: `Error: File '${filePath}' not found` };
         }
-        content = await fs.readFile(resolvedPath, "utf-8");
+        content = await fs.readFile(resolvedPath, 'utf-8');
       }
 
-      const result = performStringReplacement(
-        content,
-        oldString,
-        newString,
-        replaceAll,
-      );
+      const result = performStringReplacement(content, oldString, newString, replaceAll);
 
-      if (typeof result === "string") {
+      if (typeof result === 'string') {
         return { error: result };
       }
 
@@ -451,18 +438,16 @@ export class FilesystemBackend implements BackendProtocolV2 {
       // Write securely
       if (SUPPORTS_NOFOLLOW) {
         const flags =
-          fsSync.constants.O_WRONLY |
-          fsSync.constants.O_TRUNC |
-          fsSync.constants.O_NOFOLLOW;
+          fsSync.constants.O_WRONLY | fsSync.constants.O_TRUNC | fsSync.constants.O_NOFOLLOW;
 
         const fd = await fs.open(resolvedPath, flags);
         try {
-          await fd.writeFile(newContent, "utf-8");
+          await fd.writeFile(newContent, 'utf-8');
         } finally {
           await fd.close();
         }
       } else {
-        await fs.writeFile(resolvedPath, newContent, "utf-8");
+        await fs.writeFile(resolvedPath, newContent, 'utf-8');
       }
 
       return { path: filePath, filesUpdate: null, occurrences: occurrences };
@@ -483,13 +468,13 @@ export class FilesystemBackend implements BackendProtocolV2 {
    */
   async grep(
     pattern: string,
-    dirPath: string = "/",
+    dirPath: string = '/',
     glob: string | null = null,
   ): Promise<GrepResult> {
     // Resolve base path
     let baseFull: string;
     try {
-      baseFull = this.resolvePath(dirPath || ".");
+      baseFull = this.resolvePath(dirPath || '.');
     } catch {
       return { matches: [] };
     }
@@ -531,32 +516,32 @@ export class FilesystemBackend implements BackendProtocolV2 {
   ): Promise<Record<string, Array<[number, string]>> | null> {
     return new Promise((resolve) => {
       // -F enables fixed-string (literal) mode
-      const args = ["--json", "-F"];
+      const args = ['--json', '-F'];
       if (includeGlob) {
-        args.push("--glob", includeGlob);
+        args.push('--glob', includeGlob);
       }
-      args.push("--", pattern, baseFull);
+      args.push('--', pattern, baseFull);
 
-      const proc = spawn("rg", args, { timeout: 30000 });
+      const proc = spawn('rg', args, { timeout: 30000 });
       const results: Record<string, Array<[number, string]>> = {};
-      let output = "";
+      let output = '';
 
-      proc.stdout.on("data", (data) => {
+      proc.stdout.on('data', (data) => {
         output += data.toString();
       });
 
-      proc.on("close", (code) => {
+      proc.on('close', (code) => {
         if (code !== 0 && code !== 1) {
           // Error (code 1 means no matches, which is ok)
           resolve(null);
           return;
         }
 
-        for (const line of output.split("\n")) {
+        for (const line of output.split('\n')) {
           if (!line.trim()) continue;
           try {
             const data = JSON.parse(line);
-            if (data.type !== "match") continue;
+            if (data.type !== 'match') continue;
 
             const pdata = data.data || {};
             const ftext = pdata.path?.text;
@@ -567,9 +552,9 @@ export class FilesystemBackend implements BackendProtocolV2 {
               try {
                 const resolved = path.resolve(ftext);
                 const relative = path.relative(this.cwd, resolved);
-                if (relative.startsWith("..")) continue;
-                const normalizedRelative = relative.split(path.sep).join("/");
-                virtPath = "/" + normalizedRelative;
+                if (relative.startsWith('..')) continue;
+                const normalizedRelative = relative.split(path.sep).join('/');
+                virtPath = '/' + normalizedRelative;
               } catch {
                 continue;
               }
@@ -578,7 +563,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
             }
 
             const ln = pdata.line_number;
-            const lt = pdata.lines?.text?.replace(/\n$/, "") || "";
+            const lt = pdata.lines?.text?.replace(/\n$/, '') || '';
             if (ln === undefined) continue;
 
             if (!results[virtPath]) {
@@ -594,7 +579,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
         resolve(results);
       });
 
-      proc.on("error", () => {
+      proc.on('error', () => {
         resolve(null);
       });
     });
@@ -620,7 +605,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
     const root = stat.isDirectory() ? baseFull : path.dirname(baseFull);
 
     // Use fast-glob to recursively find all files
-    const files = await fg("**/*", {
+    const files = await fg('**/*', {
       cwd: root,
       absolute: true,
       onlyFiles: true,
@@ -636,10 +621,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
         }
 
         // Filter by glob if provided
-        if (
-          includeGlob &&
-          !micromatch.isMatch(path.basename(fp), includeGlob)
-        ) {
+        if (includeGlob && !micromatch.isMatch(path.basename(fp), includeGlob)) {
           continue;
         }
 
@@ -650,8 +632,8 @@ export class FilesystemBackend implements BackendProtocolV2 {
         }
 
         // Read and search using literal substring matching
-        const content = await fs.readFile(fp, "utf-8");
-        const lines = content.split("\n");
+        const content = await fs.readFile(fp, 'utf-8');
+        const lines = content.split('\n');
 
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
@@ -661,9 +643,9 @@ export class FilesystemBackend implements BackendProtocolV2 {
             if (this.virtualMode) {
               try {
                 const relative = path.relative(this.cwd, fp);
-                if (relative.startsWith("..")) continue;
-                const normalizedRelative = relative.split(path.sep).join("/");
-                virtPath = "/" + normalizedRelative;
+                if (relative.startsWith('..')) continue;
+                const normalizedRelative = relative.split(path.sep).join('/');
+                virtPath = '/' + normalizedRelative;
               } catch {
                 continue;
               }
@@ -689,13 +671,12 @@ export class FilesystemBackend implements BackendProtocolV2 {
   /**
    * Structured glob matching returning FileInfo objects.
    */
-  async glob(pattern: string, searchPath: string = "/"): Promise<GlobResult> {
-    if (pattern.startsWith("/")) {
+  async glob(pattern: string, searchPath: string = '/'): Promise<GlobResult> {
+    if (pattern.startsWith('/')) {
       pattern = pattern.substring(1);
     }
 
-    const resolvedSearchPath =
-      searchPath === "/" ? this.cwd : this.resolvePath(searchPath);
+    const resolvedSearchPath = searchPath === '/' ? this.cwd : this.resolvePath(searchPath);
 
     try {
       const stat = await fs.stat(resolvedSearchPath);
@@ -725,7 +706,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
           // Normalize fast-glob paths to platform separators
           // fast-glob returns forward slashes on all platforms, but we need
           // platform-native separators for path comparisons on Windows
-          const normalizedPath = matchedPath.split("/").join(path.sep);
+          const normalizedPath = matchedPath.split('/').join(path.sep);
 
           if (!this.virtualMode) {
             results.push({
@@ -735,23 +716,19 @@ export class FilesystemBackend implements BackendProtocolV2 {
               modified_at: stat.mtime.toISOString(),
             });
           } else {
-            const cwdStr = this.cwd.endsWith(path.sep)
-              ? this.cwd
-              : this.cwd + path.sep;
+            const cwdStr = this.cwd.endsWith(path.sep) ? this.cwd : this.cwd + path.sep;
             let relativePath: string;
 
             if (normalizedPath.startsWith(cwdStr)) {
               relativePath = normalizedPath.substring(cwdStr.length);
             } else if (normalizedPath.startsWith(this.cwd)) {
-              relativePath = normalizedPath
-                .substring(this.cwd.length)
-                .replace(/^[/\\]/, "");
+              relativePath = normalizedPath.substring(this.cwd.length).replace(/^[/\\]/, '');
             } else {
               relativePath = normalizedPath;
             }
 
-            relativePath = relativePath.split(path.sep).join("/");
-            const virt = "/" + relativePath;
+            relativePath = relativePath.split(path.sep).join('/');
+            const virt = '/' + relativePath;
             results.push({
               path: virt,
               is_dir: false,
@@ -778,9 +755,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
    * @param files - List of [path, content] tuples to upload
    * @returns List of FileUploadResponse objects, one per input file
    */
-  async uploadFiles(
-    files: Array<[string, Uint8Array]>,
-  ): Promise<FileUploadResponse[]> {
+  async uploadFiles(files: Array<[string, Uint8Array]>): Promise<FileUploadResponse[]> {
     const responses: FileUploadResponse[] = [];
 
     for (const [filePath, content] of files) {
@@ -794,14 +769,14 @@ export class FilesystemBackend implements BackendProtocolV2 {
         await fs.writeFile(resolvedPath, content);
         responses.push({ path: filePath, error: null });
       } catch (e: any) {
-        if (e.code === "ENOENT") {
-          responses.push({ path: filePath, error: "file_not_found" });
-        } else if (e.code === "EACCES") {
-          responses.push({ path: filePath, error: "permission_denied" });
-        } else if (e.code === "EISDIR") {
-          responses.push({ path: filePath, error: "is_directory" });
+        if (e.code === 'ENOENT') {
+          responses.push({ path: filePath, error: 'file_not_found' });
+        } else if (e.code === 'EACCES') {
+          responses.push({ path: filePath, error: 'permission_denied' });
+        } else if (e.code === 'EISDIR') {
+          responses.push({ path: filePath, error: 'is_directory' });
         } else {
-          responses.push({ path: filePath, error: "invalid_path" });
+          responses.push({ path: filePath, error: 'invalid_path' });
         }
       }
     }
@@ -824,29 +799,29 @@ export class FilesystemBackend implements BackendProtocolV2 {
         const content = await fs.readFile(resolvedPath);
         responses.push({ path: filePath, content, error: null });
       } catch (e: any) {
-        if (e.code === "ENOENT") {
+        if (e.code === 'ENOENT') {
           responses.push({
             path: filePath,
             content: null,
-            error: "file_not_found",
+            error: 'file_not_found',
           });
-        } else if (e.code === "EACCES") {
+        } else if (e.code === 'EACCES') {
           responses.push({
             path: filePath,
             content: null,
-            error: "permission_denied",
+            error: 'permission_denied',
           });
-        } else if (e.code === "EISDIR") {
+        } else if (e.code === 'EISDIR') {
           responses.push({
             path: filePath,
             content: null,
-            error: "is_directory",
+            error: 'is_directory',
           });
         } else {
           responses.push({
             path: filePath,
             content: null,
-            error: "invalid_path",
+            error: 'invalid_path',
           });
         }
       }

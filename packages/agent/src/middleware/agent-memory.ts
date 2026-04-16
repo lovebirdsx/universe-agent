@@ -31,17 +31,17 @@
  * ```
  */
 
-import fs from "node:fs";
-import { z } from "zod";
+import fs from 'node:fs';
+import { z } from 'zod';
 import {
   createMiddleware,
   /**
    * required for type inference
    */
   type AgentMiddleware as _AgentMiddleware,
-} from "langchain";
+} from 'langchain';
 
-import type { Settings } from "../config.js";
+import type { Settings } from '../config.js';
 
 /**
  * Options for the agent memory middleware.
@@ -211,9 +211,7 @@ write_file '{project_deepagents_dir}/agent.md' ...  # Create project memory file
  * @deprecated Use `createMemoryMiddleware` from `./memory.js` instead.
  * This function uses direct filesystem access which limits portability.
  */
-export function createAgentMemoryMiddleware(
-  options: AgentMemoryMiddlewareOptions,
-) {
+export function createAgentMemoryMiddleware(options: AgentMemoryMiddlewareOptions) {
   const { settings, assistantId, systemPromptTemplate } = options;
 
   // Compute paths
@@ -225,28 +223,28 @@ export function createAgentMemoryMiddleware(
   // Build project memory info for documentation
   const projectMemoryInfo = projectRoot
     ? `\`${projectRoot}\` (detected)`
-    : "None (not in a git project)";
+    : 'None (not in a git project)';
 
   // Build project deepagents directory path
   const projectDeepagentsDir = projectRoot
     ? `${projectRoot}/.deepagents`
-    : "[project-root]/.deepagents (not in a project)";
+    : '[project-root]/.deepagents (not in a project)';
 
   const template = systemPromptTemplate || DEFAULT_MEMORY_TEMPLATE;
 
   return createMiddleware({
-    name: "AgentMemoryMiddleware",
+    name: 'AgentMemoryMiddleware',
     stateSchema: AgentMemoryStateSchema as any,
 
     beforeAgent(state: any) {
       const result: Record<string, string> = {};
 
       // Load user memory if not already in state
-      if (!("userMemory" in state)) {
+      if (!('userMemory' in state)) {
         const userPath = settings.getUserAgentMdPath(assistantId);
         if (fs.existsSync(userPath)) {
           try {
-            result.userMemory = fs.readFileSync(userPath, "utf-8");
+            result.userMemory = fs.readFileSync(userPath, 'utf-8');
           } catch {
             // Ignore read errors
           }
@@ -254,11 +252,11 @@ export function createAgentMemoryMiddleware(
       }
 
       // Load project memory if not already in state
-      if (!("projectMemory" in state)) {
+      if (!('projectMemory' in state)) {
         const projectPath = settings.getProjectAgentMdPath();
         if (projectPath && fs.existsSync(projectPath)) {
           try {
-            result.projectMemory = fs.readFileSync(projectPath, "utf-8");
+            result.projectMemory = fs.readFileSync(projectPath, 'utf-8');
           } catch {
             // Ignore read errors
           }
@@ -272,28 +270,28 @@ export function createAgentMemoryMiddleware(
       // Extract memory from state
       const userMemory = request.state?.userMemory;
       const projectMemory = request.state?.projectMemory;
-      const baseSystemPrompt = request.systemPrompt || "";
+      const baseSystemPrompt = request.systemPrompt || '';
 
       // Format memory section with both memories
       const memorySection = template
-        .replace("{user_memory}", userMemory || "(No user agent.md)")
-        .replace("{project_memory}", projectMemory || "(No project agent.md)");
+        .replace('{user_memory}', userMemory || '(No user agent.md)')
+        .replace('{project_memory}', projectMemory || '(No project agent.md)');
 
       // Format long-term memory documentation
       const memoryDocs = LONGTERM_MEMORY_SYSTEM_PROMPT.replaceAll(
-        "{agent_dir_absolute}",
+        '{agent_dir_absolute}',
         agentDirAbsolute,
       )
-        .replaceAll("{agent_dir_display}", agentDirDisplay)
-        .replaceAll("{project_memory_info}", projectMemoryInfo)
-        .replaceAll("{project_deepagents_dir}", projectDeepagentsDir);
+        .replaceAll('{agent_dir_display}', agentDirDisplay)
+        .replaceAll('{project_memory_info}', projectMemoryInfo)
+        .replaceAll('{project_deepagents_dir}', projectDeepagentsDir);
 
       // Memory content at start, base prompt in middle, documentation at end
       let systemPrompt = memorySection;
       if (baseSystemPrompt) {
-        systemPrompt += "\n\n" + baseSystemPrompt;
+        systemPrompt += '\n\n' + baseSystemPrompt;
       }
-      systemPrompt += "\n\n" + memoryDocs;
+      systemPrompt += '\n\n' + memoryDocs;
 
       return handler({ ...request, systemPrompt });
     },

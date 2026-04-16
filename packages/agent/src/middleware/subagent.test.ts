@@ -1,26 +1,24 @@
-import { describe, it, expect, vi } from "vitest";
-import { MemorySaver } from "@langchain/langgraph-checkpoint";
-import { FakeListChatModel } from "@langchain/core/utils/testing";
+import { describe, it, expect, vi } from 'vitest';
+import { MemorySaver } from '@langchain/langgraph-checkpoint';
+import { FakeListChatModel } from '@langchain/core/utils/testing';
 import {
   AIMessage,
   BaseMessage,
   SystemMessage,
   HumanMessage,
   ToolMessage,
-} from "@langchain/core/messages";
-import { RunnableLambda } from "@langchain/core/runnables";
+} from '@langchain/core/messages';
+import { RunnableLambda } from '@langchain/core/runnables';
 
-import { createDeepAgent } from "../agent.js";
-import { createSkillsMiddleware } from "./skills.js";
-import { createFileData } from "../backends/utils.js";
-import { createMockBackend } from "./test.js";
+import { createDeepAgent } from '../agent.js';
+import { createSkillsMiddleware } from './skills.js';
+import { createFileData } from '../backends/utils.js';
+import { createMockBackend } from './test.js';
 
 /**
  * Helper to get all system prompts from model invoke spy calls.
  */
-function getAllSystemPromptsFromSpy(
-  invokeSpy: ReturnType<typeof vi.spyOn>,
-): string[] {
+function getAllSystemPromptsFromSpy(invokeSpy: ReturnType<typeof vi.spyOn>): string[] {
   const systemPrompts: string[] = [];
   for (const call of invokeSpy.mock.calls) {
     const messages = call[0] as BaseMessage[] | undefined;
@@ -51,59 +49,59 @@ Instructions for the test skill.
  * 2. skillsMetadata from subagent middleware doesn't bubble up to parent
  * 3. General-purpose subagent DOES inherit skills from main agent
  */
-describe("Subagent skills isolation", () => {
-  it("should NOT inherit skills for custom subagents", async () => {
+describe('Subagent skills isolation', () => {
+  it('should NOT inherit skills for custom subagents', async () => {
     /**
      * Test that custom subagents do NOT inherit skills from the main agent.
      * Custom subagents must explicitly define their own `skills` property to get skills.
      */
-    const invokeSpy = vi.spyOn(FakeListChatModel.prototype, "invoke");
+    const invokeSpy = vi.spyOn(FakeListChatModel.prototype, 'invoke');
 
     const taskToolCallId = `call_${Date.now()}`;
     const model = new FakeListChatModel({
       responses: [
         // Main agent invokes custom-worker subagent
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
             {
               id: taskToolCallId,
-              name: "task",
+              name: 'task',
               args: {
-                description: "Do some custom work",
-                subagent_type: "custom-worker",
+                description: 'Do some custom work',
+                subagent_type: 'custom-worker',
               },
             },
           ],
         }) as unknown as string,
         // Custom subagent completes
-        "Custom work done",
+        'Custom work done',
         // Extra responses
-        "Done",
-        "Done",
-        "Done",
+        'Done',
+        'Done',
+        'Done',
       ],
     });
 
     const checkpointer = new MemorySaver();
     const agent = createDeepAgent({
       model: model,
-      skills: ["/skills/"],
+      skills: ['/skills/'],
       checkpointer,
       subagents: [
         {
-          name: "custom-worker",
-          description: "A custom worker agent without skills",
-          systemPrompt: "You are a custom worker. This is your unique prompt.",
+          name: 'custom-worker',
+          description: 'A custom worker agent without skills',
+          systemPrompt: 'You are a custom worker. This is your unique prompt.',
         },
       ],
     });
 
     await agent.invoke(
       {
-        messages: [new HumanMessage("Test custom subagent")],
+        messages: [new HumanMessage('Test custom subagent')],
         files: {
-          "/skills/test-skill/SKILL.md": createFileData(TEST_SKILL_MD),
+          '/skills/test-skill/SKILL.md': createFileData(TEST_SKILL_MD),
         },
       },
       {
@@ -115,70 +113,68 @@ describe("Subagent skills isolation", () => {
     const systemPrompts = getAllSystemPromptsFromSpy(invokeSpy);
 
     // Main agent should have skills
-    const mainAgentPrompts = systemPrompts.filter((p) =>
-      p.includes("`task` (subagent spawner)"),
-    );
+    const mainAgentPrompts = systemPrompts.filter((p) => p.includes('`task` (subagent spawner)'));
     expect(mainAgentPrompts.length).toBeGreaterThan(0);
-    expect(mainAgentPrompts[0]).toContain("Skills System");
-    expect(mainAgentPrompts[0]).toContain("test-skill");
+    expect(mainAgentPrompts[0]).toContain('Skills System');
+    expect(mainAgentPrompts[0]).toContain('test-skill');
 
     // Custom subagent should have been invoked
     const customSubagentPrompts = systemPrompts.filter((p) =>
-      p.includes("You are a custom worker. This is your unique prompt."),
+      p.includes('You are a custom worker. This is your unique prompt.'),
     );
     expect(customSubagentPrompts.length).toBeGreaterThan(0);
     // Custom subagent should NOT have skills
-    expect(customSubagentPrompts[0]).not.toContain("Skills System");
-    expect(customSubagentPrompts[0]).not.toContain("test-skill");
+    expect(customSubagentPrompts[0]).not.toContain('Skills System');
+    expect(customSubagentPrompts[0]).not.toContain('test-skill');
 
     invokeSpy.mockRestore();
   });
 
-  it("should inherit skills for general-purpose subagent", async () => {
+  it('should inherit skills for general-purpose subagent', async () => {
     /**
      * Test that the general-purpose subagent DOES inherit skills from main agent.
      * This is the intended behavior - GP subagent has access to everything the main agent has.
      */
-    const invokeSpy = vi.spyOn(FakeListChatModel.prototype, "invoke");
+    const invokeSpy = vi.spyOn(FakeListChatModel.prototype, 'invoke');
 
     const taskToolCallId = `call_${Date.now()}`;
     const model = new FakeListChatModel({
       responses: [
         // Main agent invokes general-purpose subagent
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
             {
               id: taskToolCallId,
-              name: "task",
+              name: 'task',
               args: {
-                description: "Do something with skills",
-                subagent_type: "general-purpose",
+                description: 'Do something with skills',
+                subagent_type: 'general-purpose',
               },
             },
           ],
         }) as unknown as string,
         // GP subagent completes
-        "Subagent done",
+        'Subagent done',
         // Extra responses
-        "Done",
-        "Done",
-        "Done",
+        'Done',
+        'Done',
+        'Done',
       ],
     });
 
     const checkpointer = new MemorySaver();
     const agent = createDeepAgent({
       model,
-      skills: ["/skills/"],
+      skills: ['/skills/'],
       checkpointer,
     });
 
     await agent.invoke(
       {
-        messages: [new HumanMessage("Test GP subagent")],
+        messages: [new HumanMessage('Test GP subagent')],
         files: {
-          "/skills/test-skill/SKILL.md": createFileData(TEST_SKILL_MD),
+          '/skills/test-skill/SKILL.md': createFileData(TEST_SKILL_MD),
         },
       },
       {
@@ -191,25 +187,23 @@ describe("Subagent skills isolation", () => {
 
     // Main agent should have skills
     const mainAgentPrompts = systemPrompts.filter(
-      (p) =>
-        p.includes("test-skill") && p.includes("`task` (subagent spawner)"),
+      (p) => p.includes('test-skill') && p.includes('`task` (subagent spawner)'),
     );
     expect(mainAgentPrompts.length).toBeGreaterThan(0);
-    expect(mainAgentPrompts[0]).toContain("Skills System");
+    expect(mainAgentPrompts[0]).toContain('Skills System');
 
     // GP subagent should also have skills (no `task` tool in prompt)
     const gpSubagentPrompts = systemPrompts.filter(
-      (p) =>
-        p.includes("test-skill") && !p.includes("`task` (subagent spawner)"),
+      (p) => p.includes('test-skill') && !p.includes('`task` (subagent spawner)'),
     );
     expect(gpSubagentPrompts.length).toBeGreaterThan(0);
-    expect(gpSubagentPrompts[0]).toContain("Skills System");
-    expect(gpSubagentPrompts[0]).toContain("test-skill");
+    expect(gpSubagentPrompts[0]).toContain('Skills System');
+    expect(gpSubagentPrompts[0]).toContain('test-skill');
 
     invokeSpy.mockRestore();
   });
 
-  it("should not include skillsMetadata in parent agent final state", async () => {
+  it('should not include skillsMetadata in parent agent final state', async () => {
     /**
      * Test that skillsMetadata from subagent middleware doesn't bubble up to parent.
      *
@@ -221,27 +215,27 @@ describe("Subagent skills isolation", () => {
      * This works because skillsMetadata is in EXCLUDED_STATE_KEYS, which tells
      * the subagent middleware to exclude it from the returned state update.
      */
-    const model = new FakeListChatModel({ responses: ["Done"] });
+    const model = new FakeListChatModel({ responses: ['Done'] });
 
     // Create subagent with SkillsMiddleware
     const skillsMiddleware = createSkillsMiddleware({
       backend: createMockBackend({
         files: {
-          "/skills/user/subagent-skill/SKILL.md": `---
+          '/skills/user/subagent-skill/SKILL.md': `---
 name: subagent-skill
 description: A skill for the subagent
 ---
 # Subagent Skill`,
         },
         directories: {
-          "/skills/user/": [{ name: "subagent-skill", type: "directory" }],
+          '/skills/user/': [{ name: 'subagent-skill', type: 'directory' }],
         },
       }),
-      sources: ["/skills/user/"],
+      sources: ['/skills/user/'],
     });
 
     // Import createAgent for the subagent
-    const { createAgent } = await import("langchain");
+    const { createAgent } = await import('langchain');
     const subagent = createAgent({
       model,
       middleware: [skillsMiddleware],
@@ -253,8 +247,8 @@ description: A skill for the subagent
       checkpointer,
       subagents: [
         {
-          name: "skills-agent",
-          description: "Agent with skills middleware.",
+          name: 'skills-agent',
+          description: 'Agent with skills middleware.',
           runnable: subagent,
         },
       ],
@@ -262,7 +256,7 @@ description: A skill for the subagent
 
     const result = await parentAgent.invoke(
       {
-        messages: [new HumanMessage("Hello")],
+        messages: [new HumanMessage('Hello')],
       },
       {
         configurable: { thread_id: `test-skills-isolation-${Date.now()}` },
@@ -272,7 +266,7 @@ description: A skill for the subagent
 
     // Verify skillsMetadata is NOT in the parent agent's final state
     // This confirms EXCLUDED_STATE_KEYS is working correctly
-    expect(result).not.toHaveProperty("skillsMetadata");
+    expect(result).not.toHaveProperty('skillsMetadata');
   });
 });
 
@@ -286,17 +280,17 @@ description: A skill for the subagent
  *
  * These must be filtered out before constructing the ToolMessage.
  */
-describe("Subagent content block filtering", () => {
-  it("should filter tool_use blocks from subagent response content", async () => {
+describe('Subagent content block filtering', () => {
+  it('should filter tool_use blocks from subagent response content', async () => {
     const mockSubagent = RunnableLambda.from(async () => ({
       messages: [
         new AIMessage({
           content: [
-            { type: "text", text: "Here is the result" },
+            { type: 'text', text: 'Here is the result' },
             {
-              type: "tool_use",
-              id: "call_inner",
-              name: "some_tool",
+              type: 'tool_use',
+              id: 'call_inner',
+              name: 'some_tool',
               input: {},
             },
           ],
@@ -308,20 +302,20 @@ describe("Subagent content block filtering", () => {
     const model = new FakeListChatModel({
       responses: [
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
             {
               id: taskToolCallId,
-              name: "task",
+              name: 'task',
               args: {
-                description: "Do work",
-                subagent_type: "worker",
+                description: 'Do work',
+                subagent_type: 'worker',
               },
             },
           ],
         }) as unknown as string,
-        "Done",
-        "Done",
+        'Done',
+        'Done',
       ],
     });
 
@@ -331,53 +325,51 @@ describe("Subagent content block filtering", () => {
       checkpointer,
       subagents: [
         {
-          name: "worker",
-          description: "A worker agent",
+          name: 'worker',
+          description: 'A worker agent',
           runnable: mockSubagent,
         },
       ],
     });
 
     const result = await agent.invoke(
-      { messages: [new HumanMessage("Test")] },
+      { messages: [new HumanMessage('Test')] },
       {
         configurable: { thread_id: `test-tool-use-filter-${Date.now()}` },
         recursionLimit: 50,
       },
     );
 
-    const toolMessages = result.messages.filter((msg: BaseMessage) =>
-      ToolMessage.isInstance(msg),
-    );
+    const toolMessages = result.messages.filter((msg: BaseMessage) => ToolMessage.isInstance(msg));
     expect(toolMessages.length).toBeGreaterThan(0);
 
     for (const msg of toolMessages) {
       if (Array.isArray(msg.content)) {
         const invalidBlocks = (msg.content as Array<{ type: string }>).filter(
-          (block) => block.type === "tool_use",
+          (block) => block.type === 'tool_use',
         );
         expect(invalidBlocks).toHaveLength(0);
       }
     }
 
     const taskToolMessage = toolMessages.find(
-      (msg: BaseMessage) => (msg as ToolMessage).name === "task",
+      (msg: BaseMessage) => (msg as ToolMessage).name === 'task',
     ) as ToolMessage;
     expect(taskToolMessage).toBeDefined();
     expect(taskToolMessage.content).toContainEqual({
-      type: "text",
-      text: "Here is the result",
+      type: 'text',
+      text: 'Here is the result',
     });
   });
 
-  it("should filter thinking and redacted_thinking blocks from subagent response content", async () => {
+  it('should filter thinking and redacted_thinking blocks from subagent response content', async () => {
     const mockSubagent = RunnableLambda.from(async () => ({
       messages: [
         new AIMessage({
           content: [
-            { type: "thinking", thinking: "Let me reason about this..." },
-            { type: "redacted_thinking", data: "..." },
-            { type: "text", text: "Final answer" },
+            { type: 'thinking', thinking: 'Let me reason about this...' },
+            { type: 'redacted_thinking', data: '...' },
+            { type: 'text', text: 'Final answer' },
           ],
         }),
       ],
@@ -387,20 +379,20 @@ describe("Subagent content block filtering", () => {
     const model = new FakeListChatModel({
       responses: [
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
             {
               id: taskToolCallId,
-              name: "task",
+              name: 'task',
               args: {
-                description: "Do work",
-                subagent_type: "worker",
+                description: 'Do work',
+                subagent_type: 'worker',
               },
             },
           ],
         }) as unknown as string,
-        "Done",
-        "Done",
+        'Done',
+        'Done',
       ],
     });
 
@@ -410,15 +402,15 @@ describe("Subagent content block filtering", () => {
       checkpointer,
       subagents: [
         {
-          name: "worker",
-          description: "A worker agent",
+          name: 'worker',
+          description: 'A worker agent',
           runnable: mockSubagent,
         },
       ],
     });
 
     const result = await agent.invoke(
-      { messages: [new HumanMessage("Test")] },
+      { messages: [new HumanMessage('Test')] },
       {
         configurable: {
           thread_id: `test-thinking-filter-${Date.now()}`,
@@ -428,20 +420,16 @@ describe("Subagent content block filtering", () => {
     );
 
     const taskToolMessage = result.messages.find(
-      (msg: BaseMessage) =>
-        ToolMessage.isInstance(msg) && (msg as ToolMessage).name === "task",
+      (msg: BaseMessage) => ToolMessage.isInstance(msg) && (msg as ToolMessage).name === 'task',
     ) as ToolMessage;
     expect(taskToolMessage).toBeDefined();
     expect(taskToolMessage.content).toContainEqual({
-      type: "text",
-      text: "Final answer",
+      type: 'text',
+      text: 'Final answer',
     });
     if (Array.isArray(taskToolMessage.content)) {
-      const invalidBlocks = (
-        taskToolMessage.content as Array<{ type: string }>
-      ).filter(
-        (block) =>
-          block.type === "thinking" || block.type === "redacted_thinking",
+      const invalidBlocks = (taskToolMessage.content as Array<{ type: string }>).filter(
+        (block) => block.type === 'thinking' || block.type === 'redacted_thinking',
       );
       expect(invalidBlocks).toHaveLength(0);
     }
@@ -453,13 +441,13 @@ describe("Subagent content block filtering", () => {
         new AIMessage({
           content: [
             {
-              type: "tool_use",
-              id: "call_1",
-              name: "tool_a",
+              type: 'tool_use',
+              id: 'call_1',
+              name: 'tool_a',
               input: {},
             },
-            { type: "thinking", thinking: "internal reasoning" },
-            { type: "redacted_thinking", data: "..." },
+            { type: 'thinking', thinking: 'internal reasoning' },
+            { type: 'redacted_thinking', data: '...' },
           ],
         }),
       ],
@@ -469,20 +457,20 @@ describe("Subagent content block filtering", () => {
     const model = new FakeListChatModel({
       responses: [
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
             {
               id: taskToolCallId,
-              name: "task",
+              name: 'task',
               args: {
-                description: "Do work",
-                subagent_type: "worker",
+                description: 'Do work',
+                subagent_type: 'worker',
               },
             },
           ],
         }) as unknown as string,
-        "Done",
-        "Done",
+        'Done',
+        'Done',
       ],
     });
 
@@ -492,15 +480,15 @@ describe("Subagent content block filtering", () => {
       checkpointer,
       subagents: [
         {
-          name: "worker",
-          description: "A worker agent",
+          name: 'worker',
+          description: 'A worker agent',
           runnable: mockSubagent,
         },
       ],
     });
 
     const result = await agent.invoke(
-      { messages: [new HumanMessage("Test")] },
+      { messages: [new HumanMessage('Test')] },
       {
         configurable: {
           thread_id: `test-invalid-blocks-fallback-${Date.now()}`,
@@ -510,18 +498,17 @@ describe("Subagent content block filtering", () => {
     );
 
     const taskToolMessage = result.messages.find(
-      (msg: BaseMessage) =>
-        ToolMessage.isInstance(msg) && (msg as ToolMessage).name === "task",
+      (msg: BaseMessage) => ToolMessage.isInstance(msg) && (msg as ToolMessage).name === 'task',
     ) as ToolMessage;
     expect(taskToolMessage).toBeDefined();
-    expect(taskToolMessage.content).toBe("Task completed");
+    expect(taskToolMessage.content).toBe('Task completed');
   });
 
-  it("should pass through string content unchanged", async () => {
+  it('should pass through string content unchanged', async () => {
     const mockSubagent = RunnableLambda.from(async () => ({
       messages: [
         new AIMessage({
-          content: "Simple string result",
+          content: 'Simple string result',
         }),
       ],
     }));
@@ -530,20 +517,20 @@ describe("Subagent content block filtering", () => {
     const model = new FakeListChatModel({
       responses: [
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
             {
               id: taskToolCallId,
-              name: "task",
+              name: 'task',
               args: {
-                description: "Do work",
-                subagent_type: "worker",
+                description: 'Do work',
+                subagent_type: 'worker',
               },
             },
           ],
         }) as unknown as string,
-        "Done",
-        "Done",
+        'Done',
+        'Done',
       ],
     });
 
@@ -553,15 +540,15 @@ describe("Subagent content block filtering", () => {
       checkpointer,
       subagents: [
         {
-          name: "worker",
-          description: "A worker agent",
+          name: 'worker',
+          description: 'A worker agent',
           runnable: mockSubagent,
         },
       ],
     });
 
     const result = await agent.invoke(
-      { messages: [new HumanMessage("Test")] },
+      { messages: [new HumanMessage('Test')] },
       {
         configurable: {
           thread_id: `test-string-content-${Date.now()}`,
@@ -571,11 +558,10 @@ describe("Subagent content block filtering", () => {
     );
 
     const taskToolMessage = result.messages.find(
-      (msg: BaseMessage) =>
-        ToolMessage.isInstance(msg) && (msg as ToolMessage).name === "task",
+      (msg: BaseMessage) => ToolMessage.isInstance(msg) && (msg as ToolMessage).name === 'task',
     ) as ToolMessage;
     expect(taskToolMessage).toBeDefined();
-    expect(taskToolMessage.content).toBe("Simple string result");
+    expect(taskToolMessage.content).toBe('Simple string result');
   });
 });
 
@@ -586,10 +572,10 @@ describe("Subagent content block filtering", () => {
  * JSON-serialize it as the ToolMessage content instead of extracting the
  * last message text. This gives the supervisor predictable, parseable data.
  */
-describe("Subagent structured response", () => {
-  it("should serialize structuredResponse as ToolMessage content", async () => {
+describe('Subagent structured response', () => {
+  it('should serialize structuredResponse as ToolMessage content', async () => {
     const structuredData = {
-      findings: "Renewable energy adoption is accelerating",
+      findings: 'Renewable energy adoption is accelerating',
       confidence: 0.92,
       sources: 3,
     };
@@ -597,7 +583,7 @@ describe("Subagent structured response", () => {
     const mockSubagent = RunnableLambda.from(async () => ({
       messages: [
         new AIMessage({
-          content: "Here are my findings about renewable energy.",
+          content: 'Here are my findings about renewable energy.',
         }),
       ],
       structuredResponse: structuredData,
@@ -607,20 +593,20 @@ describe("Subagent structured response", () => {
     const model = new FakeListChatModel({
       responses: [
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
             {
               id: taskToolCallId,
-              name: "task",
+              name: 'task',
               args: {
-                description: "Analyze renewable energy trends",
-                subagent_type: "analyzer",
+                description: 'Analyze renewable energy trends',
+                subagent_type: 'analyzer',
               },
             },
           ],
         }) as unknown as string,
-        "Done",
-        "Done",
+        'Done',
+        'Done',
       ],
     });
 
@@ -630,15 +616,15 @@ describe("Subagent structured response", () => {
       checkpointer,
       subagents: [
         {
-          name: "analyzer",
-          description: "An analysis agent",
+          name: 'analyzer',
+          description: 'An analysis agent',
           runnable: mockSubagent,
         },
       ],
     });
 
     const result = await agent.invoke(
-      { messages: [new HumanMessage("Analyze renewable energy")] },
+      { messages: [new HumanMessage('Analyze renewable energy')] },
       {
         configurable: {
           thread_id: `test-structured-response-${Date.now()}`,
@@ -648,8 +634,7 @@ describe("Subagent structured response", () => {
     );
 
     const taskToolMessage = result.messages.find(
-      (msg: BaseMessage) =>
-        ToolMessage.isInstance(msg) && (msg as ToolMessage).name === "task",
+      (msg: BaseMessage) => ToolMessage.isInstance(msg) && (msg as ToolMessage).name === 'task',
     ) as ToolMessage;
     expect(taskToolMessage).toBeDefined();
     expect(taskToolMessage.content).toBe(JSON.stringify(structuredData));
@@ -658,11 +643,11 @@ describe("Subagent structured response", () => {
     expect(parsed).toEqual(structuredData);
   });
 
-  it("should fall back to last message when no structuredResponse is present", async () => {
+  it('should fall back to last message when no structuredResponse is present', async () => {
     const mockSubagent = RunnableLambda.from(async () => ({
       messages: [
         new AIMessage({
-          content: "Plain text result without structured response",
+          content: 'Plain text result without structured response',
         }),
       ],
     }));
@@ -671,20 +656,20 @@ describe("Subagent structured response", () => {
     const model = new FakeListChatModel({
       responses: [
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
             {
               id: taskToolCallId,
-              name: "task",
+              name: 'task',
               args: {
-                description: "Do work",
-                subagent_type: "worker",
+                description: 'Do work',
+                subagent_type: 'worker',
               },
             },
           ],
         }) as unknown as string,
-        "Done",
-        "Done",
+        'Done',
+        'Done',
       ],
     });
 
@@ -694,15 +679,15 @@ describe("Subagent structured response", () => {
       checkpointer,
       subagents: [
         {
-          name: "worker",
-          description: "A worker agent",
+          name: 'worker',
+          description: 'A worker agent',
           runnable: mockSubagent,
         },
       ],
     });
 
     const result = await agent.invoke(
-      { messages: [new HumanMessage("Test")] },
+      { messages: [new HumanMessage('Test')] },
       {
         configurable: {
           thread_id: `test-no-structured-response-${Date.now()}`,
@@ -712,12 +697,9 @@ describe("Subagent structured response", () => {
     );
 
     const taskToolMessage = result.messages.find(
-      (msg: BaseMessage) =>
-        ToolMessage.isInstance(msg) && (msg as ToolMessage).name === "task",
+      (msg: BaseMessage) => ToolMessage.isInstance(msg) && (msg as ToolMessage).name === 'task',
     ) as ToolMessage;
     expect(taskToolMessage).toBeDefined();
-    expect(taskToolMessage.content).toBe(
-      "Plain text result without structured response",
-    );
+    expect(taskToolMessage.content).toBe('Plain text result without structured response');
   });
 });

@@ -7,8 +7,8 @@ import {
   getConfig,
   getCurrentTaskInput,
   getStore as getLangGraphStore,
-} from "@langchain/langgraph";
-import type { BaseStore } from "@langchain/langgraph-checkpoint";
+} from '@langchain/langgraph';
+import type { BaseStore } from '@langchain/langgraph-checkpoint';
 import type {
   BackendOptions,
   BackendProtocolV2,
@@ -24,7 +24,7 @@ import type {
   ReadResult,
   WriteResult,
   StateAndStore,
-} from "./protocol.js";
+} from './protocol.js';
 import {
   createFileData,
   fileDataToString,
@@ -37,23 +37,19 @@ import {
   migrateToFileDataV2,
   performStringReplacement,
   updateFileData,
-} from "./utils.js";
+} from './utils.js';
 
 const NAMESPACE_COMPONENT_RE = /^[A-Za-z0-9\-_.@+:~]+$/;
 
 function getObjectRecord(value: unknown): Record<string, unknown> | undefined {
-  return value != null && typeof value === "object"
+  return value != null && typeof value === 'object'
     ? (value as Record<string, unknown>)
     : undefined;
 }
 
-function getAssistantIdFromRecord(
-  value: Record<string, unknown> | undefined,
-): string | undefined {
+function getAssistantIdFromRecord(value: Record<string, unknown> | undefined): string | undefined {
   const assistantId = value?.assistant_id ?? value?.assistantId;
-  return typeof assistantId === "string" && assistantId.length > 0
-    ? assistantId
-    : undefined;
+  return typeof assistantId === 'string' && assistantId.length > 0 ? assistantId : undefined;
 }
 
 /**
@@ -68,11 +64,11 @@ function getAssistantIdFromRecord(
  */
 function validateNamespace(namespace: string[]): string[] {
   if (namespace.length === 0) {
-    throw new Error("Namespace array must not be empty.");
+    throw new Error('Namespace array must not be empty.');
   }
   for (let i = 0; i < namespace.length; i++) {
     const component = namespace[i];
-    if (typeof component !== "string") {
+    if (typeof component !== 'string') {
       throw new TypeError(
         `Namespace component at index ${i} must be a string, got ${typeof component}.`,
       );
@@ -180,7 +176,7 @@ export class StoreBackend implements BackendProtocolV2 {
   private stateAndStore: StateAndStore | undefined;
   private storeOverride: BaseStore | undefined;
   private _namespace: string[] | StoreBackendNamespaceFactory | undefined;
-  private fileFormat: "v1" | "v2";
+  private fileFormat: 'v1' | 'v2';
 
   constructor(options?: StoreBackendOptions);
   /**
@@ -194,8 +190,8 @@ export class StoreBackend implements BackendProtocolV2 {
     let opts: StoreBackendOptions | undefined;
     if (
       stateAndStoreOrOptions != null &&
-      typeof stateAndStoreOrOptions === "object" &&
-      "state" in stateAndStoreOrOptions
+      typeof stateAndStoreOrOptions === 'object' &&
+      'state' in stateAndStoreOrOptions
     ) {
       // Legacy path
       this.stateAndStore = stateAndStoreOrOptions;
@@ -211,7 +207,7 @@ export class StoreBackend implements BackendProtocolV2 {
       this._namespace = opts.namespace;
     }
     this.storeOverride = opts?.store;
-    this.fileFormat = opts?.fileFormat ?? "v2";
+    this.fileFormat = opts?.fileFormat ?? 'v2';
   }
 
   /**
@@ -228,7 +224,7 @@ export class StoreBackend implements BackendProtocolV2 {
     if (this.stateAndStore) {
       const store = this.stateAndStore.store;
       if (!store) {
-        throw new Error("Store is required but not available in runtime");
+        throw new Error('Store is required but not available in runtime');
       }
       return store;
     }
@@ -240,8 +236,8 @@ export class StoreBackend implements BackendProtocolV2 {
     const store = getLangGraphStore();
     if (!store) {
       throw new Error(
-        "Store is required but not available in LangGraph execution context. " +
-          "Ensure the graph was configured with a store.",
+        'Store is required but not available in LangGraph execution context. ' +
+          'Ensure the graph was configured with a store.',
       );
     }
 
@@ -304,16 +300,13 @@ export class StoreBackend implements BackendProtocolV2 {
   private getLegacyAssistantId(): string | undefined {
     const config = this.getNamespaceConfig();
     const assistantIdFromConfig =
-      getAssistantIdFromRecord(config?.metadata) ??
-      getAssistantIdFromRecord(config?.configurable);
+      getAssistantIdFromRecord(config?.metadata) ?? getAssistantIdFromRecord(config?.configurable);
     if (assistantIdFromConfig) {
       return assistantIdFromConfig;
     }
 
     const assistantId = this.stateAndStore?.assistantId;
-    return typeof assistantId === "string" && assistantId.length > 0
-      ? assistantId
-      : undefined;
+    return typeof assistantId === 'string' && assistantId.length > 0 ? assistantId : undefined;
   }
 
   /**
@@ -343,10 +336,10 @@ export class StoreBackend implements BackendProtocolV2 {
 
     const assistantId = this.getLegacyAssistantId();
     if (assistantId) {
-      return [assistantId, "filesystem"];
+      return [assistantId, 'filesystem'];
     }
 
-    return ["filesystem"];
+    return ['filesystem'];
   }
 
   /**
@@ -362,16 +355,16 @@ export class StoreBackend implements BackendProtocolV2 {
     const hasValidContent =
       value.content !== undefined &&
       (Array.isArray(value.content) ||
-        typeof value.content === "string" ||
+        typeof value.content === 'string' ||
         ArrayBuffer.isView(value.content));
 
     if (
       !hasValidContent ||
-      typeof value.created_at !== "string" ||
-      typeof value.modified_at !== "string"
+      typeof value.created_at !== 'string' ||
+      typeof value.modified_at !== 'string'
     ) {
       throw new Error(
-        `Store item does not contain valid FileData fields. Got keys: ${Object.keys(value).join(", ")}`,
+        `Store item does not contain valid FileData fields. Got keys: ${Object.keys(value).join(', ')}`,
       );
     }
 
@@ -392,7 +385,7 @@ export class StoreBackend implements BackendProtocolV2 {
   private convertFileDataToStoreValue(fileData: FileData): Record<string, any> {
     return {
       content: fileData.content,
-      ...("mimeType" in fileData ? { mimeType: fileData.mimeType } : {}),
+      ...('mimeType' in fileData ? { mimeType: fileData.mimeType } : {}),
       created_at: fileData.created_at,
       modified_at: fileData.modified_at,
     };
@@ -461,7 +454,7 @@ export class StoreBackend implements BackendProtocolV2 {
     const subdirs = new Set<string>();
 
     // Normalize path to have trailing slash for proper prefix matching
-    const normalizedPath = path.endsWith("/") ? path : path + "/";
+    const normalizedPath = path.endsWith('/') ? path : path + '/';
 
     for (const item of items) {
       const itemKey = String(item.key);
@@ -475,10 +468,10 @@ export class StoreBackend implements BackendProtocolV2 {
       const relative = itemKey.substring(normalizedPath.length);
 
       // If relative path contains '/', it's in a subdirectory
-      if (relative.includes("/")) {
+      if (relative.includes('/')) {
         // Extract the immediate subdirectory name
-        const subdirName = relative.split("/")[0];
-        subdirs.add(normalizedPath + subdirName + "/");
+        const subdirName = relative.split('/')[0];
+        subdirs.add(normalizedPath + subdirName + '/');
         continue;
       }
 
@@ -486,7 +479,7 @@ export class StoreBackend implements BackendProtocolV2 {
       try {
         const fd = this.convertStoreItemToFileData(item);
         const size = isFileDataV1(fd)
-          ? fd.content.join("\n").length
+          ? fd.content.join('\n').length
           : isFileDataBinary(fd)
             ? fd.content.byteLength
             : fd.content.length;
@@ -508,7 +501,7 @@ export class StoreBackend implements BackendProtocolV2 {
         path: subdir,
         is_dir: true,
         size: 0,
-        modified_at: "",
+        modified_at: '',
       });
     }
 
@@ -527,15 +520,11 @@ export class StoreBackend implements BackendProtocolV2 {
    * @param limit - Maximum number of lines to read
    * @returns ReadResult with content on success or error on failure
    */
-  async read(
-    filePath: string,
-    offset: number = 0,
-    limit: number = 500,
-  ): Promise<ReadResult> {
+  async read(filePath: string, offset: number = 0, limit: number = 500): Promise<ReadResult> {
     try {
       const readRawResult = await this.readRaw(filePath);
       if (readRawResult.error || !readRawResult.data) {
-        return { error: readRawResult.error || "File data not found" };
+        return { error: readRawResult.error || 'File data not found' };
       }
 
       const fileDataV2 = migrateToFileDataV2(readRawResult.data, filePath);
@@ -545,14 +534,14 @@ export class StoreBackend implements BackendProtocolV2 {
         return { content: fileDataV2.content, mimeType: fileDataV2.mimeType };
       }
 
-      if (typeof fileDataV2.content !== "string") {
+      if (typeof fileDataV2.content !== 'string') {
         return {
           error: `File '${filePath}' has binary content but text MIME type`,
         };
       }
-      const lines = fileDataV2.content.split("\n");
+      const lines = fileDataV2.content.split('\n');
       const selected = lines.slice(offset, offset + limit);
-      return { content: selected.join("\n"), mimeType: fileDataV2.mimeType };
+      return { content: selected.join('\n'), mimeType: fileDataV2.mimeType };
     } catch (e: any) {
       return { error: e.message };
     }
@@ -593,12 +582,7 @@ export class StoreBackend implements BackendProtocolV2 {
 
     // Create new file
     const mimeType = getMimeType(filePath);
-    const fileData = createFileData(
-      content,
-      undefined,
-      this.fileFormat,
-      mimeType,
-    );
+    const fileData = createFileData(content, undefined, this.fileFormat, mimeType);
     const storeValue = this.convertFileDataToStoreValue(fileData);
     await store.put(namespace, filePath, storeValue);
     return { path: filePath, filesUpdate: null };
@@ -626,14 +610,9 @@ export class StoreBackend implements BackendProtocolV2 {
     try {
       const fileData = this.convertStoreItemToFileData(item);
       const content = fileDataToString(fileData);
-      const result = performStringReplacement(
-        content,
-        oldString,
-        newString,
-        replaceAll,
-      );
+      const result = performStringReplacement(content, oldString, newString, replaceAll);
 
-      if (typeof result === "string") {
+      if (typeof result === 'string') {
         return { error: result };
       }
 
@@ -653,11 +632,7 @@ export class StoreBackend implements BackendProtocolV2 {
    * Search file contents for a literal text pattern.
    * Binary files are skipped.
    */
-  async grep(
-    pattern: string,
-    path: string = "/",
-    glob: string | null = null,
-  ): Promise<GrepResult> {
+  async grep(pattern: string, path: string = '/', glob: string | null = null): Promise<GrepResult> {
     const store = this.getStore();
     const namespace = this.getNamespace();
     const items = await this.searchStorePaginated(store, namespace);
@@ -679,7 +654,7 @@ export class StoreBackend implements BackendProtocolV2 {
   /**
    * Structured glob matching returning FileInfo objects.
    */
-  async glob(pattern: string, path: string = "/"): Promise<GlobResult> {
+  async glob(pattern: string, path: string = '/'): Promise<GlobResult> {
     const store = this.getStore();
     const namespace = this.getNamespace();
     const items = await this.searchStorePaginated(store, namespace);
@@ -695,17 +670,17 @@ export class StoreBackend implements BackendProtocolV2 {
     }
 
     const result = globSearchFiles(files, pattern, path);
-    if (result === "No files found") {
+    if (result === 'No files found') {
       return { files: [] };
     }
 
-    const paths = result.split("\n");
+    const paths = result.split('\n');
     const infos: FileInfo[] = [];
     for (const p of paths) {
       const fd = files[p];
       const size = fd
         ? isFileDataV1(fd)
-          ? fd.content.join("\n").length
+          ? fd.content.join('\n').length
           : isFileDataBinary(fd)
             ? fd.content.byteLength
             : fd.content.length
@@ -714,7 +689,7 @@ export class StoreBackend implements BackendProtocolV2 {
         path: p,
         is_dir: false,
         size: size,
-        modified_at: fd?.modified_at || "",
+        modified_at: fd?.modified_at || '',
       });
     }
     return { files: infos };
@@ -726,9 +701,7 @@ export class StoreBackend implements BackendProtocolV2 {
    * @param files - List of [path, content] tuples to upload
    * @returns List of FileUploadResponse objects, one per input file
    */
-  async uploadFiles(
-    files: Array<[string, Uint8Array]>,
-  ): Promise<FileUploadResponse[]> {
+  async uploadFiles(files: Array<[string, Uint8Array]>): Promise<FileUploadResponse[]> {
     const store = this.getStore();
     const namespace = this.getNamespace();
     const responses: FileUploadResponse[] = [];
@@ -736,26 +709,21 @@ export class StoreBackend implements BackendProtocolV2 {
     for (const [path, content] of files) {
       try {
         const mimeType = getMimeType(path);
-        const isBinary = this.fileFormat === "v2" && !isTextMimeType(mimeType);
+        const isBinary = this.fileFormat === 'v2' && !isTextMimeType(mimeType);
 
         let fileData: FileData;
         if (isBinary) {
-          fileData = createFileData(content, undefined, "v2", mimeType);
+          fileData = createFileData(content, undefined, 'v2', mimeType);
         } else {
           const contentStr = new TextDecoder().decode(content);
-          fileData = createFileData(
-            contentStr,
-            undefined,
-            this.fileFormat,
-            mimeType,
-          );
+          fileData = createFileData(contentStr, undefined, this.fileFormat, mimeType);
         }
 
         const storeValue = this.convertFileDataToStoreValue(fileData);
         await store.put(namespace, path, storeValue);
         responses.push({ path, error: null });
       } catch {
-        responses.push({ path, error: "invalid_path" });
+        responses.push({ path, error: 'invalid_path' });
       }
     }
 
@@ -777,21 +745,21 @@ export class StoreBackend implements BackendProtocolV2 {
       try {
         const item = await store.get(namespace, path);
         if (!item) {
-          responses.push({ path, content: null, error: "file_not_found" });
+          responses.push({ path, content: null, error: 'file_not_found' });
           continue;
         }
 
         const fileData = this.convertStoreItemToFileData(item);
         const fileDataV2 = migrateToFileDataV2(fileData, path);
 
-        if (typeof fileDataV2.content === "string") {
+        if (typeof fileDataV2.content === 'string') {
           const content = new TextEncoder().encode(fileDataV2.content);
           responses.push({ path, content, error: null });
         } else {
           responses.push({ path, content: fileDataV2.content, error: null });
         }
       } catch {
-        responses.push({ path, content: null, error: "file_not_found" });
+        responses.push({ path, content: null, error: 'file_not_found' });
       }
     }
 

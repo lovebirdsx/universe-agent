@@ -1,15 +1,15 @@
-import { useState } from 'react'
-import { Button } from '@universe-agent/ui'
-import { formatMoney, cn } from '@universe-agent/shared'
+import { useState } from 'react';
+import { Button } from '@universe-agent/ui';
+import { formatMoney, cn } from '@universe-agent/shared';
 
 const PRODUCTS = [
   { id: 1, name: 'Widget Pro', price: 49.99 },
   { id: 2, name: 'Gadget Plus', price: 129.0 },
   { id: 3, name: 'Doohickey', price: 9.99 },
-] as const
+] as const;
 
 export default function App() {
-  const [selected, setSelected] = useState<number | null>(null)
+  const [selected, setSelected] = useState<number | null>(null);
 
   return (
     <main
@@ -52,5 +52,5 @@ export default function App() {
         </p>
       )}
     </main>
-  )
+  );
 }

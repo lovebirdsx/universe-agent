@@ -1,7 +1,7 @@
-import { Hono } from 'hono'
-import { formatMoney } from '@universe-agent/shared'
+import { Hono } from 'hono';
+import { formatMoney } from '@universe-agent/shared';
 
-const app = new Hono()
+const app = new Hono();
 
 app.get('/', (c) => {
   return c.json({
@@ -11,11 +11,11 @@ app.get('/', (c) => {
       price_eur: formatMoney(129.0, 'EUR'),
     },
     timestamp: new Date().toISOString(),
-  })
-})
+  });
+});
 
 app.get('/health', (c) => {
-  return c.json({ status: 'ok' })
-})
+  return c.json({ status: 'ok' });
+});
 
-export { app }
+export { app };

@@ -7,26 +7,14 @@
  * - v2 (current): {@link ./v2/protocol.js}
  */
 
-import type { Runtime, ToolRuntime } from "langchain";
-import type { BaseStore } from "@langchain/langgraph-checkpoint";
-import type {
-  BackendProtocolV1,
-  SandboxBackendProtocolV1,
-} from "./v1/protocol.js";
-import type {
-  BackendProtocolV2,
-  SandboxBackendProtocolV2,
-} from "./v2/protocol.js";
-import { adaptBackendProtocol, adaptSandboxProtocol } from "./utils.js";
+import type { Runtime, ToolRuntime } from 'langchain';
+import type { BaseStore } from '@langchain/langgraph-checkpoint';
+import type { BackendProtocolV1, SandboxBackendProtocolV1 } from './v1/protocol.js';
+import type { BackendProtocolV2, SandboxBackendProtocolV2 } from './v2/protocol.js';
+import { adaptBackendProtocol, adaptSandboxProtocol } from './utils.js';
 
-export type {
-  BackendProtocolV1,
-  SandboxBackendProtocolV1,
-} from "./v1/protocol.js";
-export type {
-  BackendProtocolV2,
-  SandboxBackendProtocolV2,
-} from "./v2/protocol.js";
+export type { BackendProtocolV1, SandboxBackendProtocolV1 } from './v1/protocol.js';
+export type { BackendProtocolV2, SandboxBackendProtocolV2 } from './v2/protocol.js';
 
 /** @deprecated Use {@link BackendProtocolV2} instead. */
 export interface BackendProtocol extends BackendProtocolV1 {}
@@ -232,10 +220,10 @@ export interface ExecuteResponse {
  * Standardized error codes for file upload/download operations.
  */
 export type FileOperationError =
-  | "file_not_found"
-  | "permission_denied"
-  | "is_directory"
-  | "invalid_path";
+  | 'file_not_found'
+  | 'permission_denied'
+  | 'is_directory'
+  | 'invalid_path';
 
 /**
  * Result of a single file download operation.
@@ -264,7 +252,7 @@ export interface FileUploadResponse {
  */
 export interface BackendOptions {
   /** File data format to use for new writes. Defaults to "v2". */
-  fileFormat?: "v1" | "v2";
+  fileFormat?: 'v1' | 'v2';
 }
 
 /**
@@ -273,15 +261,13 @@ export interface BackendOptions {
  * @param backend - Backend instance to check
  * @returns True if the backend implements SandboxBackendProtocolV2
  */
-export function isSandboxBackend(
-  backend: unknown,
-): backend is SandboxBackendProtocolV2 {
+export function isSandboxBackend(backend: unknown): backend is SandboxBackendProtocolV2 {
   return (
     backend != null &&
-    typeof backend === "object" &&
-    typeof (backend as SandboxBackendProtocolV2).execute === "function" &&
-    typeof (backend as SandboxBackendProtocolV2).id === "string" &&
-    (backend as SandboxBackendProtocolV2).id !== ""
+    typeof backend === 'object' &&
+    typeof (backend as SandboxBackendProtocolV2).execute === 'function' &&
+    typeof (backend as SandboxBackendProtocolV2).id === 'string' &&
+    (backend as SandboxBackendProtocolV2).id !== ''
   );
 }
 
@@ -291,9 +277,7 @@ export function isSandboxBackend(
  * Use this when accepting either protocol version. Pass through
  * {@link adaptSandboxProtocol} to normalize to {@link SandboxBackendProtocolV2}.
  */
-export type AnySandboxProtocol =
-  | SandboxBackendProtocol
-  | SandboxBackendProtocolV2;
+export type AnySandboxProtocol = SandboxBackendProtocol | SandboxBackendProtocolV2;
 
 /**
  * Type guard to check if a backend is a sandbox protocol (v1 or v2).
@@ -304,15 +288,13 @@ export type AnySandboxProtocol =
  * @param backend - Backend instance to check
  * @returns True if the backend implements sandbox protocol (v1 or v2)
  */
-export function isSandboxProtocol(
-  backend: unknown,
-): backend is AnySandboxProtocol {
+export function isSandboxProtocol(backend: unknown): backend is AnySandboxProtocol {
   return (
     backend != null &&
-    typeof backend === "object" &&
-    typeof (backend as any).execute === "function" &&
-    typeof (backend as any).id === "string" &&
-    (backend as any).id !== ""
+    typeof backend === 'object' &&
+    typeof (backend as any).execute === 'function' &&
+    typeof (backend as any).id === 'string' &&
+    (backend as any).id !== ''
   );
 }
 
@@ -428,17 +410,17 @@ export interface SandboxDeleteOptions {
  */
 export type SandboxErrorCode =
   /** Sandbox has not been initialized - call initialize() first */
-  | "NOT_INITIALIZED"
+  | 'NOT_INITIALIZED'
   /** Sandbox is already initialized - cannot initialize twice */
-  | "ALREADY_INITIALIZED"
+  | 'ALREADY_INITIALIZED'
   /** Command execution timed out */
-  | "COMMAND_TIMEOUT"
+  | 'COMMAND_TIMEOUT'
   /** Command execution failed */
-  | "COMMAND_FAILED"
+  | 'COMMAND_FAILED'
   /** File operation (read/write) failed */
-  | "FILE_OPERATION_FAILED";
+  | 'FILE_OPERATION_FAILED';
 
-const SANDBOX_ERROR_SYMBOL = Symbol.for("sandbox.error");
+const SANDBOX_ERROR_SYMBOL = Symbol.for('sandbox.error');
 
 /**
  * Custom error class for sandbox operations.
@@ -472,7 +454,7 @@ export class SandboxError extends Error {
   [SANDBOX_ERROR_SYMBOL] = true as const;
 
   /** Error name for instanceof checks and logging */
-  override readonly name: string = "SandboxError";
+  override readonly name: string = 'SandboxError';
 
   /**
    * Creates a new SandboxError.
@@ -491,7 +473,7 @@ export class SandboxError extends Error {
 
   static isInstance(error: unknown): error is SandboxError {
     return (
-      typeof error === "object" &&
+      typeof error === 'object' &&
       error !== null &&
       (error as Record<symbol, unknown>)[SANDBOX_ERROR_SYMBOL] === true
     );
@@ -556,9 +538,7 @@ export interface BackendRuntime<StateT = unknown> extends Runtime {
  * });
  * ```
  */
-export type BackendFactory = (
-  runtime: BackendRuntime,
-) => MaybePromise<AnyBackendProtocol>;
+export type BackendFactory = (runtime: BackendRuntime) => MaybePromise<AnyBackendProtocol>;
 
 /**
  * Resolve a backend instance or await a {@link BackendFactory}.
@@ -573,13 +553,11 @@ export async function resolveBackend(
   backend: AnyBackendProtocol | BackendFactory,
   runtime: BackendRuntime | ToolRuntime,
 ): Promise<BackendProtocolV2> {
-  if (typeof backend === "function") {
+  if (typeof backend === 'function') {
     const resolved = await backend(runtime as BackendRuntime);
     return isSandboxProtocol(resolved)
       ? adaptSandboxProtocol(resolved)
       : adaptBackendProtocol(resolved);
   }
-  return isSandboxProtocol(backend)
-    ? adaptSandboxProtocol(backend)
-    : adaptBackendProtocol(backend);
+  return isSandboxProtocol(backend) ? adaptSandboxProtocol(backend) : adaptBackendProtocol(backend);
 }

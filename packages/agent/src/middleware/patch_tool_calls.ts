@@ -6,9 +6,9 @@ import {
    * required for type inference
    */
   type AgentMiddleware as _AgentMiddleware,
-} from "langchain";
-import { RemoveMessage, type BaseMessage } from "@langchain/core/messages";
-import { REMOVE_ALL_MESSAGES } from "@langchain/langgraph";
+} from 'langchain';
+import { RemoveMessage, type BaseMessage } from '@langchain/core/messages';
+import { REMOVE_ALL_MESSAGES } from '@langchain/langgraph';
 
 /**
  * Patch tool call / tool response parity in a messages array.
@@ -75,9 +75,7 @@ export function patchDanglingToolCalls(messages: BaseMessage[]): {
         // Look for a corresponding ToolMessage in the messages after this one
         const correspondingToolMsg = messages
           .slice(i + 1)
-          .find(
-            (m) => ToolMessage.isInstance(m) && m.tool_call_id === toolCall.id,
-          );
+          .find((m) => ToolMessage.isInstance(m) && m.tool_call_id === toolCall.id);
 
         if (!correspondingToolMsg) {
           // We have a dangling tool call which needs a ToolMessage
@@ -133,7 +131,7 @@ export function patchDanglingToolCalls(messages: BaseMessage[]): {
  */
 export function createPatchToolCallsMiddleware() {
   return createMiddleware({
-    name: "patchToolCallsMiddleware",
+    name: 'patchToolCallsMiddleware',
     beforeAgent: async (state) => {
       const messages = state.messages;
 
@@ -152,10 +150,7 @@ export function createPatchToolCallsMiddleware() {
 
       // Return state update with RemoveMessage followed by patched messages
       return {
-        messages: [
-          new RemoveMessage({ id: REMOVE_ALL_MESSAGES }),
-          ...patchedMessages,
-        ],
+        messages: [new RemoveMessage({ id: REMOVE_ALL_MESSAGES }), ...patchedMessages],
       };
     },
 

@@ -21,11 +21,24 @@
     "clean": "tsc --build --clean"
   },
   "dependencies": {
-    "@universe-agent/shared": "workspace:*"
+    "@universe-agent/shared": "workspace:*",
+    "langchain": "catalog:",
+    "@langchain/core": "catalog:",
+    "@langchain/langgraph": "catalog:",
+    "@langchain/langgraph-checkpoint": "catalog:",
+    "@langchain/langgraph-sdk": "catalog:",
+    "@langchain/anthropic": "catalog:",
+    "langsmith": "catalog:",
+    "zod": "catalog:",
+    "yaml": "catalog:",
+    "micromatch": "catalog:",
+    "fast-glob": "catalog:"
   },
   "devDependencies": {
     "@universe-agent/config-eslint": "workspace:*",
     "@universe-agent/config-ts": "workspace:*",
+    "@types/micromatch": "catalog:",
+    "@types/node": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

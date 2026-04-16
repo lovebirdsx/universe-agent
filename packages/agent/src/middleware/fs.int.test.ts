@@ -1,34 +1,31 @@
-import { describe, it, expect } from "vitest";
-import { createAgent } from "langchain";
-import { HumanMessage, ToolMessage } from "@langchain/core/messages";
-import { InMemoryStore } from "@langchain/langgraph-checkpoint";
-import { MemorySaver } from "@langchain/langgraph";
-import { createDeepAgent } from "../index.js";
-import {
-  createFilesystemMiddleware,
-  WRITE_FILE_TOOL_DESCRIPTION,
-} from "./fs.js";
+import { describe, it, expect } from 'vitest';
+import { createAgent } from 'langchain';
+import { HumanMessage, ToolMessage } from '@langchain/core/messages';
+import { InMemoryStore } from '@langchain/langgraph-checkpoint';
+import { MemorySaver } from '@langchain/langgraph';
+import { createDeepAgent } from '../index.js';
+import { createFilesystemMiddleware, WRITE_FILE_TOOL_DESCRIPTION } from './fs.js';
 import {
   StateBackend,
   StoreBackend,
   CompositeBackend,
   type BackendRuntime,
-} from "../backends/index.js";
-import { fileDataToString } from "../backends/utils.js";
-import type { FileData } from "../backends/protocol.js";
+} from '../backends/index.js';
+import { fileDataToString } from '../backends/utils.js';
+import type { FileData } from '../backends/protocol.js';
 import {
   SAMPLE_MODEL,
   getPremierLeagueStandings,
   getLaLigaStandings,
   getNbaStandings,
-} from "../testing/utils.js";
+} from '../testing/utils.js';
 
-describe("Filesystem Middleware Integration Tests", () => {
+describe('Filesystem Middleware Integration Tests', () => {
   it.concurrent.each([
-    { useComposite: false, label: "StateBackend" },
-    { useComposite: true, label: "CompositeBackend" },
+    { useComposite: false, label: 'StateBackend' },
+    { useComposite: true, label: 'CompositeBackend' },
   ])(
-    "should override filesystem system prompt ($label)",
+    'should override filesystem system prompt ($label)',
     { timeout: 90 * 1000 }, // 90s
     async ({ useComposite }) => {
       const checkpointer = useComposite ? new MemorySaver() : undefined;
@@ -37,14 +34,13 @@ describe("Filesystem Middleware Integration Tests", () => {
       const backend = useComposite
         ? (runtime: BackendRuntime) =>
             new CompositeBackend(new StateBackend(runtime), {
-              "/memories/": new StoreBackend(runtime),
+              '/memories/': new StoreBackend(runtime),
             })
         : undefined; // Use default StateBackend
 
       const filesystemMiddleware = createFilesystemMiddleware({
         backend,
-        systemPrompt:
-          "In every single response, you must say the word 'pokemon'! You love it!",
+        systemPrompt: "In every single response, you must say the word 'pokemon'! You love it!",
       });
 
       const agent = createAgent({
@@ -59,23 +55,21 @@ describe("Filesystem Middleware Integration Tests", () => {
         : undefined;
       const response = await agent.invoke(
         {
-          messages: [new HumanMessage("What do you like?")],
+          messages: [new HumanMessage('What do you like?')],
         },
         config,
       );
 
       const lastMessage = response.messages[response.messages.length - 1];
-      expect(lastMessage.content.toString().toLowerCase()).toMatch(
-        /pok[ée]mon/,
-      );
+      expect(lastMessage.content.toString().toLowerCase()).toMatch(/pok[ée]mon/);
     },
   );
 
   it.concurrent.each([
-    { useComposite: false, label: "StateBackend" },
-    { useComposite: true, label: "CompositeBackend" },
+    { useComposite: false, label: 'StateBackend' },
+    { useComposite: true, label: 'CompositeBackend' },
   ])(
-    "should override filesystem tool descriptions ($label)",
+    'should override filesystem tool descriptions ($label)',
     { timeout: 90 * 1000 }, // 90s
     async ({ useComposite }) => {
       const checkpointer = useComposite ? new MemorySaver() : undefined;
@@ -84,7 +78,7 @@ describe("Filesystem Middleware Integration Tests", () => {
       const backend = useComposite
         ? (runtime: BackendRuntime) =>
             new CompositeBackend(new StateBackend(runtime), {
-              "/memories/": new StoreBackend(runtime),
+              '/memories/': new StoreBackend(runtime),
             })
         : undefined;
 
@@ -94,9 +88,9 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend,
             customToolDescriptions: {
-              ls: "Charmander",
-              read_file: "Bulbasaur",
-              edit_file: "Squirtle",
+              ls: 'Charmander',
+              read_file: 'Bulbasaur',
+              edit_file: 'Squirtle',
             },
           }),
         ] as const,
@@ -112,34 +106,34 @@ describe("Filesystem Middleware Integration Tests", () => {
       }
 
       expect(tools).toMatchObject({
-        ls: { description: "Charmander" },
-        read_file: { description: "Bulbasaur" },
+        ls: { description: 'Charmander' },
+        read_file: { description: 'Bulbasaur' },
         write_file: {
           description: WRITE_FILE_TOOL_DESCRIPTION,
         },
         edit_file: {
-          description: "Squirtle",
+          description: 'Squirtle',
         },
       });
     },
   );
 
   it.concurrent(
-    "should list longterm memory files without path",
+    'should list longterm memory files without path',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
-      await store.put(["filesystem"], "/test.txt", {
-        content: ["Hello world"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/test.txt', {
+        content: ['Hello world'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
-      await store.put(["filesystem"], "/pokemon/charmander.txt", {
-        content: ["Ember"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/pokemon/charmander.txt', {
+        content: ['Ember'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
 
       const agent = createAgent({
@@ -148,7 +142,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ] as const,
@@ -159,17 +153,17 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config = { configurable: { thread_id: crypto.randomUUID() } };
       const response = await agent.invoke(
         {
-          messages: [new HumanMessage("List all of your files")],
+          messages: [new HumanMessage('List all of your files')],
           files: {
-            "/pizza.txt": {
-              content: ["Hello world"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/pizza.txt': {
+              content: ['Hello world'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
-            "/pokemon/squirtle.txt": {
-              content: ["Splash"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/pokemon/squirtle.txt': {
+              content: ['Splash'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
           },
         } as any,
@@ -177,34 +171,32 @@ describe("Filesystem Middleware Integration Tests", () => {
       );
 
       const messages = response.messages;
-      const lsMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "ls",
-      );
+      const lsMessage = messages.find((msg) => ToolMessage.isInstance(msg) && msg.name === 'ls');
 
       expect(lsMessage).toBeDefined();
       const lsContent = lsMessage!.content.toString();
-      expect(lsContent).toContain("/pizza.txt");
-      expect(lsContent).toContain("/pokemon/");
-      expect(lsContent).toContain("/memories/");
+      expect(lsContent).toContain('/pizza.txt');
+      expect(lsContent).toContain('/pokemon/');
+      expect(lsContent).toContain('/memories/');
     },
   );
 
   it.concurrent(
-    "should list longterm memory files with path filter",
+    'should list longterm memory files with path filter',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
-      await store.put(["filesystem"], "/test.txt", {
-        content: ["Hello world"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/test.txt', {
+        content: ['Hello world'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
-      await store.put(["filesystem"], "/pokemon/charmander.txt", {
-        content: ["Ember"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/pokemon/charmander.txt', {
+        content: ['Ember'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
 
       const agent = createAgent({
@@ -213,7 +205,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ] as const,
@@ -224,17 +216,17 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config = { configurable: { thread_id: crypto.randomUUID() } };
       const response = await agent.invoke(
         {
-          messages: [new HumanMessage("List all files in /pokemon")],
+          messages: [new HumanMessage('List all files in /pokemon')],
           files: {
-            "/pizza.txt": {
-              content: ["Hello world"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/pizza.txt': {
+              content: ['Hello world'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
-            "/pokemon/squirtle.txt": {
-              content: ["Splash"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/pokemon/squirtle.txt': {
+              content: ['Splash'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
           },
         } as any,
@@ -242,20 +234,18 @@ describe("Filesystem Middleware Integration Tests", () => {
       );
 
       const messages = response.messages;
-      const lsMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "ls",
-      );
+      const lsMessage = messages.find((msg) => ToolMessage.isInstance(msg) && msg.name === 'ls');
 
       expect(lsMessage).toBeDefined();
       const lsContent = lsMessage!.content.toString();
-      expect(lsContent).toContain("/pokemon/squirtle.txt");
-      expect(lsContent).not.toContain("/memories/pokemon/charmander.txt");
-      expect(lsContent).not.toContain("/pizza.txt");
+      expect(lsContent).toContain('/pokemon/squirtle.txt');
+      expect(lsContent).not.toContain('/memories/pokemon/charmander.txt');
+      expect(lsContent).not.toContain('/pizza.txt');
     },
   );
 
   it.concurrent(
-    "should read longterm memory local file",
+    'should read longterm memory local file',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
@@ -267,7 +257,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ] as const,
@@ -278,12 +268,12 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config = { configurable: { thread_id: crypto.randomUUID() } };
       const response = await agent.invoke(
         {
-          messages: [new HumanMessage("Read the file /pizza.txt")],
+          messages: [new HumanMessage('Read the file /pizza.txt')],
           files: {
-            "/pizza.txt": {
-              content: ["Pepperoni is the best"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/pizza.txt': {
+              content: ['Pepperoni is the best'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
           },
         } as any,
@@ -292,27 +282,25 @@ describe("Filesystem Middleware Integration Tests", () => {
 
       const messages = response.messages;
       const readMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "read_file",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'read_file',
       );
 
       expect(readMessage).toBeDefined();
-      expect(JSON.stringify(readMessage!.content)).toContain(
-        "Pepperoni is the best",
-      );
+      expect(JSON.stringify(readMessage!.content)).toContain('Pepperoni is the best');
     },
   );
 
   it.concurrent(
-    "should read longterm memory store file",
+    'should read longterm memory store file',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
-      await store.put(["filesystem"], "/test.txt", {
-        content: ["Hello from store"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/test.txt', {
+        content: ['Hello from store'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
 
       const agent = createAgent({
@@ -321,7 +309,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ],
@@ -332,34 +320,32 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config = { configurable: { thread_id: crypto.randomUUID() } };
       const response = await agent.invoke(
         {
-          messages: [new HumanMessage("Read the file /memories/test.txt")],
+          messages: [new HumanMessage('Read the file /memories/test.txt')],
         },
         config,
       );
 
       const messages = response.messages;
       const readMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "read_file",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'read_file',
       );
 
       expect(readMessage).toBeDefined();
-      expect(JSON.stringify(readMessage!.content)).toContain(
-        "Hello from store",
-      );
+      expect(JSON.stringify(readMessage!.content)).toContain('Hello from store');
     },
   );
 
   it.concurrent(
-    "should propagate store via invoke config (cloud deployment simulation)",
+    'should propagate store via invoke config (cloud deployment simulation)',
     { timeout: 90 * 1000 },
     async () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
-      await store.put(["filesystem"], "/test.txt", {
-        content: ["Hello from runtime store"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/test.txt', {
+        content: ['Hello from runtime store'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
 
       const agent = createAgent({
@@ -368,7 +354,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ],
@@ -381,25 +367,23 @@ describe("Filesystem Middleware Integration Tests", () => {
       };
       const response = await agent.invoke(
         {
-          messages: [new HumanMessage("Read the file /memories/test.txt")],
+          messages: [new HumanMessage('Read the file /memories/test.txt')],
         },
         config,
       );
 
       const messages = response.messages;
       const readMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "read_file",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'read_file',
       );
 
       expect(readMessage).toBeDefined();
-      expect(JSON.stringify(readMessage!.content)).toContain(
-        "Hello from runtime store",
-      );
+      expect(JSON.stringify(readMessage!.content)).toContain('Hello from runtime store');
     },
   );
 
   it.concurrent(
-    "should write to longterm memory",
+    'should write to longterm memory',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
@@ -411,7 +395,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ],
@@ -422,39 +406,31 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config = { configurable: { thread_id: crypto.randomUUID() } };
       await agent.invoke(
         {
-          messages: [
-            new HumanMessage(
-              "Write 'persistent data' to /memories/persistent.txt",
-            ),
-          ],
+          messages: [new HumanMessage("Write 'persistent data' to /memories/persistent.txt")],
         },
         config,
       );
 
       // Verify file was written to store
-      const items = await store.search(["filesystem"]);
-      const persistentFile = items.find(
-        (item) => item.key === "/persistent.txt",
-      );
+      const items = await store.search(['filesystem']);
+      const persistentFile = items.find((item) => item.key === '/persistent.txt');
 
       expect(persistentFile).toBeDefined();
-      expect((persistentFile!.value as any).content).toContain(
-        "persistent data",
-      );
+      expect((persistentFile!.value as any).content).toContain('persistent data');
     },
   );
 
   it.concurrent(
-    "should fail to write to existing store file",
+    'should fail to write to existing store file',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
-      await store.put(["filesystem"], "/existing.txt", {
-        content: ["Already exists"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/existing.txt', {
+        content: ['Already exists'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
 
       const agent = createAgent({
@@ -463,7 +439,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ],
@@ -474,34 +450,32 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config = { configurable: { thread_id: crypto.randomUUID() } };
       const response = await agent.invoke(
         {
-          messages: [
-            new HumanMessage("Write 'new data' to /memories/existing.txt"),
-          ],
+          messages: [new HumanMessage("Write 'new data' to /memories/existing.txt")],
         },
         config,
       );
 
       const messages = response.messages;
       const writeMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "write_file",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'write_file',
       );
 
       expect(writeMessage).toBeDefined();
-      expect(writeMessage!.content.toString()).toContain("already exists");
+      expect(writeMessage!.content.toString()).toContain('already exists');
     },
   );
 
   it.concurrent(
-    "should edit longterm memory file",
+    'should edit longterm memory file',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
-      await store.put(["filesystem"], "/editable.txt", {
-        content: ["Line 1", "Line 2", "Line 3"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/editable.txt', {
+        content: ['Line 1', 'Line 2', 'Line 3'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
 
       const agent = createAgent({
@@ -510,7 +484,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ],
@@ -531,16 +505,16 @@ describe("Filesystem Middleware Integration Tests", () => {
       );
 
       // Verify file was edited in store
-      const items = await store.search(["filesystem"]);
-      const editedFile = items.find((item) => item.key === "/editable.txt");
+      const items = await store.search(['filesystem']);
+      const editedFile = items.find((item) => item.key === '/editable.txt');
 
       expect(editedFile).toBeDefined();
-      expect((editedFile!.value as any).content).toContain("Modified Line 2");
+      expect((editedFile!.value as any).content).toContain('Modified Line 2');
     },
   );
 
   it.concurrent(
-    "should handle tool results exceeding token limit",
+    'should handle tool results exceeding token limit',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
@@ -553,7 +527,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ],
@@ -564,22 +538,20 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config = { configurable: { thread_id: crypto.randomUUID() } };
       const response = await agent.invoke(
         {
-          messages: [new HumanMessage("Get NBA standings")],
+          messages: [new HumanMessage('Get NBA standings')],
         },
         config,
       );
 
       const files = (response as any).files || {};
-      const largeResultFiles = Object.keys(files).filter((f) =>
-        f.includes("/large_tool_results/"),
-      );
+      const largeResultFiles = Object.keys(files).filter((f) => f.includes('/large_tool_results/'));
 
       expect(largeResultFiles.length).toBeGreaterThan(0);
     },
   );
 
   it.concurrent(
-    "should handle tool results with custom token limit",
+    'should handle tool results with custom token limit',
     { timeout: 120000 },
     async () => {
       const checkpointer = new MemorySaver();
@@ -592,7 +564,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
             toolTokenLimitBeforeEvict: 10000, // Low limit to trigger eviction
           }),
@@ -609,7 +581,7 @@ describe("Filesystem Middleware Integration Tests", () => {
         {
           messages: [
             new HumanMessage(
-              "Get NBA standings, if the information from the tool is not good, then just return, only try reading file 1 time max.",
+              'Get NBA standings, if the information from the tool is not good, then just return, only try reading file 1 time max.',
             ),
           ],
         },
@@ -618,16 +590,14 @@ describe("Filesystem Middleware Integration Tests", () => {
 
       // Check if result was evicted with custom limit
       const files = (response as any).files || {};
-      const largeResultFiles = Object.keys(files).filter((f) =>
-        f.includes("/large_tool_results/"),
-      );
+      const largeResultFiles = Object.keys(files).filter((f) => f.includes('/large_tool_results/'));
 
       expect(largeResultFiles.length).toBeGreaterThan(0);
     },
   );
 
   it.concurrent(
-    "should handle Command return with tool call",
+    'should handle Command return with tool call',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const agent = createDeepAgent({
@@ -636,17 +606,17 @@ describe("Filesystem Middleware Integration Tests", () => {
       });
 
       const response = await agent.invoke({
-        messages: [new HumanMessage("Get premier league standings")],
+        messages: [new HumanMessage('Get premier league standings')],
       });
 
       // Command returns files and research state
       expect(response.files).toBeDefined();
-      expect(response.files!["/test.txt"]).toBeDefined();
+      expect(response.files!['/test.txt']).toBeDefined();
     },
   );
 
   it.concurrent(
-    "should handle Command with existing state",
+    'should handle Command with existing state',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const agent = createDeepAgent({
@@ -655,27 +625,25 @@ describe("Filesystem Middleware Integration Tests", () => {
       });
 
       const response = await agent.invoke({
-        messages: [new HumanMessage("Get la liga standings")],
+        messages: [new HumanMessage('Get la liga standings')],
         files: {
-          "/existing.txt": {
-            content: ["Existing file"],
-            created_at: "2021-01-01",
-            modified_at: "2021-01-01",
+          '/existing.txt': {
+            content: ['Existing file'],
+            created_at: '2021-01-01',
+            modified_at: '2021-01-01',
           },
         },
       });
 
       // Existing files should be preserved
       expect(response.files).toBeDefined();
-      expect(response.files!["/existing.txt"]).toBeDefined();
-      expect(response.files!["/existing.txt"]?.content).toContain(
-        "Existing file",
-      );
+      expect(response.files!['/existing.txt']).toBeDefined();
+      expect(response.files!['/existing.txt']?.content).toContain('Existing file');
     },
   );
 
   it.concurrent(
-    "should fail to write to existing local file",
+    'should fail to write to existing local file',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
@@ -687,7 +655,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ],
@@ -700,10 +668,10 @@ describe("Filesystem Middleware Integration Tests", () => {
         {
           messages: [new HumanMessage("Write 'new content' to /existing.txt")],
           files: {
-            "/existing.txt": {
-              content: ["Already exists"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/existing.txt': {
+              content: ['Already exists'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
           },
         } as any,
@@ -712,16 +680,16 @@ describe("Filesystem Middleware Integration Tests", () => {
 
       const messages = response.messages;
       const writeMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "write_file",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'write_file',
       );
 
       expect(writeMessage).toBeDefined();
-      expect(writeMessage!.content.toString()).toContain("already exists");
+      expect(writeMessage!.content.toString()).toContain('already exists');
     },
   );
 
   it.concurrent(
-    "should perform glob search in shortterm memory only",
+    'should perform glob search in shortterm memory only',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
@@ -735,22 +703,22 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config = { configurable: { thread_id: crypto.randomUUID() } };
       const response = await agent.invoke(
         {
-          messages: [new HumanMessage("Use glob to find all Python files")],
+          messages: [new HumanMessage('Use glob to find all Python files')],
           files: {
-            "/test.py": {
-              content: ["import os"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/test.py': {
+              content: ['import os'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
-            "/main.py": {
-              content: ["def main(): pass"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/main.py': {
+              content: ['def main(): pass'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
-            "/readme.txt": {
-              content: ["Documentation"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/readme.txt': {
+              content: ['Documentation'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
           },
         } as any,
@@ -759,38 +727,38 @@ describe("Filesystem Middleware Integration Tests", () => {
 
       const messages = response.messages;
       const globMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "glob",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'glob',
       );
 
       expect(globMessage).toBeDefined();
       const globContent = globMessage!.content.toString();
-      expect(globContent).toContain("/test.py");
-      expect(globContent).toContain("/main.py");
-      expect(globContent).not.toContain("/readme.txt");
+      expect(globContent).toContain('/test.py');
+      expect(globContent).toContain('/main.py');
+      expect(globContent).not.toContain('/readme.txt');
     },
   );
 
   it.concurrent(
-    "should perform glob search in longterm memory only",
+    'should perform glob search in longterm memory only',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
-      await store.put(["filesystem"], "/config.py", {
-        content: ["DEBUG = True"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/config.py', {
+        content: ['DEBUG = True'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
-      await store.put(["filesystem"], "/settings.py", {
+      await store.put(['filesystem'], '/settings.py', {
         content: ["SECRET_KEY = 'abc'"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
-      await store.put(["filesystem"], "/notes.txt", {
-        content: ["Important notes"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/notes.txt', {
+        content: ['Important notes'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
 
       const agent = createAgent({
@@ -799,7 +767,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ],
@@ -810,9 +778,7 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config = { configurable: { thread_id: crypto.randomUUID() } };
       const response = await agent.invoke(
         {
-          messages: [
-            new HumanMessage("Use glob to find all Python files in /memories"),
-          ],
+          messages: [new HumanMessage('Use glob to find all Python files in /memories')],
           files: {},
         } as any,
         config,
@@ -820,33 +786,33 @@ describe("Filesystem Middleware Integration Tests", () => {
 
       const messages = response.messages;
       const globMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "glob",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'glob',
       );
 
       expect(globMessage).toBeDefined();
       const globContent = globMessage!.content.toString();
-      expect(globContent).toContain("/memories/config.py");
-      expect(globContent).toContain("/memories/settings.py");
-      expect(globContent).not.toContain("/memories/notes.txt");
+      expect(globContent).toContain('/memories/config.py');
+      expect(globContent).toContain('/memories/settings.py');
+      expect(globContent).not.toContain('/memories/notes.txt');
     },
   );
 
   it.concurrent(
-    "should perform glob search across mixed memory",
+    'should perform glob search across mixed memory',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
-      await store.put(["filesystem"], "/longterm.py", {
-        content: ["# Longterm file"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/longterm.py', {
+        content: ['# Longterm file'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
-      await store.put(["filesystem"], "/longterm.txt", {
-        content: ["Text file"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/longterm.txt', {
+        content: ['Text file'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
 
       const agent = createAgent({
@@ -855,7 +821,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ],
@@ -866,17 +832,17 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config = { configurable: { thread_id: crypto.randomUUID() } };
       const response = await agent.invoke(
         {
-          messages: [new HumanMessage("Use glob to find all Python files")],
+          messages: [new HumanMessage('Use glob to find all Python files')],
           files: {
-            "/shortterm.py": {
-              content: ["# Shortterm file"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/shortterm.py': {
+              content: ['# Shortterm file'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
-            "/shortterm.txt": {
-              content: ["Another text file"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/shortterm.txt': {
+              content: ['Another text file'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
           },
         } as any,
@@ -885,20 +851,20 @@ describe("Filesystem Middleware Integration Tests", () => {
 
       const messages = response.messages;
       const globMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "glob",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'glob',
       );
 
       expect(globMessage).toBeDefined();
       const globContent = globMessage!.content.toString();
-      expect(globContent).toContain("/shortterm.py");
-      expect(globContent).toContain("/memories/longterm.py");
-      expect(globContent).not.toContain("/shortterm.txt");
-      expect(globContent).not.toContain("/memories/longterm.txt");
+      expect(globContent).toContain('/shortterm.py');
+      expect(globContent).toContain('/memories/longterm.py');
+      expect(globContent).not.toContain('/shortterm.txt');
+      expect(globContent).not.toContain('/memories/longterm.txt');
     },
   );
 
   it.concurrent(
-    "should perform grep search in shortterm memory only",
+    'should perform grep search in shortterm memory only',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
@@ -912,26 +878,22 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config = { configurable: { thread_id: crypto.randomUUID() } };
       const response = await agent.invoke(
         {
-          messages: [
-            new HumanMessage(
-              "Use grep to find all files containing the word 'import'",
-            ),
-          ],
+          messages: [new HumanMessage("Use grep to find all files containing the word 'import'")],
           files: {
-            "/test.py": {
-              content: ["import os", "import sys"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/test.py': {
+              content: ['import os', 'import sys'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
-            "/main.py": {
-              content: ["def main(): pass"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/main.py': {
+              content: ['def main(): pass'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
-            "/helper.py": {
-              content: ["import json"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/helper.py': {
+              content: ['import json'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
           },
         } as any,
@@ -940,38 +902,38 @@ describe("Filesystem Middleware Integration Tests", () => {
 
       const messages = response.messages;
       const grepMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "grep",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'grep',
       );
 
       expect(grepMessage).toBeDefined();
       const grepContent = grepMessage!.content.toString();
-      expect(grepContent).toContain("/test.py");
-      expect(grepContent).toContain("/helper.py");
-      expect(grepContent).not.toContain("/main.py");
+      expect(grepContent).toContain('/test.py');
+      expect(grepContent).toContain('/helper.py');
+      expect(grepContent).not.toContain('/main.py');
     },
   );
 
   it.concurrent(
-    "should perform grep search in longterm memory only",
+    'should perform grep search in longterm memory only',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
-      await store.put(["filesystem"], "/pokemon/charmander.txt", {
-        content: ["Charmander is a fire type", "It evolves into Charmeleon"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/pokemon/charmander.txt', {
+        content: ['Charmander is a fire type', 'It evolves into Charmeleon'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
-      await store.put(["filesystem"], "/pokemon/squirtle.txt", {
-        content: ["Squirtle is a water type", "It evolves into Wartortle"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/pokemon/squirtle.txt', {
+        content: ['Squirtle is a water type', 'It evolves into Wartortle'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
-      await store.put(["filesystem"], "/pokemon/bulbasaur.txt", {
-        content: ["Bulbasaur is a grass type"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/pokemon/bulbasaur.txt', {
+        content: ['Bulbasaur is a grass type'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
 
       const agent = createAgent({
@@ -980,7 +942,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ],
@@ -1003,33 +965,33 @@ describe("Filesystem Middleware Integration Tests", () => {
 
       const messages = response.messages;
       const grepMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "grep",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'grep',
       );
 
       expect(grepMessage).toBeDefined();
       const grepContent = grepMessage!.content.toString();
-      expect(grepContent).toContain("/memories/pokemon/charmander.txt");
-      expect(grepContent).not.toContain("/memories/pokemon/squirtle.txt");
-      expect(grepContent).not.toContain("/memories/pokemon/bulbasaur.txt");
+      expect(grepContent).toContain('/memories/pokemon/charmander.txt');
+      expect(grepContent).not.toContain('/memories/pokemon/squirtle.txt');
+      expect(grepContent).not.toContain('/memories/pokemon/bulbasaur.txt');
     },
   );
 
   it.concurrent(
-    "should perform grep search across mixed memory",
+    'should perform grep search across mixed memory',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
-      await store.put(["filesystem"], "/longterm_config.py", {
-        content: ["DEBUG = True", "TESTING = False"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/longterm_config.py', {
+        content: ['DEBUG = True', 'TESTING = False'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
-      await store.put(["filesystem"], "/longterm_settings.py", {
+      await store.put(['filesystem'], '/longterm_settings.py', {
         content: ["SECRET_KEY = 'abc'"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
 
       const agent = createAgent({
@@ -1038,7 +1000,7 @@ describe("Filesystem Middleware Integration Tests", () => {
           createFilesystemMiddleware({
             backend: (runtime: BackendRuntime) =>
               new CompositeBackend(new StateBackend(runtime), {
-                "/memories/": new StoreBackend(runtime),
+                '/memories/': new StoreBackend(runtime),
               }),
           }),
         ],
@@ -1049,19 +1011,17 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config = { configurable: { thread_id: crypto.randomUUID() } };
       const response = await agent.invoke(
         {
-          messages: [
-            new HumanMessage("Use grep to find all files containing 'DEBUG'"),
-          ],
+          messages: [new HumanMessage("Use grep to find all files containing 'DEBUG'")],
           files: {
-            "/shortterm_config.py": {
-              content: ["DEBUG = False", "VERBOSE = True"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/shortterm_config.py': {
+              content: ['DEBUG = False', 'VERBOSE = True'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
-            "/shortterm_main.py": {
-              content: ["def main(): pass"],
-              created_at: "2021-01-01",
-              modified_at: "2021-01-01",
+            '/shortterm_main.py': {
+              content: ['def main(): pass'],
+              created_at: '2021-01-01',
+              modified_at: '2021-01-01',
             },
           },
         } as any,
@@ -1070,20 +1030,20 @@ describe("Filesystem Middleware Integration Tests", () => {
 
       const messages = response.messages;
       const grepMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "grep",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'grep',
       );
 
       expect(grepMessage).toBeDefined();
       const grepContent = grepMessage!.content.toString();
-      expect(grepContent).toContain("/shortterm_config.py");
-      expect(grepContent).toContain("/memories/longterm_config.py");
-      expect(grepContent).not.toContain("/shortterm_main.py");
-      expect(grepContent).not.toContain("/memories/longterm_settings.py");
+      expect(grepContent).toContain('/shortterm_config.py');
+      expect(grepContent).toContain('/memories/longterm_config.py');
+      expect(grepContent).not.toContain('/shortterm_main.py');
+      expect(grepContent).not.toContain('/memories/longterm_settings.py');
     },
   );
 
   it.concurrent(
-    "should use default backend when no backend specified",
+    'should use default backend when no backend specified',
     { timeout: 120000 },
     async () => {
       const checkpointer = new MemorySaver();
@@ -1104,37 +1064,35 @@ describe("Filesystem Middleware Integration Tests", () => {
       );
 
       expect((response as any).files).toBeDefined();
-      expect((response as any).files["/test.txt"]).toBeDefined();
-      expect((response as any).files["/test.txt"].content).toContain(
-        "Hello World",
-      );
+      expect((response as any).files['/test.txt']).toBeDefined();
+      expect((response as any).files['/test.txt'].content).toContain('Hello World');
 
       const response2 = await agent.invoke(
         {
-          messages: [new HumanMessage("Read /test.txt")],
+          messages: [new HumanMessage('Read /test.txt')],
         },
         config,
       );
 
       const messages = response2.messages;
       const readMessage = messages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "read_file",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'read_file',
       );
       expect(readMessage).toBeDefined();
-      expect(JSON.stringify(readMessage!.content)).toContain("Hello World");
+      expect(JSON.stringify(readMessage!.content)).toContain('Hello World');
     },
   );
 
   it.concurrent(
-    "should handle longterm memory CRUD across multiple threads",
+    'should handle longterm memory CRUD across multiple threads',
     { timeout: 120000 },
     async () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
       // Pre-populate the store with a test file
-      await store.put(["filesystem"], "/pokemon.txt", {
-        content: ["Charmander is a fire-type Pokemon"],
+      await store.put(['filesystem'], '/pokemon.txt', {
+        content: ['Charmander is a fire-type Pokemon'],
         created_at: new Date().toISOString(),
         modified_at: new Date().toISOString(),
       });
@@ -1142,7 +1100,7 @@ describe("Filesystem Middleware Integration Tests", () => {
       const agent = createDeepAgent({
         backend: (runtime: BackendRuntime) =>
           new CompositeBackend(new StateBackend(runtime), {
-            "/memories/": new StoreBackend(runtime),
+            '/memories/': new StoreBackend(runtime),
           }),
         checkpointer,
         store,
@@ -1152,66 +1110,60 @@ describe("Filesystem Middleware Integration Tests", () => {
       const config1 = { configurable: { thread_id: crypto.randomUUID() } };
       const readResponse = await agent.invoke(
         {
-          messages: [new HumanMessage("Read /memories/pokemon.txt")],
+          messages: [new HumanMessage('Read /memories/pokemon.txt')],
         },
         config1,
       );
 
       const readMessages = readResponse.messages;
       const readMessage = readMessages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "read_file",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'read_file',
       );
       expect(readMessage).toBeDefined();
-      expect(JSON.stringify(readMessage!.content)).toContain("Charmander");
+      expect(JSON.stringify(readMessage!.content)).toContain('Charmander');
 
       // List from another thread
       const config2 = { configurable: { thread_id: crypto.randomUUID() } };
       const listResponse = await agent.invoke(
         {
-          messages: [new HumanMessage("List files in /memories")],
+          messages: [new HumanMessage('List files in /memories')],
         },
         config2,
       );
 
       const listMessages = listResponse.messages;
       const lsMessage = listMessages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "ls",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'ls',
       );
       expect(lsMessage).toBeDefined();
-      expect(lsMessage!.content.toString()).toContain("/memories/pokemon.txt");
+      expect(lsMessage!.content.toString()).toContain('/memories/pokemon.txt');
 
       // Edit from yet another thread
       const config3 = { configurable: { thread_id: crypto.randomUUID() } };
       const editResponse = await agent.invoke(
         {
-          messages: [
-            new HumanMessage(
-              "Edit /memories/pokemon.txt: replace 'fire' with 'blazing'",
-            ),
-          ],
+          messages: [new HumanMessage("Edit /memories/pokemon.txt: replace 'fire' with 'blazing'")],
         },
         config3,
       );
 
       const editMessages = editResponse.messages;
       const editMessage = editMessages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "edit_file",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'edit_file',
       );
       expect(editMessage).toBeDefined();
 
       // Verify the edit persisted in the store
-      const updatedFile = await store.get(["filesystem"], "/pokemon.txt");
+      const updatedFile = await store.get(['filesystem'], '/pokemon.txt');
       expect(updatedFile).toBeDefined();
       const rawContent = (updatedFile!.value as any).content;
-      const content = Array.isArray(rawContent)
-        ? rawContent.join("\n")
-        : rawContent;
-      expect(content).toContain("blazing");
+      const content = Array.isArray(rawContent) ? rawContent.join('\n') : rawContent;
+      expect(content).toContain('blazing');
     },
   );
 
   it.concurrent(
-    "should handle shortterm memory CRUD in single thread",
+    'should handle shortterm memory CRUD in single thread',
     { timeout: 120000 },
     async () => {
       const checkpointer = new MemorySaver();
@@ -1238,16 +1190,12 @@ describe("Filesystem Middleware Integration Tests", () => {
       );
 
       const files = writeResponse.files || {};
-      expect(files["/charmander.txt"]).toBeDefined();
+      expect(files['/charmander.txt']).toBeDefined();
 
       // Read the shortterm memory file
       const readResponse = await agent.invoke(
         {
-          messages: [
-            new HumanMessage(
-              "Read the haiku about Charmander from /charmander.txt",
-            ),
-          ],
+          messages: [new HumanMessage('Read the haiku about Charmander from /charmander.txt')],
         },
         config,
       );
@@ -1255,56 +1203,44 @@ describe("Filesystem Middleware Integration Tests", () => {
       const readMessages = readResponse.messages;
       const readMessage = [...readMessages]
         .reverse()
-        .find((msg) => ToolMessage.isInstance(msg) && msg.name === "read_file");
+        .find((msg) => ToolMessage.isInstance(msg) && msg.name === 'read_file');
       expect(readMessage).toBeDefined();
-      expect(
-        JSON.stringify(readMessage!.content).toLowerCase().includes("fiery"),
-      ).toBe(true);
+      expect(JSON.stringify(readMessage!.content).toLowerCase().includes('fiery')).toBe(true);
 
       // List all files in shortterm memory
       const listResponse = await agent.invoke(
         {
-          messages: [
-            new HumanMessage("List all of the files in your filesystem"),
-          ],
+          messages: [new HumanMessage('List all of the files in your filesystem')],
         },
         config,
       );
 
       const listMessages = listResponse.messages;
       const lsMessage = listMessages.find(
-        (msg) => ToolMessage.isInstance(msg) && msg.name === "ls",
+        (msg) => ToolMessage.isInstance(msg) && msg.name === 'ls',
       );
       expect(lsMessage).toBeDefined();
-      expect(lsMessage!.content.toString()).toContain("/charmander.txt");
+      expect(lsMessage!.content.toString()).toContain('/charmander.txt');
 
       // Edit the shortterm memory file
       const editResponse = await agent.invoke(
         {
-          messages: [
-            new HumanMessage(
-              "Edit the haiku about Charmander to use the word 'ember'",
-            ),
-          ],
+          messages: [new HumanMessage("Edit the haiku about Charmander to use the word 'ember'")],
         },
         config,
       );
 
       const editedFiles = editResponse.files || {};
-      expect(editedFiles["/charmander.txt"]).toBeDefined();
-      const content = editedFiles["/charmander.txt"]
-        ? fileDataToString(editedFiles["/charmander.txt"] as FileData)
+      expect(editedFiles['/charmander.txt']).toBeDefined();
+      const content = editedFiles['/charmander.txt']
+        ? fileDataToString(editedFiles['/charmander.txt'] as FileData)
         : undefined;
-      expect(content?.toLowerCase().includes("ember")).toBe(true);
+      expect(content?.toLowerCase().includes('ember')).toBe(true);
 
       // Read again to verify edit
       const verifyResponse = await agent.invoke(
         {
-          messages: [
-            new HumanMessage(
-              "Read the haiku about Charmander at /charmander.txt",
-            ),
-          ],
+          messages: [new HumanMessage('Read the haiku about Charmander at /charmander.txt')],
         },
         config,
       );
@@ -1312,33 +1248,29 @@ describe("Filesystem Middleware Integration Tests", () => {
       const verifyMessages = verifyResponse.messages;
       const verifyReadMessage = [...verifyMessages]
         .reverse()
-        .find((msg) => ToolMessage.isInstance(msg) && msg.name === "read_file");
+        .find((msg) => ToolMessage.isInstance(msg) && msg.name === 'read_file');
       expect(verifyReadMessage).toBeDefined();
-      expect(
-        JSON.stringify(verifyReadMessage!.content)
-          .toLowerCase()
-          .includes("ember"),
-      ).toBe(true);
+      expect(JSON.stringify(verifyReadMessage!.content).toLowerCase().includes('ember')).toBe(true);
     },
   );
 
   it.concurrent(
-    "should propagate store via invoke config with createDeepAgent (cloud deployment simulation)",
+    'should propagate store via invoke config with createDeepAgent (cloud deployment simulation)',
     { timeout: 90 * 1000 },
     async () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
-      await store.put(["filesystem"], "/test.txt", {
-        content: ["Hello from cloud runtime store"],
-        created_at: "2021-01-01",
-        modified_at: "2021-01-01",
+      await store.put(['filesystem'], '/test.txt', {
+        content: ['Hello from cloud runtime store'],
+        created_at: '2021-01-01',
+        modified_at: '2021-01-01',
       });
 
       const agent = createDeepAgent({
         backend: (runtime: BackendRuntime) =>
           new CompositeBackend(new StateBackend(runtime), {
-            "/memories/": new StoreBackend(runtime),
+            '/memories/': new StoreBackend(runtime),
           }),
         checkpointer,
       });
@@ -1349,20 +1281,18 @@ describe("Filesystem Middleware Integration Tests", () => {
       };
       const response = await agent.invoke(
         {
-          messages: [new HumanMessage("Read the file /memories/test.txt")],
+          messages: [new HumanMessage('Read the file /memories/test.txt')],
         },
         config,
       );
 
       const messages = response.messages;
       const readMessage = messages.find(
-        (msg: any) => ToolMessage.isInstance(msg) && msg.name === "read_file",
+        (msg: any) => ToolMessage.isInstance(msg) && msg.name === 'read_file',
       );
 
       expect(readMessage).toBeDefined();
-      expect(JSON.stringify(readMessage!.content)).toContain(
-        "Hello from cloud runtime store",
-      );
+      expect(JSON.stringify(readMessage!.content)).toContain('Hello from cloud runtime store');
     },
   );
 });

@@ -24,9 +24,9 @@
  * @see https://agentskills.io/specification
  */
 
-import fs from "node:fs";
-import path from "node:path";
-import yaml from "yaml";
+import fs from 'node:fs';
+import path from 'node:path';
+import yaml from 'yaml';
 
 /** Maximum size for SKILL.md files (10MB) */
 export const MAX_SKILL_FILE_SIZE = 10 * 1024 * 1024;
@@ -56,7 +56,7 @@ export interface SkillMetadata {
   path: string;
 
   /** Source of the skill ('user' or 'project') */
-  source: "user" | "project";
+  source: 'user' | 'project';
 
   /** Optional: License name or reference to bundled license file */
   license?: string;
@@ -108,10 +108,7 @@ function isSafePath(targetPath: string, baseDir: string): boolean {
     const resolvedBase = fs.realpathSync(baseDir);
 
     // Check if the resolved path is within the base directory
-    return (
-      resolvedPath.startsWith(resolvedBase + path.sep) ||
-      resolvedPath === resolvedBase
-    );
+    return resolvedPath.startsWith(resolvedBase + path.sep) || resolvedPath === resolvedBase;
   } catch {
     // Error resolving paths (e.g., circular symlinks, too many levels)
     return false;
@@ -132,21 +129,18 @@ function isSafePath(targetPath: string, baseDir: string): boolean {
  * @param directoryName - The parent directory name
  * @returns Validation result with error message if invalid
  */
-function validateSkillName(
-  name: string,
-  directoryName: string,
-): ValidationResult {
+function validateSkillName(name: string, directoryName: string): ValidationResult {
   if (!name) {
-    return { valid: false, error: "name is required" };
+    return { valid: false, error: 'name is required' };
   }
   if (name.length > MAX_SKILL_NAME_LENGTH) {
-    return { valid: false, error: "name exceeds 64 characters" };
+    return { valid: false, error: 'name exceeds 64 characters' };
   }
   // Pattern: lowercase alphanumeric, single hyphens between segments, no start/end hyphen
   if (!SKILL_NAME_PATTERN.test(name)) {
     return {
       valid: false,
-      error: "name must be lowercase alphanumeric with single hyphens only",
+      error: 'name must be lowercase alphanumeric with single hyphens only',
     };
   }
   if (name !== directoryName) {
@@ -172,7 +166,7 @@ function parseFrontmatter(content: string): Record<string, unknown> | null {
 
   try {
     const parsed = yaml.parse(match[1]);
-    return typeof parsed === "object" && parsed !== null ? parsed : null;
+    return typeof parsed === 'object' && parsed !== null ? parsed : null;
   } catch {
     return null;
   }
@@ -187,20 +181,18 @@ function parseFrontmatter(content: string): Record<string, unknown> | null {
  */
 export function parseSkillMetadata(
   skillMdPath: string,
-  source: "user" | "project",
+  source: 'user' | 'project',
 ): SkillMetadata | null {
   try {
     // Security: Check file size to prevent DoS attacks
     const stats = fs.statSync(skillMdPath);
     if (stats.size > MAX_SKILL_FILE_SIZE) {
       // oxlint-disable-next-line no-console
-      console.warn(
-        `Skipping ${skillMdPath}: file too large (${stats.size} bytes)`,
-      );
+      console.warn(`Skipping ${skillMdPath}: file too large (${stats.size} bytes)`);
       return null;
     }
 
-    const content = fs.readFileSync(skillMdPath, "utf-8");
+    const content = fs.readFileSync(skillMdPath, 'utf-8');
     const frontmatter = parseFrontmatter(content);
 
     if (!frontmatter) {
@@ -215,9 +207,7 @@ export function parseSkillMetadata(
 
     if (!name || !description) {
       // oxlint-disable-next-line no-console
-      console.warn(
-        `Skipping ${skillMdPath}: missing required 'name' or 'description'`,
-      );
+      console.warn(`Skipping ${skillMdPath}: missing required 'name' or 'description'`);
       return null;
     }
 
@@ -228,7 +218,7 @@ export function parseSkillMetadata(
       // oxlint-disable-next-line no-console
       console.warn(
         `Skill '${name}' in ${skillMdPath} does not follow Agent Skills spec: ${validation.error}. ` +
-          "Consider renaming to be spec-compliant.",
+          'Consider renaming to be spec-compliant.',
       );
     }
 
@@ -248,16 +238,12 @@ export function parseSkillMetadata(
       path: skillMdPath,
       source,
       license: frontmatter.license ? String(frontmatter.license) : undefined,
-      compatibility: frontmatter.compatibility
-        ? String(frontmatter.compatibility)
-        : undefined,
+      compatibility: frontmatter.compatibility ? String(frontmatter.compatibility) : undefined,
       metadata:
-        frontmatter.metadata && typeof frontmatter.metadata === "object"
+        frontmatter.metadata && typeof frontmatter.metadata === 'object'
           ? (frontmatter.metadata as Record<string, string>)
           : undefined,
-      allowedTools: frontmatter["allowed-tools"]
-        ? String(frontmatter["allowed-tools"])
-        : undefined,
+      allowedTools: frontmatter['allowed-tools'] ? String(frontmatter['allowed-tools']) : undefined,
     };
   } catch (error) {
     // oxlint-disable-next-line no-console
@@ -285,16 +271,10 @@ export function parseSkillMetadata(
  * @param source - Source of the skills ('user' or 'project')
  * @returns List of skill metadata
  */
-function listSkillsFromDir(
-  skillsDir: string,
-  source: "user" | "project",
-): SkillMetadata[] {
+function listSkillsFromDir(skillsDir: string, source: 'user' | 'project'): SkillMetadata[] {
   // Check if skills directory exists
-  const expandedDir = skillsDir.startsWith("~")
-    ? path.join(
-        process.env.HOME || process.env.USERPROFILE || "",
-        skillsDir.slice(1),
-      )
+  const expandedDir = skillsDir.startsWith('~')
+    ? path.join(process.env.HOME || process.env.USERPROFILE || '', skillsDir.slice(1))
     : skillsDir;
 
   if (!fs.existsSync(expandedDir)) {
@@ -333,7 +313,7 @@ function listSkillsFromDir(
     }
 
     // Look for SKILL.md file
-    const skillMdPath = path.join(skillDir, "SKILL.md");
+    const skillMdPath = path.join(skillDir, 'SKILL.md');
     if (!fs.existsSync(skillMdPath)) {
       continue;
     }
@@ -368,7 +348,7 @@ export function listSkills(options: ListSkillsOptions): SkillMetadata[] {
 
   // Load user skills first (foundation)
   if (options.userSkillsDir) {
-    const userSkills = listSkillsFromDir(options.userSkillsDir, "user");
+    const userSkills = listSkillsFromDir(options.userSkillsDir, 'user');
     for (const skill of userSkills) {
       allSkills.set(skill.name, skill);
     }
@@ -376,10 +356,7 @@ export function listSkills(options: ListSkillsOptions): SkillMetadata[] {
 
   // Load project skills second (override/augment)
   if (options.projectSkillsDir) {
-    const projectSkills = listSkillsFromDir(
-      options.projectSkillsDir,
-      "project",
-    );
+    const projectSkills = listSkillsFromDir(options.projectSkillsDir, 'project');
     for (const skill of projectSkills) {
       // Project skills override user skills with the same name
       allSkills.set(skill.name, skill);

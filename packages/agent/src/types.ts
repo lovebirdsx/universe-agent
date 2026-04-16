@@ -10,23 +10,16 @@ import type {
   ResponseFormatUndefined,
   ToolStrategy,
   ProviderStrategy,
-} from "langchain";
-import type {
-  ClientTool,
-  ServerTool,
-  StructuredTool,
-} from "@langchain/core/tools";
-import type { BaseLanguageModel } from "@langchain/core/language_models/base";
-import type {
-  BaseCheckpointSaver,
-  BaseStore,
-} from "@langchain/langgraph-checkpoint";
+} from 'langchain';
+import type { ClientTool, ServerTool, StructuredTool } from '@langchain/core/tools';
+import type { BaseLanguageModel } from '@langchain/core/language_models/base';
+import type { BaseCheckpointSaver, BaseStore } from '@langchain/langgraph-checkpoint';
 
-import type { AnyBackendProtocol } from "./backends/index.js";
-import type { AsyncSubAgent, SubAgent } from "./middleware/index.js";
-import type { InteropZodObject } from "@langchain/core/utils/types";
-import type { AnnotationRoot } from "@langchain/langgraph";
-import type { CompiledSubAgent } from "./middleware/subagents.js";
+import type { AnyBackendProtocol } from './backends/index.js';
+import type { AsyncSubAgent, SubAgent } from './middleware/index.js';
+import type { InteropZodObject } from '@langchain/core/utils/types';
+import type { AnnotationRoot } from '@langchain/langgraph';
+import type { CompiledSubAgent } from './middleware/subagents.js';
 
 // LangChain uses AnyAnnotationRoot internally but doesn't export it
 // We use AnnotationRoot<any> as a compatible equivalent
@@ -56,23 +49,20 @@ export type ExtractSubAgentMiddleware<T> = T extends { middleware?: infer M }
 /**
  * Helper type to flatten and merge middleware from all subagents
  */
-export type FlattenSubAgentMiddleware<T extends readonly AnySubAgent[]> =
-  T extends readonly []
-    ? readonly []
-    : T extends readonly [infer First, ...infer Rest]
-      ? Rest extends readonly AnySubAgent[]
-        ? readonly [
-            ...ExtractSubAgentMiddleware<First>,
-            ...FlattenSubAgentMiddleware<Rest>,
-          ]
-        : ExtractSubAgentMiddleware<First>
-      : readonly [];
+export type FlattenSubAgentMiddleware<T extends readonly AnySubAgent[]> = T extends readonly []
+  ? readonly []
+  : T extends readonly [infer First, ...infer Rest]
+    ? Rest extends readonly AnySubAgent[]
+      ? readonly [...ExtractSubAgentMiddleware<First>, ...FlattenSubAgentMiddleware<Rest>]
+      : ExtractSubAgentMiddleware<First>
+    : readonly [];
 
 /**
  * Helper type to merge states from subagent middleware
  */
-export type InferSubAgentMiddlewareStates<T extends readonly AnySubAgent[]> =
-  InferMiddlewareStates<FlattenSubAgentMiddleware<T>>;
+export type InferSubAgentMiddlewareStates<T extends readonly AnySubAgent[]> = InferMiddlewareStates<
+  FlattenSubAgentMiddleware<T>
+>;
 
 /**
  * Combined state type including custom middleware and subagent middleware states
@@ -80,8 +70,7 @@ export type InferSubAgentMiddlewareStates<T extends readonly AnySubAgent[]> =
 export type MergedDeepAgentState<
   TMiddleware extends readonly AgentMiddleware[],
   TSubagents extends readonly AnySubAgent[],
-> = InferMiddlewareStates<TMiddleware> &
-  InferSubAgentMiddlewareStates<TSubagents>;
+> = InferMiddlewareStates<TMiddleware> & InferSubAgentMiddlewareStates<TSubagents>;
 
 /**
  * Union of all response format types accepted by `createDeepAgent`.
@@ -158,14 +147,9 @@ export interface DeepAgentTypeConfig<
     | AnyAnnotationRoot
     | InteropZodObject
     | undefined,
-  TContext extends AnyAnnotationRoot | InteropZodObject =
-    | AnyAnnotationRoot
-    | InteropZodObject,
+  TContext extends AnyAnnotationRoot | InteropZodObject = AnyAnnotationRoot | InteropZodObject,
   TMiddleware extends readonly AgentMiddleware[] = readonly AgentMiddleware[],
-  TTools extends readonly (ClientTool | ServerTool)[] = readonly (
-    | ClientTool
-    | ServerTool
-  )[],
+  TTools extends readonly (ClientTool | ServerTool)[] = readonly (ClientTool | ServerTool)[],
   TSubagents extends readonly AnySubAgent[] = readonly AnySubAgent[],
 > extends AgentTypeConfig<TResponse, TState, TContext, TMiddleware, TTools> {
   /** The subagents array type for type-safe streaming */
@@ -201,12 +185,11 @@ export interface DefaultDeepAgentTypeConfig extends DeepAgentTypeConfig {
  * type Subagents = InferDeepAgentSubagents<typeof agent>;
  * ```
  */
-export type DeepAgent<
-  TTypes extends DeepAgentTypeConfig = DeepAgentTypeConfig,
-> = ReactAgent<TTypes> & {
-  /** Type brand for DeepAgent type inference */
-  readonly "~deepAgentTypes": TTypes;
-};
+export type DeepAgent<TTypes extends DeepAgentTypeConfig = DeepAgentTypeConfig> =
+  ReactAgent<TTypes> & {
+    /** Type brand for DeepAgent type inference */
+    readonly '~deepAgentTypes': TTypes;
+  };
 
 /**
  * Helper type to resolve a DeepAgentTypeConfig from either:
@@ -220,7 +203,7 @@ export type DeepAgent<
  * ```
  */
 export type ResolveDeepAgentTypeConfig<T> = T extends {
-  "~deepAgentTypes": infer Types;
+  '~deepAgentTypes': infer Types;
 }
   ? Types extends DeepAgentTypeConfig
     ? Types
@@ -255,7 +238,7 @@ export type InferDeepAgentType<
  * type Subagents = InferDeepAgentSubagents<typeof agent>;
  * ```
  */
-export type InferDeepAgentSubagents<T> = InferDeepAgentType<T, "Subagents">;
+export type InferDeepAgentSubagents<T> = InferDeepAgentType<T, 'Subagents'>;
 
 /**
  * Helper type to extract CompiledSubAgent (subagents with `runnable`) from a DeepAgent.
@@ -325,21 +308,20 @@ export type InferSubagentByName<T, TName extends string> =
  * type SubagentState = InferMiddlewareStates<SubagentMiddleware>;
  * ```
  */
-export type InferSubagentReactAgentType<
-  TSubagent extends SubAgent | CompiledSubAgent,
-> = TSubagent extends CompiledSubAgent
-  ? TSubagent["runnable"]
-  : TSubagent extends SubAgent
-    ? ReactAgent<
-        AgentTypeConfig<
-          ResponseFormatUndefined,
-          undefined,
-          AnyAnnotationRoot,
-          ExtractSubAgentMiddleware<TSubagent>,
-          readonly []
+export type InferSubagentReactAgentType<TSubagent extends SubAgent | CompiledSubAgent> =
+  TSubagent extends CompiledSubAgent
+    ? TSubagent['runnable']
+    : TSubagent extends SubAgent
+      ? ReactAgent<
+          AgentTypeConfig<
+            ResponseFormatUndefined,
+            undefined,
+            AnyAnnotationRoot,
+            ExtractSubAgentMiddleware<TSubagent>,
+            readonly []
+          >
         >
-      >
-    : never;
+      : never;
 
 /**
  * Configuration parameters for creating a Deep Agent
@@ -353,14 +335,10 @@ export type InferSubagentReactAgentType<
  */
 export interface CreateDeepAgentParams<
   TResponse extends SupportedResponseFormat = SupportedResponseFormat,
-  ContextSchema extends AnnotationRoot<any> | InteropZodObject =
-    AnnotationRoot<any>,
+  ContextSchema extends AnnotationRoot<any> | InteropZodObject = AnnotationRoot<any>,
   TMiddleware extends readonly AgentMiddleware[] = readonly AgentMiddleware[],
   TSubagents extends readonly AnySubAgent[] = readonly AnySubAgent[],
-  TTools extends readonly (ClientTool | ServerTool)[] = readonly (
-    | ClientTool
-    | ServerTool
-  )[],
+  TTools extends readonly (ClientTool | ServerTool)[] = readonly (ClientTool | ServerTool)[],
 > {
   /** The model to use (model name string or LanguageModelLike instance). Defaults to claude-sonnet-4-5-20250929 */
   model?: BaseLanguageModel | string;

@@ -5,9 +5,9 @@
  * reused across different state schemas, similar to LangGraph's messagesValue.
  */
 
-import { z } from "zod";
-import { ReducedValue } from "@langchain/langgraph";
-import { FileDataSchema, fileDataReducer } from "./middleware/fs.js";
+import { z } from 'zod';
+import { ReducedValue } from '@langchain/langgraph';
+import { FileDataSchema, fileDataReducer } from './middleware/fs.js';
 
 /**
  * Shared ReducedValue for file data state management.

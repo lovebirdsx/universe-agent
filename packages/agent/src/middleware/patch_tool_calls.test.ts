@@ -1,36 +1,33 @@
-import { describe, it, expect, vi } from "vitest";
-import { AIMessage, HumanMessage, ToolMessage } from "@langchain/core/messages";
-import { RemoveMessage } from "@langchain/core/messages";
-import { REMOVE_ALL_MESSAGES } from "@langchain/langgraph";
+import { describe, it, expect, vi } from 'vitest';
+import { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
+import { RemoveMessage } from '@langchain/core/messages';
+import { REMOVE_ALL_MESSAGES } from '@langchain/langgraph';
 
-import {
-  createPatchToolCallsMiddleware,
-  patchDanglingToolCalls,
-} from "./patch_tool_calls.js";
-import type { MiddlewareHandler } from "./types.js";
+import { createPatchToolCallsMiddleware, patchDanglingToolCalls } from './patch_tool_calls.js';
+import type { MiddlewareHandler } from './types.js';
 
-describe("createPatchToolCallsMiddleware", () => {
-  describe("no patching needed (should return undefined)", () => {
-    it("should return undefined when messages is empty", async () => {
+describe('createPatchToolCallsMiddleware', () => {
+  describe('no patching needed (should return undefined)', () => {
+    it('should return undefined when messages is empty', async () => {
       const middleware = createPatchToolCallsMiddleware();
       // @ts-expect-error - typing issue in LangChain
       const result = await middleware.beforeAgent?.({ messages: [] });
       expect(result).toBeUndefined();
     });
 
-    it("should return undefined when messages is undefined", async () => {
+    it('should return undefined when messages is undefined', async () => {
       const middleware = createPatchToolCallsMiddleware();
       // @ts-expect-error - typing issue in LangChain
       const result = await middleware.beforeAgent?.({ messages: undefined });
       expect(result).toBeUndefined();
     });
 
-    it("should return undefined when there are no AI messages with tool calls", async () => {
+    it('should return undefined when there are no AI messages with tool calls', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
-        new HumanMessage({ content: "Hello" }),
-        new AIMessage({ content: "Hi there!" }),
-        new HumanMessage({ content: "How are you?" }),
+        new HumanMessage({ content: 'Hello' }),
+        new AIMessage({ content: 'Hi there!' }),
+        new HumanMessage({ content: 'How are you?' }),
       ];
 
       // @ts-expect-error - typing issue in LangChain
@@ -38,24 +35,24 @@ describe("createPatchToolCallsMiddleware", () => {
       expect(result).toBeUndefined();
     });
 
-    it("should return undefined when all tool calls have corresponding ToolMessages", async () => {
+    it('should return undefined when all tool calls have corresponding ToolMessages', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
-        new HumanMessage({ content: "Read a file" }),
+        new HumanMessage({ content: 'Read a file' }),
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
             {
-              id: "call_123",
-              name: "read_file",
-              args: { path: "/test.txt" },
+              id: 'call_123',
+              name: 'read_file',
+              args: { path: '/test.txt' },
             },
           ],
         }),
         new ToolMessage({
-          content: "File contents here",
-          name: "read_file",
-          tool_call_id: "call_123",
+          content: 'File contents here',
+          name: 'read_file',
+          tool_call_id: 'call_123',
         }),
         new AIMessage({ content: "Here's the file content" }),
       ];
@@ -65,11 +62,11 @@ describe("createPatchToolCallsMiddleware", () => {
       expect(result).toBeUndefined();
     });
 
-    it("should return undefined when AI message has empty tool_calls array", async () => {
+    it('should return undefined when AI message has empty tool_calls array', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
         new AIMessage({
-          content: "No tools",
+          content: 'No tools',
           tool_calls: [],
         }),
       ];
@@ -79,11 +76,11 @@ describe("createPatchToolCallsMiddleware", () => {
       expect(result).toBeUndefined();
     });
 
-    it("should return undefined when AI message has null tool_calls", async () => {
+    it('should return undefined when AI message has null tool_calls', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
         new AIMessage({
-          content: "Also no tools",
+          content: 'Also no tools',
           tool_calls: null as any,
         }),
       ];
@@ -94,22 +91,22 @@ describe("createPatchToolCallsMiddleware", () => {
     });
   });
 
-  describe("dangling tool calls (should patch)", () => {
-    it("should add synthetic ToolMessage for dangling tool call", async () => {
+  describe('dangling tool calls (should patch)', () => {
+    it('should add synthetic ToolMessage for dangling tool call', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
-        new HumanMessage({ content: "Read a file" }),
+        new HumanMessage({ content: 'Read a file' }),
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
             {
-              id: "call_123",
-              name: "read_file",
-              args: { path: "/test.txt" },
+              id: 'call_123',
+              name: 'read_file',
+              args: { path: '/test.txt' },
             },
           ],
         }),
-        new HumanMessage({ content: "Never mind" }),
+        new HumanMessage({ content: 'Never mind' }),
       ];
 
       // @ts-expect-error - typing issue in LangChain
@@ -126,22 +123,22 @@ describe("createPatchToolCallsMiddleware", () => {
 
       // Find the synthetic ToolMessage and verify its content
       const toolMessage = result?.messages.find(
-        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === "call_123",
+        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === 'call_123',
       );
       expect(toolMessage).toBeDefined();
-      expect(toolMessage?.content).toContain("cancelled");
-      expect(toolMessage?.name).toBe("read_file");
+      expect(toolMessage?.content).toContain('cancelled');
+      expect(toolMessage?.name).toBe('read_file');
     });
 
-    it("should patch multiple dangling tool calls in a single AI message", async () => {
+    it('should patch multiple dangling tool calls in a single AI message', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
-        new HumanMessage({ content: "Do multiple things" }),
+        new HumanMessage({ content: 'Do multiple things' }),
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
-            { id: "call_1", name: "tool_a", args: {} },
-            { id: "call_2", name: "tool_b", args: {} },
+            { id: 'call_1', name: 'tool_a', args: {} },
+            { id: 'call_2', name: 'tool_b', args: {} },
           ],
         }),
         // Both tool calls are dangling
@@ -157,25 +154,24 @@ describe("createPatchToolCallsMiddleware", () => {
       // Should have synthetic ToolMessages for both dangling calls
       const syntheticMsgs = result?.messages.filter(
         (m: any) =>
-          ToolMessage.isInstance(m) &&
-          (m.tool_call_id === "call_1" || m.tool_call_id === "call_2"),
+          ToolMessage.isInstance(m) && (m.tool_call_id === 'call_1' || m.tool_call_id === 'call_2'),
       );
       expect(syntheticMsgs?.length).toBe(2);
     });
 
-    it("should handle multiple AI messages with dangling tool calls", async () => {
+    it('should handle multiple AI messages with dangling tool calls', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
         new AIMessage({
-          content: "",
-          tool_calls: [{ id: "call_1", name: "tool_a", args: {} }],
+          content: '',
+          tool_calls: [{ id: 'call_1', name: 'tool_a', args: {} }],
         }),
-        new HumanMessage({ content: "msg1" }),
+        new HumanMessage({ content: 'msg1' }),
         new AIMessage({
-          content: "",
-          tool_calls: [{ id: "call_2", name: "tool_b", args: {} }],
+          content: '',
+          tool_calls: [{ id: 'call_2', name: 'tool_b', args: {} }],
         }),
-        new HumanMessage({ content: "msg2" }),
+        new HumanMessage({ content: 'msg2' }),
       ];
 
       // @ts-expect-error - typing issue in LangChain
@@ -187,41 +183,41 @@ describe("createPatchToolCallsMiddleware", () => {
 
       // Both tool calls should have synthetic responses
       const toolMessage1 = result?.messages.find(
-        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === "call_1",
+        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === 'call_1',
       );
       const toolMessage2 = result?.messages.find(
-        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === "call_2",
+        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === 'call_2',
       );
 
       expect(toolMessage1).toBeDefined();
       expect(toolMessage2).toBeDefined();
     });
 
-    it("should only patch dangling tool calls, not ones with responses", async () => {
+    it('should only patch dangling tool calls, not ones with responses', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
-        new HumanMessage({ content: "Do two things" }),
+        new HumanMessage({ content: 'Do two things' }),
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
             {
-              id: "call_1",
-              name: "read_file",
-              args: { path: "/test1.txt" },
+              id: 'call_1',
+              name: 'read_file',
+              args: { path: '/test1.txt' },
             },
             {
-              id: "call_2",
-              name: "write_file",
-              args: { path: "/test2.txt" },
+              id: 'call_2',
+              name: 'write_file',
+              args: { path: '/test2.txt' },
             },
           ],
         }),
         new ToolMessage({
-          content: "File written successfully",
-          name: "write_file",
-          tool_call_id: "call_2",
+          content: 'File written successfully',
+          name: 'write_file',
+          tool_call_id: 'call_2',
         }),
-        new HumanMessage({ content: "Thanks" }),
+        new HumanMessage({ content: 'Thanks' }),
       ];
 
       // @ts-expect-error - typing issue in LangChain
@@ -235,9 +231,9 @@ describe("createPatchToolCallsMiddleware", () => {
       const syntheticToolMessage = result?.messages.find(
         (m: any) =>
           ToolMessage.isInstance(m) &&
-          m.tool_call_id === "call_1" &&
-          typeof m.content === "string" &&
-          m.content.includes("cancelled"),
+          m.tool_call_id === 'call_1' &&
+          typeof m.content === 'string' &&
+          m.content.includes('cancelled'),
       );
       expect(syntheticToolMessage).toBeDefined();
 
@@ -245,28 +241,28 @@ describe("createPatchToolCallsMiddleware", () => {
       const originalToolMessage = result?.messages.find(
         (m: any) =>
           ToolMessage.isInstance(m) &&
-          m.tool_call_id === "call_2" &&
-          m.content === "File written successfully",
+          m.tool_call_id === 'call_2' &&
+          m.content === 'File written successfully',
       );
       expect(originalToolMessage).toBeDefined();
     });
   });
 
-  describe("orphaned ToolMessages (should remove)", () => {
-    it("should remove orphaned ToolMessages at the start of the message array", async () => {
+  describe('orphaned ToolMessages (should remove)', () => {
+    it('should remove orphaned ToolMessages at the start of the message array', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
         new ToolMessage({
-          content: "orphaned result 1",
-          name: "ls",
-          tool_call_id: "orphan_1",
+          content: 'orphaned result 1',
+          name: 'ls',
+          tool_call_id: 'orphan_1',
         }),
         new ToolMessage({
-          content: "orphaned result 2",
-          name: "read_file",
-          tool_call_id: "orphan_2",
+          content: 'orphaned result 2',
+          name: 'read_file',
+          tool_call_id: 'orphan_2',
         }),
-        new HumanMessage({ content: "List files in /workspace" }),
+        new HumanMessage({ content: 'List files in /workspace' }),
       ];
 
       // @ts-expect-error - typing issue in LangChain
@@ -280,22 +276,20 @@ describe("createPatchToolCallsMiddleware", () => {
       expect(firstMsg).toBeInstanceOf(RemoveMessage);
 
       // No ToolMessages should remain
-      const toolMessages = result?.messages.filter((m: any) =>
-        ToolMessage.isInstance(m),
-      );
+      const toolMessages = result?.messages.filter((m: any) => ToolMessage.isInstance(m));
       expect(toolMessages?.length).toBe(0);
     });
 
-    it("should remove orphaned ToolMessages in the middle of the message array", async () => {
+    it('should remove orphaned ToolMessages in the middle of the message array', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
-        new HumanMessage({ content: "Hello" }),
+        new HumanMessage({ content: 'Hello' }),
         new ToolMessage({
-          content: "orphaned result",
-          name: "some_tool",
-          tool_call_id: "orphan_mid",
+          content: 'orphaned result',
+          name: 'some_tool',
+          tool_call_id: 'orphan_mid',
         }),
-        new AIMessage({ content: "Hi there!" }),
+        new AIMessage({ content: 'Hi there!' }),
       ];
 
       // @ts-expect-error - typing issue in LangChain
@@ -305,35 +299,33 @@ describe("createPatchToolCallsMiddleware", () => {
       // RemoveMessage + HumanMessage + AIMessage (orphaned ToolMessage removed)
       expect(result?.messages.length).toBe(3);
 
-      const toolMessages = result?.messages.filter((m: any) =>
-        ToolMessage.isInstance(m),
-      );
+      const toolMessages = result?.messages.filter((m: any) => ToolMessage.isInstance(m));
       expect(toolMessages?.length).toBe(0);
     });
 
-    it("should keep ToolMessages that have a matching AIMessage tool_call", async () => {
+    it('should keep ToolMessages that have a matching AIMessage tool_call', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
         new ToolMessage({
-          content: "orphaned - should be removed",
-          name: "rogue_tool",
-          tool_call_id: "no_match",
+          content: 'orphaned - should be removed',
+          name: 'rogue_tool',
+          tool_call_id: 'no_match',
         }),
-        new HumanMessage({ content: "Read file" }),
+        new HumanMessage({ content: 'Read file' }),
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
             {
-              id: "call_valid",
-              name: "read_file",
-              args: { path: "/test.txt" },
+              id: 'call_valid',
+              name: 'read_file',
+              args: { path: '/test.txt' },
             },
           ],
         }),
         new ToolMessage({
-          content: "File contents",
-          name: "read_file",
-          tool_call_id: "call_valid",
+          content: 'File contents',
+          name: 'read_file',
+          tool_call_id: 'call_valid',
         }),
       ];
 
@@ -346,22 +338,21 @@ describe("createPatchToolCallsMiddleware", () => {
 
       // The valid ToolMessage should remain
       const validToolMsg = result?.messages.find(
-        (m: any) =>
-          ToolMessage.isInstance(m) && m.tool_call_id === "call_valid",
+        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === 'call_valid',
       );
       expect(validToolMsg).toBeDefined();
-      expect(validToolMsg?.content).toBe("File contents");
+      expect(validToolMsg?.content).toBe('File contents');
 
       // The orphaned ToolMessage should be gone
       const orphanedToolMsg = result?.messages.find(
-        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === "no_match",
+        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === 'no_match',
       );
       expect(orphanedToolMsg).toBeUndefined();
     });
   });
 
-  describe("combined orphaned ToolMessages + dangling tool_calls (Gemini issue #314)", () => {
-    it("should handle the exact scenario from the GitHub issue checkpoint dump", async () => {
+  describe('combined orphaned ToolMessages + dangling tool_calls (Gemini issue #314)', () => {
+    it('should handle the exact scenario from the GitHub issue checkpoint dump', async () => {
       const middleware = createPatchToolCallsMiddleware();
       // Reproduces the checkpoint state reported in deepagentsjs#314:
       //   Message 1 [ToolMessage]: no preceding AI call
@@ -371,32 +362,30 @@ describe("createPatchToolCallsMiddleware", () => {
       //   Message 5 [ToolMessage]: 1 response (for ls call_ls_1 only)
       const messages = [
         new ToolMessage({
-          content: "orphaned response 1",
-          name: "some_init_tool",
-          tool_call_id: "orphan_1",
+          content: 'orphaned response 1',
+          name: 'some_init_tool',
+          tool_call_id: 'orphan_1',
         }),
         new ToolMessage({
-          content: "orphaned response 2",
-          name: "some_init_tool",
-          tool_call_id: "orphan_2",
+          content: 'orphaned response 2',
+          name: 'some_init_tool',
+          tool_call_id: 'orphan_2',
         }),
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
-            { id: "call_ls_1", name: "ls", args: { path: "/" } },
-            { id: "call_ls_2", name: "ls", args: { path: "/workspace" } },
+            { id: 'call_ls_1', name: 'ls', args: { path: '/' } },
+            { id: 'call_ls_2', name: 'ls', args: { path: '/workspace' } },
           ],
         }),
         new AIMessage({
-          content: "",
-          tool_calls: [
-            { id: "call_todos", name: "write_todos", args: { todos: [] } },
-          ],
+          content: '',
+          tool_calls: [{ id: 'call_todos', name: 'write_todos', args: { todos: [] } }],
         }),
         new ToolMessage({
-          content: "file1.txt\nfile2.txt",
-          name: "ls",
-          tool_call_id: "call_ls_1",
+          content: 'file1.txt\nfile2.txt',
+          name: 'ls',
+          tool_call_id: 'call_ls_1',
         }),
       ];
 
@@ -406,32 +395,30 @@ describe("createPatchToolCallsMiddleware", () => {
       expect(result).toBeDefined();
 
       // Filter out the RemoveMessage to inspect the patched content
-      const patched = result?.messages.filter(
-        (m: any) => !RemoveMessage.isInstance(m),
-      );
+      const patched = result?.messages.filter((m: any) => !RemoveMessage.isInstance(m));
 
       // Orphaned ToolMessages (orphan_1, orphan_2) should be removed
       const orphanedMsgs = patched?.filter(
         (m: any) =>
           ToolMessage.isInstance(m) &&
-          (m.tool_call_id === "orphan_1" || m.tool_call_id === "orphan_2"),
+          (m.tool_call_id === 'orphan_1' || m.tool_call_id === 'orphan_2'),
       );
       expect(orphanedMsgs?.length).toBe(0);
 
       // Valid ToolMessage for call_ls_1 should be preserved
       const validLsMsg = patched?.find(
-        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === "call_ls_1",
+        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === 'call_ls_1',
       );
       expect(validLsMsg).toBeDefined();
-      expect(validLsMsg?.content).toBe("file1.txt\nfile2.txt");
+      expect(validLsMsg?.content).toBe('file1.txt\nfile2.txt');
 
       // Synthetic ToolMessage for dangling call_ls_2 should be injected
       const syntheticLs2 = patched?.find(
         (m: any) =>
           ToolMessage.isInstance(m) &&
-          m.tool_call_id === "call_ls_2" &&
-          typeof m.content === "string" &&
-          m.content.includes("cancelled"),
+          m.tool_call_id === 'call_ls_2' &&
+          typeof m.content === 'string' &&
+          m.content.includes('cancelled'),
       );
       expect(syntheticLs2).toBeDefined();
 
@@ -439,9 +426,9 @@ describe("createPatchToolCallsMiddleware", () => {
       const syntheticTodos = patched?.find(
         (m: any) =>
           ToolMessage.isInstance(m) &&
-          m.tool_call_id === "call_todos" &&
-          typeof m.content === "string" &&
-          m.content.includes("cancelled"),
+          m.tool_call_id === 'call_todos' &&
+          typeof m.content === 'string' &&
+          m.content.includes('cancelled'),
       );
       expect(syntheticTodos).toBeDefined();
 
@@ -465,36 +452,34 @@ describe("createPatchToolCallsMiddleware", () => {
           }
         }
       }
-      const allToolMsgs = patched?.filter((m: any) =>
-        ToolMessage.isInstance(m),
-      );
+      const allToolMsgs = patched?.filter((m: any) => ToolMessage.isInstance(m));
       for (const tm of allToolMsgs!) {
         expect(allToolCallIds.has((tm as ToolMessage).tool_call_id)).toBe(true);
       }
     });
 
-    it("should not patch when there are no orphaned ToolMessages and no dangling tool_calls", async () => {
+    it('should not patch when there are no orphaned ToolMessages and no dangling tool_calls', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
-        new HumanMessage({ content: "Hello" }),
+        new HumanMessage({ content: 'Hello' }),
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
-            { id: "call_1", name: "ls", args: {} },
-            { id: "call_2", name: "read_file", args: {} },
+            { id: 'call_1', name: 'ls', args: {} },
+            { id: 'call_2', name: 'read_file', args: {} },
           ],
         }),
         new ToolMessage({
-          content: "result 1",
-          name: "ls",
-          tool_call_id: "call_1",
+          content: 'result 1',
+          name: 'ls',
+          tool_call_id: 'call_1',
         }),
         new ToolMessage({
-          content: "result 2",
-          name: "read_file",
-          tool_call_id: "call_2",
+          content: 'result 2',
+          name: 'read_file',
+          tool_call_id: 'call_2',
         }),
-        new AIMessage({ content: "Done!" }),
+        new AIMessage({ content: 'Done!' }),
       ];
 
       // @ts-expect-error - typing issue in LangChain
@@ -503,24 +488,24 @@ describe("createPatchToolCallsMiddleware", () => {
     });
   });
 
-  describe("wrapModelCall (safety net for HITL rejections)", () => {
-    it("should pass through when no patching needed", async () => {
+  describe('wrapModelCall (safety net for HITL rejections)', () => {
+    it('should pass through when no patching needed', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
-        new HumanMessage({ content: "Hello" }),
+        new HumanMessage({ content: 'Hello' }),
         new AIMessage({
-          content: "",
-          tool_calls: [{ id: "call_1", name: "tool_a", args: {} }],
+          content: '',
+          tool_calls: [{ id: 'call_1', name: 'tool_a', args: {} }],
         }),
         new ToolMessage({
-          content: "Result",
-          name: "tool_a",
-          tool_call_id: "call_1",
+          content: 'Result',
+          name: 'tool_a',
+          tool_call_id: 'call_1',
         }),
       ];
 
-      const handler = vi.fn().mockResolvedValue({ content: "AI response" });
-      const request = { messages, systemPrompt: "test" };
+      const handler = vi.fn().mockResolvedValue({ content: 'AI response' });
+      const request = { messages, systemPrompt: 'test' };
 
       // @ts-expect-error - typing issue in LangChain
       await middleware.wrapModelCall?.(request, handler);
@@ -529,29 +514,29 @@ describe("createPatchToolCallsMiddleware", () => {
       expect(handler).toHaveBeenCalledWith(request);
     });
 
-    it("should patch dangling tool calls in wrapModelCall", async () => {
+    it('should patch dangling tool calls in wrapModelCall', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
-        new HumanMessage({ content: "Hello" }),
+        new HumanMessage({ content: 'Hello' }),
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
-            { id: "call_1", name: "tool_a", args: {} },
-            { id: "call_2", name: "tool_b", args: {} },
+            { id: 'call_1', name: 'tool_a', args: {} },
+            { id: 'call_2', name: 'tool_b', args: {} },
           ],
         }),
         // Only call_2 has a response - call_1 is dangling
         new ToolMessage({
-          content: "Result",
-          name: "tool_b",
-          tool_call_id: "call_2",
+          content: 'Result',
+          name: 'tool_b',
+          tool_call_id: 'call_2',
         }),
       ];
 
-      const handler = vi.fn().mockResolvedValue({ content: "AI response" });
+      const handler = vi.fn().mockResolvedValue({ content: 'AI response' });
 
       await (middleware.wrapModelCall as MiddlewareHandler)(
-        { messages, systemPrompt: "test" },
+        { messages, systemPrompt: 'test' },
         handler,
       );
 
@@ -566,28 +551,28 @@ describe("createPatchToolCallsMiddleware", () => {
       const syntheticToolMessage = calledRequest.messages.find(
         (m: any) =>
           ToolMessage.isInstance(m) &&
-          m.tool_call_id === "call_1" &&
-          typeof m.content === "string" &&
-          m.content.includes("cancelled"),
+          m.tool_call_id === 'call_1' &&
+          typeof m.content === 'string' &&
+          m.content.includes('cancelled'),
       );
       expect(syntheticToolMessage).toBeDefined();
     });
 
-    it("should remove orphaned ToolMessages in wrapModelCall", async () => {
+    it('should remove orphaned ToolMessages in wrapModelCall', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
         new ToolMessage({
-          content: "orphaned",
-          name: "rogue",
-          tool_call_id: "no_match",
+          content: 'orphaned',
+          name: 'rogue',
+          tool_call_id: 'no_match',
         }),
-        new HumanMessage({ content: "Hello" }),
+        new HumanMessage({ content: 'Hello' }),
       ];
 
-      const handler = vi.fn().mockResolvedValue({ content: "AI response" });
+      const handler = vi.fn().mockResolvedValue({ content: 'AI response' });
 
       await (middleware.wrapModelCall as MiddlewareHandler)(
-        { messages, systemPrompt: "test" },
+        { messages, systemPrompt: 'test' },
         handler,
       );
 
@@ -599,26 +584,26 @@ describe("createPatchToolCallsMiddleware", () => {
       expect(calledRequest.messages[0]).toBeInstanceOf(HumanMessage);
     });
 
-    it("should handle both orphaned ToolMessages and dangling tool_calls in wrapModelCall", async () => {
+    it('should handle both orphaned ToolMessages and dangling tool_calls in wrapModelCall', async () => {
       const middleware = createPatchToolCallsMiddleware();
       const messages = [
         new ToolMessage({
-          content: "orphaned",
-          name: "rogue",
-          tool_call_id: "no_match",
+          content: 'orphaned',
+          name: 'rogue',
+          tool_call_id: 'no_match',
         }),
-        new HumanMessage({ content: "Hello" }),
+        new HumanMessage({ content: 'Hello' }),
         new AIMessage({
-          content: "",
-          tool_calls: [{ id: "call_1", name: "tool_a", args: {} }],
+          content: '',
+          tool_calls: [{ id: 'call_1', name: 'tool_a', args: {} }],
         }),
         // No ToolMessage for call_1
       ];
 
-      const handler = vi.fn().mockResolvedValue({ content: "AI response" });
+      const handler = vi.fn().mockResolvedValue({ content: 'AI response' });
 
       await (middleware.wrapModelCall as MiddlewareHandler)(
-        { messages, systemPrompt: "test" },
+        { messages, systemPrompt: 'test' },
         handler,
       );
 
@@ -630,7 +615,7 @@ describe("createPatchToolCallsMiddleware", () => {
 
       // No orphaned ToolMessages
       const orphaned = calledRequest.messages.find(
-        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === "no_match",
+        (m: any) => ToolMessage.isInstance(m) && m.tool_call_id === 'no_match',
       );
       expect(orphaned).toBeUndefined();
 
@@ -638,42 +623,42 @@ describe("createPatchToolCallsMiddleware", () => {
       const synthetic = calledRequest.messages.find(
         (m: any) =>
           ToolMessage.isInstance(m) &&
-          m.tool_call_id === "call_1" &&
-          typeof m.content === "string" &&
-          m.content.includes("cancelled"),
+          m.tool_call_id === 'call_1' &&
+          typeof m.content === 'string' &&
+          m.content.includes('cancelled'),
       );
       expect(synthetic).toBeDefined();
     });
 
-    it("should handle empty messages in wrapModelCall", async () => {
+    it('should handle empty messages in wrapModelCall', async () => {
       const middleware = createPatchToolCallsMiddleware();
-      const handler = vi.fn().mockResolvedValue({ content: "AI response" });
+      const handler = vi.fn().mockResolvedValue({ content: 'AI response' });
 
       await (middleware.wrapModelCall as MiddlewareHandler)(
-        { messages: [], systemPrompt: "test" },
+        { messages: [], systemPrompt: 'test' },
         handler,
       );
 
       expect(handler).toHaveBeenCalledWith({
         messages: [],
-        systemPrompt: "test",
+        systemPrompt: 'test',
       });
     });
   });
 
-  describe("patchDanglingToolCalls utility function", () => {
-    it("should return empty result for empty messages", () => {
+  describe('patchDanglingToolCalls utility function', () => {
+    it('should return empty result for empty messages', () => {
       const result = patchDanglingToolCalls([]);
       expect(result.patchedMessages).toEqual([]);
       expect(result.needsPatch).toBe(false);
     });
 
-    it("should detect and patch dangling tool calls", () => {
+    it('should detect and patch dangling tool calls', () => {
       const messages = [
-        new HumanMessage({ content: "Test" }),
+        new HumanMessage({ content: 'Test' }),
         new AIMessage({
-          content: "",
-          tool_calls: [{ id: "call_1", name: "tool_a", args: {} }],
+          content: '',
+          tool_calls: [{ id: 'call_1', name: 'tool_a', args: {} }],
         }),
         // No ToolMessage for call_1 - it's dangling
       ];
@@ -685,22 +670,22 @@ describe("createPatchToolCallsMiddleware", () => {
 
       // Verify synthetic ToolMessage was added
       const syntheticMsg = result.patchedMessages.find(
-        (m) => ToolMessage.isInstance(m) && m.tool_call_id === "call_1",
+        (m) => ToolMessage.isInstance(m) && m.tool_call_id === 'call_1',
       );
       expect(syntheticMsg).toBeDefined();
     });
 
-    it("should not patch when all tool calls have responses", () => {
+    it('should not patch when all tool calls have responses', () => {
       const messages = [
-        new HumanMessage({ content: "Test" }),
+        new HumanMessage({ content: 'Test' }),
         new AIMessage({
-          content: "",
-          tool_calls: [{ id: "call_1", name: "tool_a", args: {} }],
+          content: '',
+          tool_calls: [{ id: 'call_1', name: 'tool_a', args: {} }],
         }),
         new ToolMessage({
-          content: "Result",
-          name: "tool_a",
-          tool_call_id: "call_1",
+          content: 'Result',
+          name: 'tool_a',
+          tool_call_id: 'call_1',
         }),
       ];
 
@@ -710,14 +695,14 @@ describe("createPatchToolCallsMiddleware", () => {
       expect(result.patchedMessages).toEqual(messages);
     });
 
-    it("should remove orphaned ToolMessages", () => {
+    it('should remove orphaned ToolMessages', () => {
       const messages = [
         new ToolMessage({
-          content: "orphaned",
-          name: "rogue",
-          tool_call_id: "no_match",
+          content: 'orphaned',
+          name: 'rogue',
+          tool_call_id: 'no_match',
         }),
-        new HumanMessage({ content: "Test" }),
+        new HumanMessage({ content: 'Test' }),
       ];
 
       const result = patchDanglingToolCalls(messages);
@@ -727,16 +712,16 @@ describe("createPatchToolCallsMiddleware", () => {
       expect(result.patchedMessages[0]).toBeInstanceOf(HumanMessage);
     });
 
-    it("should handle both orphaned ToolMessages and dangling tool_calls", () => {
+    it('should handle both orphaned ToolMessages and dangling tool_calls', () => {
       const messages = [
         new ToolMessage({
-          content: "orphaned",
-          name: "rogue",
-          tool_call_id: "no_match",
+          content: 'orphaned',
+          name: 'rogue',
+          tool_call_id: 'no_match',
         }),
         new AIMessage({
-          content: "",
-          tool_calls: [{ id: "call_1", name: "tool_a", args: {} }],
+          content: '',
+          tool_calls: [{ id: 'call_1', name: 'tool_a', args: {} }],
         }),
         // No ToolMessage for call_1
       ];
@@ -749,33 +734,33 @@ describe("createPatchToolCallsMiddleware", () => {
 
       // No orphaned messages
       const orphaned = result.patchedMessages.find(
-        (m) => ToolMessage.isInstance(m) && m.tool_call_id === "no_match",
+        (m) => ToolMessage.isInstance(m) && m.tool_call_id === 'no_match',
       );
       expect(orphaned).toBeUndefined();
 
       // Synthetic ToolMessage injected
       const synthetic = result.patchedMessages.find(
-        (m) => ToolMessage.isInstance(m) && m.tool_call_id === "call_1",
+        (m) => ToolMessage.isInstance(m) && m.tool_call_id === 'call_1',
       );
       expect(synthetic).toBeDefined();
     });
 
-    it("should produce strict 1:1 parity for multi-tool-call AIMessages", () => {
+    it('should produce strict 1:1 parity for multi-tool-call AIMessages', () => {
       const messages = [
-        new HumanMessage({ content: "Test" }),
+        new HumanMessage({ content: 'Test' }),
         new AIMessage({
-          content: "",
+          content: '',
           tool_calls: [
-            { id: "call_1", name: "ls", args: {} },
-            { id: "call_2", name: "ls", args: {} },
-            { id: "call_3", name: "read_file", args: {} },
+            { id: 'call_1', name: 'ls', args: {} },
+            { id: 'call_2', name: 'ls', args: {} },
+            { id: 'call_3', name: 'read_file', args: {} },
           ],
         }),
         // Only call_1 has a response
         new ToolMessage({
-          content: "result",
-          name: "ls",
-          tool_call_id: "call_1",
+          content: 'result',
+          name: 'ls',
+          tool_call_id: 'call_1',
         }),
       ];
 
@@ -793,9 +778,9 @@ describe("createPatchToolCallsMiddleware", () => {
       }
 
       // Each tool_call should have exactly one ToolMessage
-      expect(toolMsgCounts.get("call_1")).toBe(1);
-      expect(toolMsgCounts.get("call_2")).toBe(1);
-      expect(toolMsgCounts.get("call_3")).toBe(1);
+      expect(toolMsgCounts.get('call_1')).toBe(1);
+      expect(toolMsgCounts.get('call_2')).toBe(1);
+      expect(toolMsgCounts.get('call_3')).toBe(1);
     });
   });
 });
