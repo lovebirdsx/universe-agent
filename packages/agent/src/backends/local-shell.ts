@@ -365,17 +365,23 @@ export class LocalShellBackend extends FilesystemBackend implements SandboxBacke
       let stderr = '';
       let timedOut = false;
 
+      const isWindows = process.platform === 'win32';
       const child = cp.spawn(command, {
         shell: true,
         env: this.#env,
         cwd: this.cwd,
+        detached: !isWindows,
       });
 
       const killChild = () => {
-        if (process.platform === 'win32') {
+        if (isWindows) {
           cp.spawn('taskkill', ['/F', '/T', '/PID', String(child.pid)], { shell: false });
         } else {
-          child.kill('SIGTERM');
+          try {
+            process.kill(-child.pid!, 'SIGTERM');
+          } catch {
+            child.kill('SIGTERM');
+          }
         }
       };
 
