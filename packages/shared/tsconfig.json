@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "@acme/config-ts/base",
+  "extends": "@universe-agent/config-ts/base",
   "compilerOptions": {
     "composite": true,
     "declaration": true,

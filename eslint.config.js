@@ -1,4 +1,4 @@
-import reactConfig from '@acme/config-eslint/react'
+import reactConfig from '@universe-agent/config-eslint/react'
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [

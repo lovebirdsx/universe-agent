@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
-import { formatMoney } from '@acme/shared'
+import { formatMoney } from '@universe-agent/shared'
 
 const app = new Hono()
 
 app.get('/', (c) => {
   return c.json({
-    message: 'Acme API',
+    message: 'Universe Agent API',
     demo: {
       price_usd: formatMoney(49.99),
       price_eur: formatMoney(129.0, 'EUR'),

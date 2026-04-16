@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Button } from '@acme/ui'
-import { formatMoney, cn } from '@acme/shared'
+import { Button } from '@universe-agent/ui'
+import { formatMoney, cn } from '@universe-agent/shared'
 
 const PRODUCTS = [
   { id: 1, name: 'Widget Pro', price: 49.99 },
@@ -16,7 +16,7 @@ export default function App() {
       className={cn('p-8', 'font-sans')}
       style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem' }}
     >
-      <h1 style={{ marginBottom: '0.5rem' }}>Acme Monorepo Demo</h1>
+      <h1 style={{ marginBottom: '0.5rem' }}>Universe Agent Monorepo Demo</h1>
       <p style={{ color: '#666', marginBottom: '1.5rem' }}>
         Built with pnpm workspaces + TypeScript Project References + Turborepo
       </p>

@@ -11,7 +11,7 @@ describe('GET /', () => {
       demo: { price_usd: string; price_eur: string }
       timestamp: string
     }
-    expect(body.message).toBe('Acme API')
+    expect(body.message).toBe('Universe Agent API')
     expect(body.demo.price_usd).toBe('$49.99')
     expect(body.demo.price_eur).toBe('€129.00')
     expect(typeof body.timestamp).toBe('string')

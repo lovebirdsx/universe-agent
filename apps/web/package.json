@@ -1,5 +1,5 @@
 {
-  "name": "@acme/web",
+  "name": "@universe-agent/web",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,14 +13,14 @@
     "lint:fix": "eslint --fix src"
   },
   "dependencies": {
-    "@acme/shared": "workspace:*",
-    "@acme/ui": "workspace:*",
+    "@universe-agent/shared": "workspace:*",
+    "@universe-agent/ui": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@acme/config-eslint": "workspace:*",
-    "@acme/config-ts": "workspace:*",
+    "@universe-agent/config-eslint": "workspace:*",
+    "@universe-agent/config-ts": "workspace:*",
     "@testing-library/react": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
