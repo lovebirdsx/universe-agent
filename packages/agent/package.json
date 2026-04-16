@@ -1,0 +1,33 @@
+{
+  "name": "@universe-agent/agent",
+  "version": "0.0.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --build",
+    "lint": "eslint src",
+    "lint:fix": "eslint --fix src",
+    "test": "vitest run",
+    "dev": "tsc --build --watch",
+    "clean": "tsc --build --clean"
+  },
+  "dependencies": {
+    "@universe-agent/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@universe-agent/config-eslint": "workspace:*",
+    "@universe-agent/config-ts": "workspace:*",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
