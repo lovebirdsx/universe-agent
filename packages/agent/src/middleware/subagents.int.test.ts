@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect } from 'vitest';
 import { createAgent, createMiddleware, ReactAgent, tool } from 'langchain';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect } from 'vitest';
 import { SystemMessage } from '@langchain/core/messages';
 import { appendToSystemMessage, prependToSystemMessage } from './utils.js';

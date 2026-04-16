@@ -371,9 +371,17 @@ export class LocalShellBackend extends FilesystemBackend implements SandboxBacke
         cwd: this.cwd,
       });
 
+      const killChild = () => {
+        if (process.platform === 'win32') {
+          cp.spawn('taskkill', ['/F', '/T', '/PID', String(child.pid)], { shell: false });
+        } else {
+          child.kill('SIGTERM');
+        }
+      };
+
       const timer = setTimeout(() => {
         timedOut = true;
-        child.kill('SIGTERM');
+        killChild();
       }, this.#timeout * 1000);
 
       child.stdout.on('data', (data: Buffer) => {

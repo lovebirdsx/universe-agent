@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from 'vitest';
 import { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
 import { RemoveMessage } from '@langchain/core/messages';

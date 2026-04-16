@@ -14,7 +14,7 @@
     "test:int:watch": "turbo run test:int:watch",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
-    "check": "turbo run lint && turbo run typecheck && turbo run test && turbo run build",
+    "check": "turbo run lint && turbo run typecheck && turbo run test:unit && turbo run build",
     "dev": "turbo run dev",
     "clean": "turbo run clean",
     "changeset": "changeset",

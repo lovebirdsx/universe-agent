@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { StoreBackend } from './store.js';
 import type { BackendRuntime } from './protocol.js';
@@ -441,7 +442,7 @@ describe('StoreBackend', () => {
 
       const full = await backend.read('/img.png');
       const withOffsetLimit = await backend.read('/img.png', 5, 2);
-      expect(withOffsetLimit.content).toBe(full.content);
+      expect(withOffsetLimit.content).toStrictEqual(full.content);
     });
   });
 

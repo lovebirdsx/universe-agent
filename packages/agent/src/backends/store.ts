@@ -376,7 +376,9 @@ export class StoreBackend implements BackendProtocolV2 {
 
     const hasValidContent =
       value.content !== undefined &&
-      (typeof value.content === 'string' || ArrayBuffer.isView(value.content));
+      (typeof value.content === 'string' ||
+        ArrayBuffer.isView(value.content) ||
+        Array.isArray(value.content));
 
     if (
       !hasValidContent ||
@@ -390,24 +392,16 @@ export class StoreBackend implements BackendProtocolV2 {
 
     const content = ArrayBuffer.isView(value.content)
       ? new Uint8Array(value.content.buffer, value.content.byteOffset, value.content.byteLength)
-      : typeof value.content === 'string'
-        ? value.content
-        : (() => {
-            throw new Error(
-              `Unsupported content type: ${typeof value.content}. Expected string or Uint8Array.`,
-            );
-          })();
-
-    if (content === undefined) {
-      throw new Error('Store item content is missing after validation');
-    }
+      : Array.isArray(value.content)
+        ? (value.content as string[])
+        : (value.content as string);
 
     return {
       content,
       mimeType: value.mimeType ?? 'application/octet-stream',
       created_at: value.created_at,
       modified_at: value.modified_at,
-    };
+    } as FileData;
   }
 
   /**

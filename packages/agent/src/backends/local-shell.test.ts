@@ -131,7 +131,9 @@ describe('LocalShellBackend', () => {
         inheritEnv: true,
       });
 
-      const result = await backend.execute('cat test.txt');
+      const result = await backend.execute(
+        "node -e \"process.stdout.write(require('fs').readFileSync('test.txt', 'utf8'))\"",
+      );
 
       expect(result.exitCode).toBe(0);
       expect(result.output).toContain('test content');
@@ -153,7 +155,7 @@ describe('LocalShellBackend', () => {
         inheritEnv: true,
       });
 
-      const result = await backend.execute('sleep 5');
+      const result = await backend.execute('node -e "setTimeout(() => {}, 5000)"');
 
       expect(result.exitCode).toBe(124);
       expect(result.output).toContain('timed out');
@@ -166,7 +168,7 @@ describe('LocalShellBackend', () => {
         inheritEnv: true,
       });
 
-      const result = await backend.execute('seq 1 1000');
+      const result = await backend.execute('node -e "for(let i=1;i<=1000;i++) console.log(i)"');
 
       expect(result.truncated).toBe(true);
       expect(result.output).toContain('Output truncated');
