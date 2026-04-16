@@ -12,10 +12,13 @@
     "exactOptionalPropertyTypes": false,
     "noUncheckedIndexedAccess": false
   },
-  "include": ["src"],
-  "exclude": [
-    "src/**/*.test-d.ts",
-    "src/**/__tests__/**"
+  "include": [
+    "src"
   ],
-  "references": [{ "path": "../shared" }]
+  "exclude": [],
+  "references": [
+    {
+      "path": "../shared"
+    }
+  ]
 }

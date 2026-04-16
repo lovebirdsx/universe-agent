@@ -13,6 +13,14 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
+    "test:unit": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test:int": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
     "lint": {
       "outputs": []
     },

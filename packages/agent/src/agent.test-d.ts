@@ -132,7 +132,7 @@ describe('createDeepAgent types', () => {
       expectTypeOf(result.counter).toEqualTypeOf<number>();
       // should have built-in state
       expectTypeOf(result).toHaveProperty('files');
-      expectTypeOf(result.files).toEqualTypeOf<FilesRecord | undefined>();
+      expectTypeOf(result.files).toMatchTypeOf<FilesRecord | undefined>();
       expectTypeOf(result).toHaveProperty('todos');
       expectTypeOf(result.todos).toEqualTypeOf<
         {

@@ -17,6 +17,11 @@
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
     "test": "vitest run",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:int": "vitest run --config vitest.int.config.ts",
+    "test:watch": "vitest",
+    "test:unit:watch": "vitest --config vitest.unit.config.ts",
+    "test:int:watch": "vitest --config vitest.int.config.ts",
     "dev": "tsc --build --watch",
     "clean": "tsc --build --clean"
   },

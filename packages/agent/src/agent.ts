@@ -268,14 +268,20 @@ export function createDeepAgent<
       ? [createSkillsMiddleware({ backend, sources: skills }) as LooseAgentMiddleware]
       : [];
 
+  // Preserve the typed instances of todoList and filesystem middleware for AllMiddleware inference.
+  // These must NOT be cast to LooseAgentMiddleware so that their state schemas (todos, files)
+  // are visible to InferMiddlewareStates and thus appear in the agent's invoke() return type.
+  const todoMiddleware = todoListMiddleware();
+  const fsMiddleware = createFilesystemMiddleware({ backend });
+
   // Built-in middleware array - core middleware with known types.
   // This tuple is typed without conditional spreads to preserve tuple inference.
   // Optional middleware (skills, memory, HITL, async) are appended at runtime.
   const builtInMiddleware = [
     // Provides todo list management capabilities for tracking tasks.
-    todoListMiddleware() as LooseAgentMiddleware,
+    todoMiddleware as LooseAgentMiddleware,
     // Enables filesystem operations and optional long-term memory storage.
-    createFilesystemMiddleware({ backend }) as LooseAgentMiddleware,
+    fsMiddleware as LooseAgentMiddleware,
     // Enables delegation to specialized subagents for complex tasks.
     createSubAgentMiddleware({
       defaultModel: model,
@@ -292,13 +298,8 @@ export function createDeepAgent<
     createPatchToolCallsMiddleware() as LooseAgentMiddleware,
   ] as const;
 
-  const [
-    todoMiddleware,
-    fsMiddleware,
-    subagentMiddleware,
-    summarizationMiddleware,
-    patchToolCallsMiddleware,
-  ] = builtInMiddleware;
+  const [, , subagentMiddleware, summarizationMiddleware, patchToolCallsMiddleware] =
+    builtInMiddleware;
 
   // Runtime middleware array: combine built-in + optional middleware.
   // Note: The full type is handled separately via AllMiddleware.
@@ -372,11 +373,16 @@ export function createDeepAgent<
   });
 
   /**
-   * Combine custom middleware with flattened subagent middleware for complete type inference
-   * This ensures InferMiddlewareStates captures state from both sources
+   * Combine custom middleware with flattened subagent middleware for complete type inference.
+   * This ensures InferMiddlewareStates captures state from both sources.
+   *
+   * todoMiddleware and fsMiddleware are kept as their concrete types (not cast to
+   * LooseAgentMiddleware) so that their state schemas (todos, files) remain visible
+   * to InferMiddlewareStates and appear in the agent's invoke() return type.
    */
   type AllMiddleware = readonly [
-    ...typeof builtInMiddleware,
+    typeof todoMiddleware,
+    typeof fsMiddleware,
     ...TMiddleware,
     ...FlattenSubAgentMiddleware<TSubagents>,
   ];
