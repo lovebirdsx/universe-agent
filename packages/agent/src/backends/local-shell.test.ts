@@ -326,7 +326,7 @@ describe('LocalShellBackend', () => {
       expect(raw.data).toBeDefined();
       expect(typeof raw.data!.content).toBe('string');
       expect(raw.data!.content).toContain('hello');
-      expect((raw.data as any).mimeType).toBe('text/plain');
+      expect((raw.data as { mimeType: string }).mimeType).toBe('text/plain');
       expect(raw.data!.created_at).toBeDefined();
       expect(raw.data!.modified_at).toBeDefined();
     });

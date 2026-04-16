@@ -41,6 +41,28 @@ import {
 
 const NAMESPACE_COMPONENT_RE = /^[A-Za-z0-9\-_.@+:~]+$/;
 
+type StoreFileValue = {
+  content: string[] | string | ArrayBufferView;
+  created_at: string;
+  modified_at: string;
+  mimeType?: string;
+};
+
+type StoreSearchOptions = {
+  query?: string;
+  filter?: Record<string, unknown>;
+  limit: number;
+  offset: number;
+};
+
+type SearchableStore = {
+  search(namespace: string[], options: StoreSearchOptions): Promise<Item[]>;
+};
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 function getObjectRecord(value: unknown): Record<string, unknown> | undefined {
   return value != null && typeof value === 'object'
     ? (value as Record<string, unknown>)
@@ -350,13 +372,11 @@ export class StoreBackend implements BackendProtocolV2 {
    * @throws Error if required fields are missing or have incorrect types
    */
   private convertStoreItemToFileData(storeItem: Item): FileData {
-    const value = storeItem.value as any;
+    const value = storeItem.value as Partial<StoreFileValue>;
 
     const hasValidContent =
       value.content !== undefined &&
-      (Array.isArray(value.content) ||
-        typeof value.content === 'string' ||
-        ArrayBuffer.isView(value.content));
+      (typeof value.content === 'string' || ArrayBuffer.isView(value.content));
 
     if (
       !hasValidContent ||
@@ -368,9 +388,23 @@ export class StoreBackend implements BackendProtocolV2 {
       );
     }
 
+    const content = ArrayBuffer.isView(value.content)
+      ? new Uint8Array(value.content.buffer, value.content.byteOffset, value.content.byteLength)
+      : typeof value.content === 'string'
+        ? value.content
+        : (() => {
+            throw new Error(
+              `Unsupported content type: ${typeof value.content}. Expected string or Uint8Array.`,
+            );
+          })();
+
+    if (content === undefined) {
+      throw new Error('Store item content is missing after validation');
+    }
+
     return {
-      content: value.content,
-      ...(value.mimeType ? { mimeType: value.mimeType } : {}),
+      content,
+      mimeType: value.mimeType ?? 'application/octet-stream',
       created_at: value.created_at,
       modified_at: value.modified_at,
     };
@@ -382,7 +416,7 @@ export class StoreBackend implements BackendProtocolV2 {
    * @param fileData - The FileData to convert
    * @returns Object with content, mimeType, created_at, and modified_at fields
    */
-  private convertFileDataToStoreValue(fileData: FileData): Record<string, any> {
+  private convertFileDataToStoreValue(fileData: FileData): Record<string, unknown> {
     return {
       content: fileData.content,
       ...('mimeType' in fileData ? { mimeType: fileData.mimeType } : {}),
@@ -400,11 +434,11 @@ export class StoreBackend implements BackendProtocolV2 {
    * @returns List of all items matching the search criteria
    */
   private async searchStorePaginated(
-    store: any,
+    store: SearchableStore,
     namespace: string[],
     options: {
       query?: string;
-      filter?: Record<string, any>;
+      filter?: Record<string, unknown>;
       pageSize?: number;
     } = {},
   ): Promise<Item[]> {
@@ -542,8 +576,8 @@ export class StoreBackend implements BackendProtocolV2 {
       const lines = fileDataV2.content.split('\n');
       const selected = lines.slice(offset, offset + limit);
       return { content: selected.join('\n'), mimeType: fileDataV2.mimeType };
-    } catch (e: any) {
-      return { error: e.message };
+    } catch (error: unknown) {
+      return { error: getErrorMessage(error) };
     }
   }
 
@@ -623,8 +657,8 @@ export class StoreBackend implements BackendProtocolV2 {
       const storeValue = this.convertFileDataToStoreValue(newFileData);
       await store.put(namespace, filePath, storeValue);
       return { path: filePath, filesUpdate: null, occurrences: occurrences };
-    } catch (e: any) {
-      return { error: `Error: ${e.message}` };
+    } catch (error: unknown) {
+      return { error: `Error: ${getErrorMessage(error)}` };
     }
   }
 

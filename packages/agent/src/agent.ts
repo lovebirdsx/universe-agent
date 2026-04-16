@@ -88,6 +88,21 @@ const BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   'write_todos',
 ]);
 
+type LooseAgentMiddleware = NonNullable<Parameters<typeof createAgent>[0]['middleware']>[number];
+
+function createAnthropicCacheMiddleware(): LooseAgentMiddleware {
+  return anthropicPromptCachingMiddleware({
+    unsupportedModelBehavior: 'ignore',
+    minMessagesToCache: 1,
+  } as never) as LooseAgentMiddleware;
+}
+
+function createHitlMiddleware(
+  interruptOn: NonNullable<CreateDeepAgentParams['interruptOn']>,
+): LooseAgentMiddleware {
+  return humanInTheLoopMiddleware({ interruptOn } as never) as LooseAgentMiddleware;
+}
+
 /**
  * Detect whether a model is an Anthropic model.
  * Used to gate Anthropic-specific prompt caching optimizations (cache_control breakpoints).
@@ -98,7 +113,10 @@ export function isAnthropicModel(model: BaseLanguageModel | string): boolean {
     return model.startsWith('claude');
   }
   if (model.getName() === 'ConfigurableModel') {
-    return (model as any)._defaultConfig?.modelProvider === 'anthropic';
+    return (
+      (model as { _defaultConfig?: { modelProvider?: string } })._defaultConfig?.modelProvider ===
+      'anthropic'
+    );
   }
   return model.getName() === 'ChatAnthropic';
 }
@@ -178,14 +196,8 @@ export function createDeepAgent<
   }
 
   const anthropicModel = isAnthropicModel(model);
-  const cacheMiddleware = anthropicModel
-    ? [
-        anthropicPromptCachingMiddleware({
-          unsupportedModelBehavior: 'ignore',
-          minMessagesToCache: 1,
-        }),
-        createCacheBreakpointMiddleware(),
-      ]
+  const cacheMiddleware: LooseAgentMiddleware[] = anthropicModel
+    ? [createAnthropicCacheMiddleware(), createCacheBreakpointMiddleware() as LooseAgentMiddleware]
     : [];
 
   /**
@@ -199,23 +211,23 @@ export function createDeepAgent<
     // Middleware for custom subagents (does NOT include skills from main agent).
     // Uses createSummarizationMiddleware (deepagents version) with backend support
     // and auto-computed defaults from model profile.
-    const subagentMiddleware = [
+    const subagentMiddleware: LooseAgentMiddleware[] = [
       // Provides todo list management capabilities for tracking tasks.
-      todoListMiddleware(),
+      todoListMiddleware() as LooseAgentMiddleware,
       // Enables filesystem operations and optional long-term memory storage.
-      createFilesystemMiddleware({ backend }),
+      createFilesystemMiddleware({ backend }) as LooseAgentMiddleware,
       // Automatically summarizes conversation history when token limits are approached.
       // Uses createSummarizationMiddleware (deepagents version) with backend support
       // and auto-computed defaults from model profile.
-      createSummarizationMiddleware({ backend }),
+      createSummarizationMiddleware({ backend }) as LooseAgentMiddleware,
       // Patches tool calls to ensure compatibility across different model providers.
-      createPatchToolCallsMiddleware(),
+      createPatchToolCallsMiddleware() as LooseAgentMiddleware,
       // Loads subagent-specific skills when configured.
       ...(input.skills != null && input.skills.length > 0
-        ? [createSkillsMiddleware({ backend, sources: input.skills })]
+        ? [createSkillsMiddleware({ backend, sources: input.skills }) as LooseAgentMiddleware]
         : []),
       // Appends custom middleware from the subagent spec.
-      ...(input.middleware ?? []),
+      ...((input.middleware ?? []) as LooseAgentMiddleware[]),
       // Adds Anthropic cache controls when supported by the model.
       ...cacheMiddleware,
     ];
@@ -245,15 +257,15 @@ export function createDeepAgent<
     const generalPurposeSpec = normalizeSubagentSpec({
       ...GENERAL_PURPOSE_SUBAGENT,
       model,
-      skills,
       tools: tools as StructuredTool[],
+      ...(skills != null ? { skills } : {}),
     });
     inlineSubagents.unshift(generalPurposeSpec);
   }
 
-  const skillsMiddleware =
+  const skillsMiddleware: LooseAgentMiddleware[] =
     skills != null && skills.length > 0
-      ? [createSkillsMiddleware({ backend, sources: skills })]
+      ? [createSkillsMiddleware({ backend, sources: skills }) as LooseAgentMiddleware]
       : [];
 
   // Built-in middleware array - core middleware with known types.
@@ -261,23 +273,23 @@ export function createDeepAgent<
   // Optional middleware (skills, memory, HITL, async) are appended at runtime.
   const builtInMiddleware = [
     // Provides todo list management capabilities for tracking tasks.
-    todoListMiddleware(),
+    todoListMiddleware() as LooseAgentMiddleware,
     // Enables filesystem operations and optional long-term memory storage.
-    createFilesystemMiddleware({ backend }),
+    createFilesystemMiddleware({ backend }) as LooseAgentMiddleware,
     // Enables delegation to specialized subagents for complex tasks.
     createSubAgentMiddleware({
       defaultModel: model,
       defaultTools: tools as StructuredTool[],
-      defaultInterruptOn: interruptOn,
       subagents: inlineSubagents,
       generalPurposeAgent: false,
-    }),
+      ...(interruptOn ? { defaultInterruptOn: interruptOn } : {}),
+    }) as LooseAgentMiddleware,
     // Automatically summarizes conversation history when token limits are approached.
     // Uses createSummarizationMiddleware (deepagents version) with backend support
     // for conversation history offloading and auto-computed defaults from model profile.
-    createSummarizationMiddleware({ backend }),
+    createSummarizationMiddleware({ backend }) as LooseAgentMiddleware,
     // Patches tool calls to ensure compatibility across different model providers.
-    createPatchToolCallsMiddleware(),
+    createPatchToolCallsMiddleware() as LooseAgentMiddleware,
   ] as const;
 
   const [
@@ -290,7 +302,7 @@ export function createDeepAgent<
 
   // Runtime middleware array: combine built-in + optional middleware.
   // Note: The full type is handled separately via AllMiddleware.
-  const middleware = [
+  const middleware: LooseAgentMiddleware[] = [
     // Built-in middleware with deterministic ordering.
     todoMiddleware,
     // Optional root-level skills.
@@ -300,9 +312,11 @@ export function createDeepAgent<
     summarizationMiddleware,
     patchToolCallsMiddleware,
     // Optional async subagent bridge.
-    ...(asyncSubAgents.length > 0 ? [createAsyncSubAgentMiddleware({ asyncSubAgents })] : []),
+    ...(asyncSubAgents.length > 0
+      ? [createAsyncSubAgentMiddleware({ asyncSubAgents }) as LooseAgentMiddleware]
+      : []),
     // User-provided middleware.
-    ...customMiddleware,
+    ...(customMiddleware as unknown as LooseAgentMiddleware[]),
     // Optional Anthropic cache controls.
     ...cacheMiddleware,
     // Optional memory support.
@@ -312,11 +326,11 @@ export function createDeepAgent<
             backend,
             sources: memory,
             addCacheControl: anthropicModel,
-          }),
+          }) as LooseAgentMiddleware,
         ]
       : []),
     // Optional human-in-the-loop tool interrupts.
-    ...(interruptOn ? [humanInTheLoopMiddleware({ interruptOn })] : []),
+    ...(interruptOn ? [createHitlMiddleware(interruptOn)] : []),
   ];
 
   // Combine system prompt parameter with BASE_AGENT_PROMPT
@@ -343,12 +357,12 @@ export function createDeepAgent<
     model,
     systemPrompt: finalSystemPrompt,
     tools: tools as StructuredTool[],
-    middleware,
-    ...(responseFormat !== null && { responseFormat }),
-    contextSchema,
-    checkpointer,
-    store,
-    name,
+    middleware: middleware as readonly AgentMiddleware[],
+    ...(responseFormat != null ? { responseFormat } : {}),
+    ...(contextSchema != null ? { contextSchema } : {}),
+    ...(checkpointer !== undefined ? { checkpointer } : {}),
+    ...(store !== undefined ? { store } : {}),
+    ...(name !== undefined ? { name } : {}),
   }).withConfig({
     recursionLimit: 10_000,
     metadata: {

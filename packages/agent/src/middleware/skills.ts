@@ -398,6 +398,10 @@ export function parseSkillMetadataFromContent(
   }
 
   const frontmatterStr = match[1];
+  if (frontmatterStr == null) {
+    console.warn(`Skipping ${skillPath}: no valid YAML frontmatter found`);
+    return null;
+  }
 
   // Parse YAML
   let frontmatterData: Record<string, unknown>;
@@ -532,6 +536,9 @@ async function listSkillsFromBackend(
       }
 
       const response = results[0];
+      if (!response) {
+        continue;
+      }
       if (response.error != null || response.content == null) {
         continue;
       }
@@ -571,6 +578,9 @@ function formatSkillsLocations(sources: string[]): string {
   const lines: string[] = [];
   for (let i = 0; i < sources.length; i++) {
     const sourcePath = sources[i];
+    if (!sourcePath) {
+      continue;
+    }
     // Extract a friendly name from the path (last non-empty component)
     // Handle both Unix (/) and Windows (\) path separators
     const name =

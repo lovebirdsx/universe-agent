@@ -133,7 +133,7 @@ const AsyncTaskSchema = z.object({
   agentName: z.string(),
   threadId: z.string(),
   runId: z.string(),
-  status: z.string(),
+  status: z.enum(['pending', 'running', 'success', 'error', 'cancelled', 'timeout', 'interrupted']),
   createdAt: z.string(),
   description: z.string().optional(),
   updatedAt: z.string().optional(),
@@ -148,13 +148,10 @@ const AsyncTaskSchema = z.object({
  * tasks dict rather than replacing it wholesale.
  */
 const AsyncTaskStateSchema = new StateSchema({
-  asyncTasks: new ReducedValue(
-    z.record(z.string(), AsyncTaskSchema).default(() => ({})),
-    {
-      inputSchema: z.record(z.string(), AsyncTaskSchema).optional(),
-      reducer: asyncTasksReducer,
-    },
-  ),
+  asyncTasks: new ReducedValue(z.record(z.string(), AsyncTaskSchema).default({}), {
+    inputSchema: z.record(z.string(), AsyncTaskSchema).optional(),
+    reducer: asyncTasksReducer,
+  }),
 });
 
 /**
@@ -409,6 +406,9 @@ export class ClientCache {
    */
   getClient(name: string): Client {
     const spec = this.agents[name];
+    if (!spec) {
+      throw new Error(`Unknown async subagent: ${name}`);
+    }
     const key = this.cacheKey(spec);
 
     const existing = this.clients.get(key);
@@ -416,8 +416,8 @@ export class ClientCache {
 
     const headers = this.resolveHeaders(spec);
     const client = new Client({
-      apiUrl: spec.url,
       defaultHeaders: headers,
+      ...(spec.url ? { apiUrl: spec.url } : {}),
     });
     this.clients.set(key, client);
 
@@ -466,6 +466,9 @@ export function buildStartTool(
       }
 
       const spec = agentMap[input.agentName];
+      if (!spec) {
+        return `Unknown async subagent type \`${input.agentName}\``;
+      }
       const callbackContext = extractCallbackContext(runtime);
       try {
         const client = clients.getClient(input.agentName);
@@ -558,8 +561,12 @@ export function buildCheckTool(clients: ClientCache) {
         runId: task.runId,
         status: result.status,
         createdAt: task.createdAt,
-        updatedAt: result.status !== task.status ? new Date().toISOString() : task.updatedAt,
         checkedAt: new Date().toISOString(),
+        ...(result.status !== task.status
+          ? { updatedAt: new Date().toISOString() }
+          : task.updatedAt
+            ? { updatedAt: task.updatedAt }
+            : {}),
       };
 
       return new Command({
@@ -602,6 +609,9 @@ export function buildUpdateTool(agentMap: Record<string, AsyncSubAgent>, clients
       if (typeof tracked === 'string') return tracked;
 
       const spec = agentMap[tracked.agentName];
+      if (!spec) {
+        return `Unknown async subagent type \`${tracked.agentName}\``;
+      }
       try {
         const client = clients.getClient(tracked.agentName);
         const run = await client.runs.create(tracked.threadId, spec.graphId, {
@@ -620,7 +630,7 @@ export function buildUpdateTool(agentMap: Record<string, AsyncSubAgent>, clients
           createdAt: tracked.createdAt,
           description: input.message,
           updatedAt: new Date().toISOString(),
-          checkedAt: tracked.checkedAt,
+          ...(tracked.checkedAt ? { checkedAt: tracked.checkedAt } : {}),
         };
 
         return new Command({
@@ -679,7 +689,7 @@ export function buildCancelTool(clients: ClientCache) {
         status: 'cancelled',
         createdAt: tracked.createdAt,
         updatedAt: new Date().toISOString(),
-        checkedAt: tracked.checkedAt,
+        ...(tracked.checkedAt ? { checkedAt: tracked.checkedAt } : {}),
       };
 
       return new Command({
@@ -732,6 +742,9 @@ export function buildListTool(clients: ClientCache) {
       for (let idx = 0; idx < filtered.length; idx++) {
         const task = filtered[idx];
         const status = statuses[idx];
+        if (!task || !status) {
+          continue;
+        }
 
         const taskEntry = formatTaskEntry(task, status);
         entries.push(taskEntry);
@@ -743,8 +756,12 @@ export function buildListTool(clients: ClientCache) {
           runId: task.runId,
           status,
           createdAt: task.createdAt,
-          updatedAt: status !== task.status ? new Date().toISOString() : task.updatedAt,
-          checkedAt: task.checkedAt,
+          ...(status !== task.status
+            ? { updatedAt: new Date().toISOString() }
+            : task.updatedAt
+              ? { updatedAt: task.updatedAt }
+              : {}),
+          ...(task.checkedAt ? { checkedAt: task.checkedAt } : {}),
         };
       }
 

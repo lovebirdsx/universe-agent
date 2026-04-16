@@ -559,7 +559,11 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
       let tokensKept = 0;
       rawCutoff = 0;
       for (let i = messages.length - 1; i >= 0; i--) {
-        const msgTokens = countTokensApproximately([messages[i]]);
+        const message = messages[i];
+        if (!message) {
+          continue;
+        }
+        const msgTokens = countTokensApproximately([message]);
         if (tokensKept + msgTokens > targetTokenCount) {
           rawCutoff = i + 1;
           break;
@@ -621,7 +625,11 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
       let tokensKept = 0;
       rawCutoff = 0;
       for (let i = messages.length - 1; i >= 0; i--) {
-        const msgTokens = countTokensApproximately([messages[i]]);
+        const message = messages[i];
+        if (!message) {
+          continue;
+        }
+        const msgTokens = countTokensApproximately([message]);
         if (tokensKept + msgTokens > targetTokenCount) {
           rawCutoff = i + 1;
           break;
@@ -705,7 +713,7 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
         result[idx] = new ToolMessage({
           content: content.substring(0, perToolBudgetChars) + '\n...(result truncated)',
           tool_call_id: msg.tool_call_id,
-          name: msg.name,
+          ...(msg.name ? { name: msg.name } : {}),
         });
         modified = true;
       }
@@ -738,6 +746,9 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
 
     for (let i = 0; i < messages.length; i++) {
       const msg = messages[i];
+      if (!msg) {
+        continue;
+      }
 
       if (i < cutoffIndex && AIMessage.isInstance(msg) && msg.tool_calls) {
         const truncatedToolCalls = msg.tool_calls.map((toolCall) => {
@@ -817,8 +828,9 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
       if (resolvedBackend.downloadFiles) {
         try {
           const responses = await resolvedBackend.downloadFiles([filePath]);
-          if (responses.length > 0 && responses[0].content && !responses[0].error) {
-            existingBytes = responses[0].content;
+          const firstResponse = responses[0];
+          if (firstResponse?.content && !firstResponse.error) {
+            existingBytes = firstResponse.content;
           }
         } catch {
           // File doesn't exist yet, that's fine
@@ -833,7 +845,8 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
         combined.set(sectionBytes, existingBytes.byteLength);
 
         const uploadResults = await resolvedBackend.uploadFiles([[filePath, combined]]);
-        result = uploadResults[0].error ? { error: uploadResults[0].error } : { path: filePath };
+        const firstUploadResult = uploadResults[0];
+        result = firstUploadResult?.error ? { error: firstUploadResult.error } : { path: filePath };
       } else if (!existingBytes) {
         result = await resolvedBackend.write(filePath, newSection);
       } else {
@@ -872,11 +885,15 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
       let kept = 0;
       const trimmedMessages: BaseMessage[] = [];
       for (let i = messages.length - 1; i >= 0; i--) {
-        const msgTokens = countTokensApproximately([messages[i]]);
+        const message = messages[i];
+        if (!message) {
+          continue;
+        }
+        const msgTokens = countTokensApproximately([message]);
         if (kept + msgTokens > trimTokensToSummarize) {
           break;
         }
-        trimmedMessages.unshift(messages[i]);
+        trimmedMessages.unshift(message);
         kept += msgTokens;
       }
       messagesToSummarize = trimmedMessages;
@@ -999,19 +1016,29 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
     return false;
   }
 
+  type MiddlewareWrapModelCall = NonNullable<_AgentMiddleware['wrapModelCall']>;
+  type MiddlewareRequest = Parameters<MiddlewareWrapModelCall>[0];
+  type MiddlewareHandler = Parameters<MiddlewareWrapModelCall>[1];
+  type MiddlewareResult = Awaited<ReturnType<MiddlewareHandler>>;
+
+  type SummarizationRequest = MiddlewareRequest & {
+    messages: BaseMessage[];
+    state: Record<string, unknown>;
+    systemMessage?: SystemMessage | unknown;
+    tools?: (ServerTool | ClientTool)[] | unknown[];
+  };
+
+  type SummarizationHandler = (
+    req: SummarizationRequest,
+  ) => Promise<MiddlewareResult> | MiddlewareResult;
+
   async function performSummarization(
-    request: {
-      messages: BaseMessage[];
-      state: Record<string, unknown>;
-      systemMessage?: SystemMessage | unknown;
-      tools?: (ServerTool | ClientTool)[] | unknown[];
-      [key: string]: unknown;
-    },
-    handler: (req: any) => any,
+    request: SummarizationRequest,
+    handler: SummarizationHandler,
     truncatedMessages: BaseMessage[],
     resolvedModel: BaseChatModel,
     maxInputTokens: number | undefined,
-  ): Promise<any> {
+  ): Promise<MiddlewareResult> {
     const cutoffIndex = determineCutoffIndex(truncatedMessages, maxInputTokens);
     if (cutoffIndex <= 0) {
       return handler({ ...request, messages: truncatedMessages });
@@ -1106,7 +1133,7 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
         } satisfies SummarizationEvent,
         _summarizationSessionId: getSessionId(request.state),
       },
-    });
+    }) as unknown as MiddlewareResult;
   }
 
   return createMiddleware({
@@ -1179,8 +1206,8 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
        * Step 3: Perform summarization
        */
       return performSummarization(
-        request as any,
-        handler,
+        request as SummarizationRequest,
+        handler as SummarizationHandler,
         truncatedMessages,
         resolvedModel,
         maxInputTokens,

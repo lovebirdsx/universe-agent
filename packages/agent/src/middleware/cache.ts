@@ -40,10 +40,15 @@ export function createCacheBreakpointMiddleware() {
 
       if (existingBlocks.length === 0) return handler(request);
 
+      const lastBlock = existingBlocks[existingBlocks.length - 1];
+      if (!lastBlock || typeof lastBlock !== 'object') {
+        return handler(request);
+      }
+
       existingBlocks[existingBlocks.length - 1] = {
-        ...existingBlocks[existingBlocks.length - 1],
+        ...lastBlock,
         cache_control: { type: 'ephemeral' },
-      };
+      } as (typeof existingBlocks)[number];
 
       return handler({
         ...request,

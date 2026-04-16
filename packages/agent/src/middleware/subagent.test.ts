@@ -110,7 +110,7 @@ describe('Subagent skills isolation', () => {
       },
     );
 
-    const systemPrompts = getAllSystemPromptsFromSpy(invokeSpy);
+    const systemPrompts = getAllSystemPromptsFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     // Main agent should have skills
     const mainAgentPrompts = systemPrompts.filter((p) => p.includes('`task` (subagent spawner)'));
@@ -183,7 +183,7 @@ describe('Subagent skills isolation', () => {
       },
     );
 
-    const systemPrompts = getAllSystemPromptsFromSpy(invokeSpy);
+    const systemPrompts = getAllSystemPromptsFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     // Main agent should have skills
     const mainAgentPrompts = systemPrompts.filter(

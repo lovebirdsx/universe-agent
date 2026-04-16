@@ -368,10 +368,12 @@ describe('DeepAgents Integration Tests', () => {
   describe.each([
     {
       strategyName: 'toolStrategy',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       wrap: (s: z.ZodObject<any>) => toolStrategy(s),
     },
     {
       strategyName: 'providerStrategy',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       wrap: (s: z.ZodObject<any>) => providerStrategy(s),
     },
   ])('responseFormat ($strategyName)', ({ strategyName, wrap }) => {

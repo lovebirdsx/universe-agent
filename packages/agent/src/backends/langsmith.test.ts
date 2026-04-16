@@ -36,6 +36,7 @@ import { LangSmithSandbox } from './langsmith.js';
 import {
   LangSmithResourceNotFoundError,
   LangSmithSandboxError,
+  Sandbox,
 } from 'langsmith/experimental/sandbox';
 
 function makeMockSandbox(name: string = 'test-sandbox') {
@@ -43,8 +44,10 @@ function makeMockSandbox(name: string = 'test-sandbox') {
   mockRead = vi.fn();
   mockWrite = vi.fn();
   mockDelete = vi.fn().mockResolvedValue(undefined);
-  MockLangSmithResourceNotFoundError = LangSmithResourceNotFoundError;
-  MockLangSmithSandboxError = LangSmithSandboxError;
+  MockLangSmithResourceNotFoundError = LangSmithResourceNotFoundError as new (
+    message?: string,
+  ) => Error;
+  MockLangSmithSandboxError = LangSmithSandboxError as new (message?: string) => Error;
 
   // A plain object that satisfies the Sandbox interface shape for testing
   return {
@@ -59,7 +62,7 @@ function makeMockSandbox(name: string = 'test-sandbox') {
 function makeSandbox(options?: { name?: string; defaultTimeout?: number }): LangSmithSandbox {
   const mock = makeMockSandbox(options?.name ?? 'test-sandbox');
   return new LangSmithSandbox({
-    sandbox: mock as any,
+    sandbox: mock as unknown as Sandbox,
     defaultTimeout: options?.defaultTimeout,
   });
 }

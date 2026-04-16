@@ -2,7 +2,6 @@ import type {
   AgentMiddleware,
   InterruptOnConfig,
   ReactAgent,
-  CreateAgentParams as _CreateAgentParams,
   AgentTypeConfig,
   InferMiddlewareStates,
   ResponseFormat,
@@ -23,6 +22,7 @@ import type { CompiledSubAgent } from './middleware/subagents.js';
 
 // LangChain uses AnyAnnotationRoot internally but doesn't export it
 // We use AnnotationRoot<any> as a compatible equivalent
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyAnnotationRoot = AnnotationRoot<any>;
 
 /** Any subagent specification — sync, compiled, or async. */
@@ -30,7 +30,7 @@ export type AnySubAgent = SubAgent | CompiledSubAgent | AsyncSubAgent;
 
 // TODO: import TypedToolStrategy from "langchain" once exported from the top-level entry point
 // (currently only available via "langchain/dist/agents/responses.js")
-interface TypedToolStrategy<T = unknown> extends Array<ToolStrategy<any>> {
+interface TypedToolStrategy<T = unknown> extends Array<ToolStrategy<unknown>> {
   _schemaType?: T;
 }
 
@@ -81,7 +81,7 @@ export type MergedDeepAgentState<
  * - `TypedToolStrategy<T>` — from `toolStrategy(schema)`
  * - `ResponseFormat` — the base union of the above single-strategy types
  */
-export type SupportedResponseFormat = ResponseFormat | TypedToolStrategy<any>;
+export type SupportedResponseFormat = ResponseFormat | TypedToolStrategy<unknown>;
 
 /**
  * Utility type to extract the parsed response type from a ResponseFormat strategy.
@@ -140,8 +140,8 @@ export type InferStructuredResponse<T extends SupportedResponseFormat> =
  * ```
  */
 export interface DeepAgentTypeConfig<
-  TResponse extends Record<string, any> | ResponseFormatUndefined =
-    | Record<string, any>
+  TResponse extends Record<string, unknown> | ResponseFormatUndefined =
+    | Record<string, unknown>
     | ResponseFormatUndefined,
   TState extends AnyAnnotationRoot | InteropZodObject | undefined =
     | AnyAnnotationRoot
@@ -161,7 +161,7 @@ export interface DeepAgentTypeConfig<
  * Used when no explicit type parameters are provided.
  */
 export interface DefaultDeepAgentTypeConfig extends DeepAgentTypeConfig {
-  Response: Record<string, any>;
+  Response: Record<string, unknown>;
   State: undefined;
   Context: AnyAnnotationRoot;
   Middleware: readonly AgentMiddleware[];
@@ -335,6 +335,7 @@ export type InferSubagentReactAgentType<TSubagent extends SubAgent | CompiledSub
  */
 export interface CreateDeepAgentParams<
   TResponse extends SupportedResponseFormat = SupportedResponseFormat,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ContextSchema extends AnnotationRoot<any> | InteropZodObject = AnnotationRoot<any>,
   TMiddleware extends readonly AgentMiddleware[] = readonly AgentMiddleware[],
   TSubagents extends readonly AnySubAgent[] = readonly AnySubAgent[],

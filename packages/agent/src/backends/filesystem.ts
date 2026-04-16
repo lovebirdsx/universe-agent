@@ -36,6 +36,10 @@ import {
   performStringReplacement,
 } from './utils.js';
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 const SUPPORTS_NOFOLLOW = fsSync.constants.O_NOFOLLOW !== undefined;
 
 /**
@@ -249,8 +253,8 @@ export class FilesystemBackend implements BackendProtocolV2 {
 
       const selectedLines = lines.slice(startIdx, endIdx);
       return { content: selectedLines.join('\n'), mimeType };
-    } catch (e: any) {
-      return { error: `Error reading file '${filePath}': ${e.message}` };
+    } catch (error: unknown) {
+      return { error: `Error reading file '${filePath}': ${getErrorMessage(error)}` };
     }
   }
 
@@ -381,8 +385,8 @@ export class FilesystemBackend implements BackendProtocolV2 {
       }
 
       return { path: filePath, filesUpdate: null };
-    } catch (e: any) {
-      return { error: `Error writing file '${filePath}': ${e.message}` };
+    } catch (error: unknown) {
+      return { error: `Error writing file '${filePath}': ${getErrorMessage(error)}` };
     }
   }
 
@@ -451,8 +455,8 @@ export class FilesystemBackend implements BackendProtocolV2 {
       }
 
       return { path: filePath, filesUpdate: null, occurrences: occurrences };
-    } catch (e: any) {
-      return { error: `Error editing file '${filePath}': ${e.message}` };
+    } catch (error: unknown) {
+      return { error: `Error editing file '${filePath}': ${getErrorMessage(error)}` };
     }
   }
 
@@ -768,12 +772,12 @@ export class FilesystemBackend implements BackendProtocolV2 {
         // Write file
         await fs.writeFile(resolvedPath, content);
         responses.push({ path: filePath, error: null });
-      } catch (e: any) {
-        if (e.code === 'ENOENT') {
+      } catch (error: unknown) {
+        if ((error as { code?: string }).code === 'ENOENT') {
           responses.push({ path: filePath, error: 'file_not_found' });
-        } else if (e.code === 'EACCES') {
+        } else if ((error as { code?: string }).code === 'EACCES') {
           responses.push({ path: filePath, error: 'permission_denied' });
-        } else if (e.code === 'EISDIR') {
+        } else if ((error as { code?: string }).code === 'EISDIR') {
           responses.push({ path: filePath, error: 'is_directory' });
         } else {
           responses.push({ path: filePath, error: 'invalid_path' });
@@ -798,20 +802,20 @@ export class FilesystemBackend implements BackendProtocolV2 {
         const resolvedPath = this.resolvePath(filePath);
         const content = await fs.readFile(resolvedPath);
         responses.push({ path: filePath, content, error: null });
-      } catch (e: any) {
-        if (e.code === 'ENOENT') {
+      } catch (error: unknown) {
+        if ((error as { code?: string }).code === 'ENOENT') {
           responses.push({
             path: filePath,
             content: null,
             error: 'file_not_found',
           });
-        } else if (e.code === 'EACCES') {
+        } else if ((error as { code?: string }).code === 'EACCES') {
           responses.push({
             path: filePath,
             content: null,
             error: 'permission_denied',
           });
-        } else if (e.code === 'EISDIR') {
+        } else if ((error as { code?: string }).code === 'EISDIR') {
           responses.push({
             path: filePath,
             content: null,

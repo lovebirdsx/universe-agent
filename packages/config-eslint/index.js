@@ -1,6 +1,6 @@
-import tseslint from 'typescript-eslint'
-import prettierConfig from 'eslint-config-prettier'
-import prettierPlugin from 'eslint-plugin-prettier'
+import tseslint from 'typescript-eslint';
+import prettierConfig from 'eslint-config-prettier';
+import prettierPlugin from 'eslint-plugin-prettier';
 
 export default tseslint.config(
   ...tseslint.configs.recommended,
@@ -18,4 +18,4 @@ export default tseslint.config(
     plugins: { prettier: prettierPlugin },
     rules: { 'prettier/prettier': 'error' },
   },
-)
+);

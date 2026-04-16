@@ -12,10 +12,12 @@ import {
   tool,
   HumanMessage,
   ToolMessage,
+  type ContentBlock,
   type AgentMiddleware as _AgentMiddleware,
   type ToolRuntime,
 } from 'langchain';
 import { Command, isCommand, StateSchema, ReducedValue } from '@langchain/langgraph';
+import type { BaseMessage } from '@langchain/core/messages';
 import { z } from 'zod/v4';
 import type {
   AnyBackendProtocol,
@@ -174,7 +176,7 @@ function extractTextFromMessage(message: {
 function buildEvictedHumanContent(
   message: HumanMessage,
   replacementText: string,
-): string | Array<Record<string, unknown>> {
+): string | Array<ContentBlock | ContentBlock.Text> {
   if (typeof message.content === 'string') {
     return replacementText;
   }
@@ -185,7 +187,10 @@ function buildEvictedHumanContent(
     if (mediaBlocks.length === 0) {
       return replacementText;
     }
-    return [{ type: 'text', text: replacementText }, ...mediaBlocks];
+    return [
+      { type: 'text', text: replacementText },
+      ...(mediaBlocks as Array<ContentBlock | ContentBlock.Text>),
+    ];
   }
   return replacementText;
 }
@@ -206,8 +211,8 @@ function buildTruncatedHumanMessage(message: HumanMessage, filePath: string): Hu
   );
   const evictedContent = buildEvictedHumanContent(message, replacementText);
   return new HumanMessage({
-    content: evictedContent as any,
-    id: message.id,
+    content: evictedContent,
+    ...(message.id ? { id: message.id } : {}),
     additional_kwargs: { ...message.additional_kwargs },
     response_metadata: { ...message.response_metadata },
   });
@@ -687,7 +692,7 @@ function createWriteFileTool(
         content: `Successfully wrote to '${file_path}'`,
         tool_call_id: runtime.toolCall?.id as string,
         name: 'write_file',
-        metadata: result.metadata,
+        ...(result.metadata ? { metadata: result.metadata } : {}),
       });
 
       if (result.filesUpdate) {
@@ -731,7 +736,7 @@ function createEditFileTool(
         content: `Successfully replaced ${result.occurrences} occurrence(s) in '${file_path}'`,
         tool_call_id: runtime.toolCall?.id as string,
         name: 'edit_file',
-        metadata: result.metadata,
+        ...(result.metadata ? { metadata: result.metadata } : {}),
       });
 
       // If filesUpdate is present, return Command to update state
@@ -1013,8 +1018,8 @@ export function createFilesystemMiddleware(options: FilesystemMiddlewareOptions 
       }
 
       const taggedMessage = new HumanMessage({
-        content: last.content as any,
-        id: last.id,
+        content: last.content,
+        ...(last.id ? { id: last.id } : {}),
         additional_kwargs: {
           ...last.additional_kwargs,
           lc_evicted_to: filePath,
@@ -1041,7 +1046,7 @@ export function createFilesystemMiddleware(options: FilesystemMiddlewareOptions 
       // Filter tools based on backend capabilities
       let tools = request.tools;
       if (!supportsExecution) {
-        tools = tools.filter((t: { name: string }) => t.name !== 'execute');
+        tools = (tools ?? []).filter((tool) => !('name' in tool) || tool.name !== 'execute');
       }
 
       // Build system prompt - add execution instructions if available
@@ -1056,15 +1061,15 @@ export function createFilesystemMiddleware(options: FilesystemMiddlewareOptions 
       let messages = request.messages;
       if (humanMessageTokenLimitBeforeEvict && messages) {
         const hasTagged = messages.some(
-          (msg: any) => HumanMessage.isInstance(msg) && msg.additional_kwargs?.lc_evicted_to,
+          (msg: unknown) => HumanMessage.isInstance(msg) && msg.additional_kwargs?.lc_evicted_to,
         );
         if (hasTagged) {
-          messages = messages.map((msg: any) => {
+          messages = messages.map((msg: unknown) => {
             if (HumanMessage.isInstance(msg) && msg.additional_kwargs?.lc_evicted_to) {
               return buildTruncatedHumanMessage(msg, msg.additional_kwargs.lc_evicted_to as string);
             }
             return msg;
-          });
+          }) as BaseMessage[];
         }
       }
 
@@ -1121,11 +1126,11 @@ export function createFilesystemMiddleware(options: FilesystemMiddlewareOptions 
           const truncatedMessage = new ToolMessage({
             content: replacementText,
             tool_call_id: msg.tool_call_id,
-            name: msg.name,
-            id: msg.id,
-            artifact: msg.artifact,
-            status: msg.status,
-            metadata: msg.metadata,
+            ...(msg.name ? { name: msg.name } : {}),
+            ...(msg.id ? { id: msg.id } : {}),
+            ...(msg.artifact !== undefined ? { artifact: msg.artifact } : {}),
+            ...(msg.status ? { status: msg.status } : {}),
+            ...(msg.metadata ? { metadata: msg.metadata } : {}),
             additional_kwargs: msg.additional_kwargs,
             response_metadata: msg.response_metadata,
           });
@@ -1154,16 +1159,19 @@ export function createFilesystemMiddleware(options: FilesystemMiddlewareOptions 
       }
 
       if (isCommand(result)) {
-        const update = result.update as any;
-        if (!update?.messages) {
+        const update = result.update as Record<string, unknown>;
+        const updateMessages = Array.isArray(update?.messages) ? update.messages : null;
+        if (!updateMessages) {
           return result;
         }
 
         let hasLargeResults = false;
-        const accumulatedFiles: Record<string, FileData> = update.files ? { ...update.files } : {};
-        const processedMessages: ToolMessage[] = [];
+        const accumulatedFiles: Record<string, FileData> = update.files
+          ? { ...(update.files as Record<string, FileData>) }
+          : {};
+        const processedMessages: BaseMessage[] = [];
 
-        for (const msg of update.messages) {
+        for (const msg of updateMessages) {
           if (ToolMessage.isInstance(msg)) {
             const processed = await processToolMessage(msg, toolTokenLimitBeforeEvict);
             processedMessages.push(processed.message);

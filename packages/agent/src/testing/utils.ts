@@ -1,7 +1,6 @@
 import {
   tool,
   createMiddleware,
-  ReactAgent,
   StructuredTool,
   ToolMessage,
   type AgentMiddleware as _AgentMiddleware,
@@ -19,11 +18,24 @@ import type * as _tools from '@langchain/core/tools';
 
 const expectedTools = ['write_todos', 'ls', 'read_file', 'write_file', 'edit_file', 'task'];
 
+type AgentGraphView = {
+  graph?: {
+    channels?: Record<string, unknown>;
+    nodes?: {
+      tools?: {
+        bound?: {
+          tools?: StructuredTool[];
+        };
+      };
+    };
+  };
+};
+
 /**
  * Assert that an agent has all the expected deep agent qualities
  * Accepts any object with a graph property (compatible with ReactAgent and DeepAgent types)
  */
-export function assertAllDeepAgentQualities(agent: { graph: ReactAgent<any>['graph'] }) {
+export function assertAllDeepAgentQualities(agent: AgentGraphView) {
   // Check state channels
   const channels = Object.keys(agent.graph?.channels || {});
   if (!channels.includes('todos')) {
@@ -34,7 +46,7 @@ export function assertAllDeepAgentQualities(agent: { graph: ReactAgent<any>['gra
   }
 
   // Check tools
-  const tools = (agent as any).graph?.nodes?.tools?.bound?.tools || [];
+  const tools = agent.graph?.nodes?.tools?.bound?.tools ?? [];
   const toolNames = tools.map((t: StructuredTool) => t.name);
   for (const toolName of expectedTools) {
     if (!toolNames.includes(toolName)) {
@@ -235,11 +247,7 @@ export const WeatherToolMiddleware = createMiddleware({
   tools: [getWeather],
 });
 
-export function extractToolsFromAgent(agent: { graph: ReactAgent<any>['graph'] }) {
-  const graph = agent.graph;
-  const toolsNode = graph.nodes?.tools.bound as unknown as {
-    tools: StructuredTool[];
-  };
-
-  return Object.fromEntries((toolsNode.tools ?? []).map((tool) => [tool.name, tool]));
+export function extractToolsFromAgent(agent: AgentGraphView) {
+  const tools = agent.graph?.nodes?.tools?.bound?.tools ?? [];
+  return Object.fromEntries(tools.map((tool) => [tool.name, tool]));
 }

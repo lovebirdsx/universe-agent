@@ -234,6 +234,9 @@ async function loadMemoryFromBackend(
     throw new Error(`Expected 1 response for path ${path}, got ${results.length}`);
   }
   const response = results[0];
+  if (!response) {
+    throw new Error(`Missing download response for path ${path}`);
+  }
 
   if (response.error != null) {
     // For now, memory files are treated as optional. file_not_found is expected

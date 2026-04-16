@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect } from 'vitest';
 import { createAgent } from 'langchain';
 import { HumanMessage, ToolMessage } from '@langchain/core/messages';
@@ -610,8 +611,8 @@ describe('Filesystem Middleware Integration Tests', () => {
       });
 
       // Command returns files and research state
-      expect(response.files).toBeDefined();
-      expect(response.files!['/test.txt']).toBeDefined();
+      expect((response as any).files).toBeDefined();
+      expect((response as any).files!['/test.txt']).toBeDefined();
     },
   );
 
@@ -636,9 +637,9 @@ describe('Filesystem Middleware Integration Tests', () => {
       });
 
       // Existing files should be preserved
-      expect(response.files).toBeDefined();
-      expect(response.files!['/existing.txt']).toBeDefined();
-      expect(response.files!['/existing.txt']?.content).toContain('Existing file');
+      expect((response as any).files).toBeDefined();
+      expect((response as any).files!['/existing.txt']).toBeDefined();
+      expect((response as any).files!['/existing.txt']?.content).toContain('Existing file');
     },
   );
 
@@ -1189,7 +1190,7 @@ describe('Filesystem Middleware Integration Tests', () => {
         config,
       );
 
-      const files = writeResponse.files || {};
+      const files = (writeResponse as any).files || {};
       expect(files['/charmander.txt']).toBeDefined();
 
       // Read the shortterm memory file
@@ -1230,7 +1231,7 @@ describe('Filesystem Middleware Integration Tests', () => {
         config,
       );
 
-      const editedFiles = editResponse.files || {};
+      const editedFiles = (editResponse as any).files || {};
       expect(editedFiles['/charmander.txt']).toBeDefined();
       const content = editedFiles['/charmander.txt']
         ? fileDataToString(editedFiles['/charmander.txt'] as FileData)

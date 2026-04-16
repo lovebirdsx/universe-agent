@@ -135,17 +135,14 @@ describe('asyncTasksReducer', () => {
 describe('TERMINAL_STATUSES', () => {
   it.each(['cancelled', 'success', 'error', 'timeout', 'interrupted'])(
     "should include '%s'",
-    (status: AsyncTaskStatus) => {
-      expect(TERMINAL_STATUSES.has(status)).toBe(true);
+    (status: string) => {
+      expect(TERMINAL_STATUSES.has(status as AsyncTaskStatus)).toBe(true);
     },
   );
 
-  it.each(['running', 'pending', 'queued'])(
-    "should NOT include '%s'",
-    (status: AsyncTaskStatus) => {
-      expect(TERMINAL_STATUSES.has(status)).toBe(false);
-    },
-  );
+  it.each(['running', 'pending', 'queued'])("should NOT include '%s'", (status: string) => {
+    expect(TERMINAL_STATUSES.has(status as AsyncTaskStatus)).toBe(false);
+  });
 });
 
 // ─── ASYNC_TASK_SYSTEM_PROMPT ───
@@ -523,7 +520,7 @@ describe('buildStartTool', () => {
     const launchTool = buildStartTool(agentMap, cache, 'Launch a SubAgent');
     const result = await launchTool.invoke(
       { description: 'do work', agentName: 'researcher' },
-      {} as any,
+      {} as ToolRuntime<AsyncToolInvokeState>,
     );
 
     expect(result).toBeInstanceOf(Command);

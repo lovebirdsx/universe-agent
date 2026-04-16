@@ -167,8 +167,8 @@ export async function notifyParent(
 ): Promise<void> {
   try {
     const client = new Client({
-      apiUrl: options?.url ?? undefined,
       apiKey: null,
+      ...(options?.url ? { apiUrl: options.url } : {}),
       defaultHeaders: resolveHeaders(options?.headers),
     });
     await client.runs.create(callbackThreadId, callbackGraphId, {
@@ -262,8 +262,8 @@ export function createCompletionCallbackMiddleware(options: CompletionCallbackOp
    */
   async function sendNotification(callbackThreadId: string, message: string): Promise<void> {
     await notifyParent(callbackGraphId, callbackThreadId, message, {
-      url,
-      headers,
+      ...(url ? { url } : {}),
+      ...(headers ? { headers } : {}),
     });
   }
 

@@ -40,14 +40,18 @@ describe('isAnthropicModel', () => {
   it('should detect ConfigurableModel wrapping an Anthropic provider', () => {
     const model = new FakeListChatModel({ responses: [] });
     vi.spyOn(model, 'getName').mockReturnValue('ConfigurableModel');
-    (model as any)._defaultConfig = { modelProvider: 'anthropic' };
+    (model as { _defaultConfig?: { modelProvider: string } })._defaultConfig = {
+      modelProvider: 'anthropic',
+    };
     expect(isAnthropicModel(model)).toBe(true);
   });
 
   it('should reject ConfigurableModel wrapping a non-Anthropic provider', () => {
     const model = new FakeListChatModel({ responses: [] });
     vi.spyOn(model, 'getName').mockReturnValue('ConfigurableModel');
-    (model as any)._defaultConfig = { modelProvider: 'openai' };
+    (model as { _defaultConfig?: { modelProvider: string } })._defaultConfig = {
+      modelProvider: 'openai',
+    };
     expect(isAnthropicModel(model)).toBe(false);
   });
 });
@@ -89,7 +93,7 @@ describe('System prompt cache control breakpoints', () => {
       },
     );
 
-    const systemMessage = getSystemMessageFromSpy(invokeSpy);
+    const systemMessage = getSystemMessageFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
     expect(systemMessage).toBeDefined();
     const blocks = systemMessage!.contentBlocks;
     expect(Array.isArray(blocks)).toBe(true);
@@ -123,10 +127,10 @@ describe('Built-in tool name collision detection', () => {
     return {
       name,
       description: `custom ${name}`,
-      schema: {} as any,
+      schema: {},
       invoke: async () => 'ok',
       batch: async () => ['ok'],
-    } as any;
+    };
   }
 
   it('should throw ConfigurationError when a user-provided tool collides with a filesystem tool', () => {

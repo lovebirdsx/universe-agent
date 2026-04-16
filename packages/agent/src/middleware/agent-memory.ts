@@ -68,6 +68,8 @@ const AgentMemoryStateSchema = z.object({
   projectMemory: z.string().optional(),
 });
 
+export type AgentMemoryState = z.infer<typeof AgentMemoryStateSchema>;
+
 /**
  * Default template for memory injection.
  */
@@ -198,6 +200,18 @@ write_file '{project_deepagents_dir}/agent.md' ...  # Create project memory file
 - Always use absolute paths for file operations
 - Check project memories BEFORE user when answering project-specific questions`;
 
+type MiddlewareWrapModelCall = NonNullable<_AgentMiddleware['wrapModelCall']>;
+type MiddlewareRequest = Parameters<MiddlewareWrapModelCall>[0];
+type MiddlewareHandler = Parameters<MiddlewareWrapModelCall>[1];
+type MiddlewareResult = ReturnType<MiddlewareHandler>;
+
+type AgentMemoryRequest = MiddlewareRequest & {
+  state?: AgentMemoryState;
+  systemPrompt?: string;
+};
+
+type AgentMemoryHandler = (request: AgentMemoryRequest) => MiddlewareResult;
+
 /**
  * Create middleware for loading agent-specific long-term memory.
  *
@@ -234,9 +248,9 @@ export function createAgentMemoryMiddleware(options: AgentMemoryMiddlewareOption
 
   return createMiddleware({
     name: 'AgentMemoryMiddleware',
-    stateSchema: AgentMemoryStateSchema as any,
+    stateSchema: AgentMemoryStateSchema,
 
-    beforeAgent(state: any) {
+    beforeAgent(state: Record<string, unknown>) {
       const result: Record<string, string> = {};
 
       // Load user memory if not already in state
@@ -266,7 +280,7 @@ export function createAgentMemoryMiddleware(options: AgentMemoryMiddlewareOption
       return Object.keys(result).length > 0 ? result : undefined;
     },
 
-    wrapModelCall(request: any, handler: any) {
+    wrapModelCall(request: AgentMemoryRequest, handler: AgentMemoryHandler) {
       // Extract memory from state
       const userMemory = request.state?.userMemory;
       const projectMemory = request.state?.projectMemory;
@@ -293,7 +307,7 @@ export function createAgentMemoryMiddleware(options: AgentMemoryMiddlewareOption
       }
       systemPrompt += '\n\n' + memoryDocs;
 
-      return handler({ ...request, systemPrompt });
+      return handler({ ...request, systemPrompt }) as MiddlewareResult;
     },
   });
 }

@@ -1,4 +1,4 @@
-import reactConfig from '@universe-agent/config-eslint/react'
+import reactConfig from '@universe-agent/config-eslint/react';
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
@@ -6,4 +6,4 @@ export default [
     ignores: ['**/dist/**', '**/node_modules/**', '**/.turbo/**', '**/*.d.ts'],
   },
   ...reactConfig,
-]
+];

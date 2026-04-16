@@ -7,7 +7,7 @@ type PromiseOrValue<T> = T | Promise<T>;
  * a function or an object with a function. To simplify testing, we define a
  * type that can be used to access the middleware hooks.
  */
-export type MiddlewareHandler<TSchema$1 = any, TContext = unknown> = (
+export type MiddlewareHandler<TSchema$1 = unknown, TContext = unknown> = (
   state: TSchema$1,
-  runtime: Runtime<TContext> | ((...args: any[]) => any),
-) => PromiseOrValue<any>;
+  runtime: Runtime<TContext> | ((...args: unknown[]) => unknown),
+) => PromiseOrValue<unknown>;

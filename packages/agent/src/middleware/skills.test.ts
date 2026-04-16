@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from 'vitest';
 import { FakeListChatModel } from '@langchain/core/utils/testing';
 import { HumanMessage, SystemMessage, type BaseMessage } from '@langchain/core/messages';
@@ -94,7 +95,7 @@ describe('createSkillsMiddleware', () => {
 
       expect(result).toBeDefined();
       expect(result?.skillsMetadata).toHaveLength(2);
-      expect(result?.skillsMetadata.map((s: any) => s.name).sort()).toEqual([
+      expect(result?.skillsMetadata.map((s: SkillMetadata) => s.name).sort()).toEqual([
         'code-review',
         'web-research',
       ]);
@@ -715,7 +716,7 @@ description: [invalid yaml syntax: unclosed bracket
       });
 
       const mockHandler = vi.fn().mockReturnValue({ response: 'ok' });
-      const request: any = {
+      const request = {
         systemMessage: new SystemMessage('Base prompt'),
         state: {
           skillsMetadata: [
@@ -728,7 +729,7 @@ description: [invalid yaml syntax: unclosed bracket
         },
       };
 
-      middleware.wrapModelCall!(request, mockHandler);
+      middleware.wrapModelCall!(request as any, mockHandler);
 
       expect(mockHandler).toHaveBeenCalled();
       const modifiedRequest = mockHandler.mock.calls[0][0];
@@ -1588,7 +1589,7 @@ description: Another test skill
     );
 
     expect(invokeSpy).toHaveBeenCalled();
-    const systemPrompt = getSystemPromptFromSpy(invokeSpy);
+    const systemPrompt = getSystemPromptFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     // Verify skill was injected into system prompt
     expect(systemPrompt).toContain('test-skill');
@@ -1623,7 +1624,7 @@ description: Another test skill
     );
 
     expect(invokeSpy).toHaveBeenCalled();
-    const systemPrompt = getSystemPromptFromSpy(invokeSpy);
+    const systemPrompt = getSystemPromptFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     // Verify both skills were injected
     expect(systemPrompt).toContain('test-skill');
@@ -1656,7 +1657,7 @@ description: Another test skill
     );
 
     expect(invokeSpy).toHaveBeenCalled();
-    const systemPrompt = getSystemPromptFromSpy(invokeSpy);
+    const systemPrompt = getSystemPromptFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     // Verify "no skills" message appears
     expect(systemPrompt).toContain('No skills available yet');
@@ -1702,7 +1703,7 @@ description: Project-level skill for team collaboration
     );
 
     expect(invokeSpy).toHaveBeenCalled();
-    const systemPrompt = getSystemPromptFromSpy(invokeSpy);
+    const systemPrompt = getSystemPromptFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     // Verify both sources' skills are present
     expect(systemPrompt).toContain('user-skill');
@@ -1737,7 +1738,7 @@ description: Project-level skill for team collaboration
     );
 
     expect(invokeSpy).toHaveBeenCalled();
-    const systemPrompt = getSystemPromptFromSpy(invokeSpy);
+    const systemPrompt = getSystemPromptFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     // Verify the full path is included for progressive disclosure
     expect(systemPrompt).toContain('/skills/test-skill/SKILL.md');
@@ -1772,7 +1773,7 @@ description: Project-level skill for team collaboration
     ).resolves.toBeDefined();
 
     expect(invokeSpy).toHaveBeenCalled();
-    const systemPrompt = getSystemPromptFromSpy(invokeSpy);
+    const systemPrompt = getSystemPromptFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     // Should still have a system prompt with the "no skills" message
     expect(systemPrompt).toContain('No skills available yet');

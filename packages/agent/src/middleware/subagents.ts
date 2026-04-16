@@ -223,8 +223,10 @@ export const TASK_SYSTEM_PROMPT = context`
  *   types for type inference. Uses `ReactAgent<any>` to accept agents with any
  *   type configuration (including DeepAgent instances).
  */
+
 export interface CompiledSubAgent<
-  TRunnable extends ReactAgent<any> | Runnable = ReactAgent<any> | Runnable,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TRunnable extends ReactAgent | Runnable = ReactAgent<any> | Runnable,
 > {
   /** The name of the agent */
   name: string;
@@ -397,6 +399,10 @@ function filterStateForSubagent(state: Record<string, unknown>): Record<string, 
  */
 const INVALID_TOOL_MESSAGE_BLOCK_TYPES = ['tool_use', 'thinking', 'redacted_thinking'];
 
+function createHitlMiddleware(interruptOn: Record<string, boolean | InterruptOnConfig>) {
+  return humanInTheLoopMiddleware({ interruptOn } as never) as AgentMiddleware;
+}
+
 /**
  * Create Command with filtered state update from subagent result
  */
@@ -473,13 +479,13 @@ function getSubagents(options: {
   if (generalPurposeAgent) {
     const generalPurposeMiddleware = [...generalPurposeMiddlewareBase];
     if (defaultInterruptOn) {
-      generalPurposeMiddleware.push(humanInTheLoopMiddleware({ interruptOn: defaultInterruptOn }));
+      generalPurposeMiddleware.push(createHitlMiddleware(defaultInterruptOn));
     }
 
     const generalPurposeSubagent = createAgent({
       model: defaultModel,
       systemPrompt: DEFAULT_SUBAGENT_PROMPT,
-      tools: defaultTools as any,
+      tools: defaultTools,
       middleware: generalPurposeMiddleware,
       name: 'general-purpose',
     });
@@ -500,7 +506,7 @@ function getSubagents(options: {
         : [...defaultSubagentMiddleware];
 
       const interruptOn = agentParams.interruptOn || defaultInterruptOn;
-      if (interruptOn) middleware.push(humanInTheLoopMiddleware({ interruptOn }));
+      if (interruptOn) middleware.push(createHitlMiddleware(interruptOn));
 
       agents[agentParams.name] = createAgent({
         model: agentParams.model ?? defaultModel,
@@ -575,6 +581,9 @@ function createTaskTool(options: {
       }
 
       const subagent = subagentGraphs[subagent_type];
+      if (!subagent) {
+        throw new Error(`Subagent ${subagent_type} is not available`);
+      }
 
       // Get current state and filter it for subagent
       const currentState = getCurrentTaskInput<Record<string, unknown>>();

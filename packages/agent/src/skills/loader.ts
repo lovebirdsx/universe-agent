@@ -164,8 +164,13 @@ function parseFrontmatter(content: string): Record<string, unknown> | null {
     return null;
   }
 
+  const frontmatterContent = match[1];
+  if (frontmatterContent == null) {
+    return null;
+  }
+
   try {
-    const parsed = yaml.parse(match[1]);
+    const parsed = yaml.parse(frontmatterContent);
     return typeof parsed === 'object' && parsed !== null ? parsed : null;
   } catch {
     return null;
@@ -237,13 +242,14 @@ export function parseSkillMetadata(
       description: descriptionStr,
       path: skillMdPath,
       source,
-      license: frontmatter.license ? String(frontmatter.license) : undefined,
-      compatibility: frontmatter.compatibility ? String(frontmatter.compatibility) : undefined,
-      metadata:
-        frontmatter.metadata && typeof frontmatter.metadata === 'object'
-          ? (frontmatter.metadata as Record<string, string>)
-          : undefined,
-      allowedTools: frontmatter['allowed-tools'] ? String(frontmatter['allowed-tools']) : undefined,
+      ...(frontmatter.license ? { license: String(frontmatter.license) } : {}),
+      ...(frontmatter.compatibility ? { compatibility: String(frontmatter.compatibility) } : {}),
+      ...(frontmatter.metadata && typeof frontmatter.metadata === 'object'
+        ? { metadata: frontmatter.metadata as Record<string, string> }
+        : {}),
+      ...(frontmatter['allowed-tools']
+        ? { allowedTools: String(frontmatter['allowed-tools']) }
+        : {}),
     };
   } catch (error) {
     // oxlint-disable-next-line no-console

@@ -17,10 +17,10 @@ export type { BackendProtocolV1, SandboxBackendProtocolV1 } from './v1/protocol.
 export type { BackendProtocolV2, SandboxBackendProtocolV2 } from './v2/protocol.js';
 
 /** @deprecated Use {@link BackendProtocolV2} instead. */
-export interface BackendProtocol extends BackendProtocolV1 {}
+export type BackendProtocol = BackendProtocolV1;
 
 /** @deprecated Use {@link SandboxBackendProtocolV2} instead. */
-export interface SandboxBackendProtocol extends SandboxBackendProtocolV1 {}
+export type SandboxBackendProtocol = SandboxBackendProtocolV1;
 
 export type MaybePromise<T> = T | Promise<T>;
 
@@ -289,12 +289,13 @@ export type AnySandboxProtocol = SandboxBackendProtocol | SandboxBackendProtocol
  * @returns True if the backend implements sandbox protocol (v1 or v2)
  */
 export function isSandboxProtocol(backend: unknown): backend is AnySandboxProtocol {
+  const candidate = backend as { execute?: unknown; id?: unknown } | null;
   return (
-    backend != null &&
-    typeof backend === 'object' &&
-    typeof (backend as any).execute === 'function' &&
-    typeof (backend as any).id === 'string' &&
-    (backend as any).id !== ''
+    candidate != null &&
+    typeof candidate === 'object' &&
+    typeof candidate.execute === 'function' &&
+    typeof candidate.id === 'string' &&
+    candidate.id !== ''
   );
 }
 

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-import { createAgentMemoryMiddleware } from './agent-memory.js';
+import { AgentMemoryState, createAgentMemoryMiddleware } from './agent-memory.js';
 import type { Settings } from '../config.js';
 import type { MiddlewareHandler } from './types.js';
 
@@ -93,7 +93,7 @@ describe('Agent Memory Middleware', () => {
         assistantId: 'test-agent',
       });
 
-      const result = (middleware.beforeAgent as MiddlewareHandler)({}, {});
+      const result = (middleware.beforeAgent as MiddlewareHandler)({}, {}) as AgentMemoryState;
 
       expect(result).toBeDefined();
       expect(result!.userMemory).toBe(userMemoryContent);
@@ -108,7 +108,7 @@ describe('Agent Memory Middleware', () => {
         assistantId: 'test-agent',
       });
 
-      const result = (middleware.beforeAgent as MiddlewareHandler)({}, {});
+      const result = (middleware.beforeAgent as MiddlewareHandler)({}, {}) as AgentMemoryState;
 
       expect(result).toBeDefined();
       expect(result!.projectMemory).toBe(projectMemoryContent);
@@ -126,7 +126,7 @@ describe('Agent Memory Middleware', () => {
         assistantId: 'test-agent',
       });
 
-      const result = (middleware.beforeAgent as MiddlewareHandler)({}, {});
+      const result = (middleware.beforeAgent as MiddlewareHandler)({}, {}) as AgentMemoryState;
 
       expect(result!.userMemory).toBe(userMemoryContent);
       expect(result!.projectMemory).toBe(projectMemoryContent);
@@ -138,7 +138,7 @@ describe('Agent Memory Middleware', () => {
         assistantId: 'test-agent',
       });
 
-      const result = (middleware.beforeAgent as MiddlewareHandler)({}, {});
+      const result = (middleware.beforeAgent as MiddlewareHandler)({}, {}) as AgentMemoryState;
 
       expect(result).toBeUndefined();
     });
@@ -152,7 +152,7 @@ describe('Agent Memory Middleware', () => {
         assistantId: 'test-agent',
       });
 
-      const result = (middleware.beforeAgent as MiddlewareHandler)({}, {});
+      const result = (middleware.beforeAgent as MiddlewareHandler)({}, {}) as AgentMemoryState;
 
       expect(result!.userMemory).toBe(userMemoryContent);
       expect(result!.projectMemory).toBeUndefined();
@@ -190,11 +190,11 @@ describe('Agent Memory Middleware', () => {
         assistantId: 'test-agent',
       });
 
-      const stateUpdate = (middleware.beforeAgent as MiddlewareHandler)({}, {});
+      const stateUpdate = (middleware.beforeAgent as MiddlewareHandler)({}, {}) as AgentMemoryState;
 
-      let capturedRequest: any;
-      const handler = vi.fn((request: any) => {
-        capturedRequest = request;
+      let capturedRequest: { systemPrompt: string } = undefined!;
+      const handler = vi.fn((request: unknown) => {
+        capturedRequest = request as { systemPrompt: string };
         return Promise.resolve({ messages: [] });
       });
 
@@ -220,11 +220,11 @@ describe('Agent Memory Middleware', () => {
         assistantId: 'test-agent',
       });
 
-      const stateUpdate = (middleware.beforeAgent as MiddlewareHandler)({}, {});
+      const stateUpdate = (middleware.beforeAgent as MiddlewareHandler)({}, {}) as AgentMemoryState;
 
-      let capturedRequest: any;
-      const handler = vi.fn((request: any) => {
-        capturedRequest = request;
+      let capturedRequest: { systemPrompt: string } = undefined!;
+      const handler = vi.fn((request: unknown) => {
+        capturedRequest = request as { systemPrompt: string };
         return Promise.resolve({ messages: [] });
       });
 
@@ -247,9 +247,9 @@ describe('Agent Memory Middleware', () => {
         assistantId: 'test-agent',
       });
 
-      let capturedRequest: any;
-      const handler = vi.fn((request: any) => {
-        capturedRequest = request;
+      let capturedRequest: { systemPrompt: string } = undefined!;
+      const handler = vi.fn((request: unknown) => {
+        capturedRequest = request as { systemPrompt: string };
         return Promise.resolve({ messages: [] });
       });
 
@@ -272,9 +272,9 @@ describe('Agent Memory Middleware', () => {
         assistantId: 'test-agent',
       });
 
-      let capturedRequest: any;
-      const handler = vi.fn((request: any) => {
-        capturedRequest = request;
+      let capturedRequest: { systemPrompt: string } = undefined!;
+      const handler = vi.fn((request: unknown) => {
+        capturedRequest = request as { systemPrompt: string };
         return Promise.resolve({ messages: [] });
       });
 
@@ -295,9 +295,9 @@ describe('Agent Memory Middleware', () => {
         assistantId: 'test-agent',
       });
 
-      let capturedRequest: any;
-      const handler = vi.fn((request: any) => {
-        capturedRequest = request;
+      let capturedRequest: { systemPrompt: string } = undefined!;
+      const handler = vi.fn((request: unknown) => {
+        capturedRequest = request as { systemPrompt: string };
         return Promise.resolve({ messages: [] });
       });
 
@@ -327,11 +327,11 @@ describe('Agent Memory Middleware', () => {
         systemPromptTemplate: customTemplate,
       });
 
-      const stateUpdate = (middleware.beforeAgent as MiddlewareHandler)({}, {});
+      const stateUpdate = (middleware.beforeAgent as MiddlewareHandler)({}, {}) as AgentMemoryState;
 
-      let capturedRequest: any;
-      const handler = vi.fn((request: any) => {
-        capturedRequest = request;
+      let capturedRequest: { systemPrompt: string } = undefined!;
+      const handler = vi.fn((request: unknown) => {
+        capturedRequest = request as { systemPrompt: string };
         return Promise.resolve({ messages: [] });
       });
 

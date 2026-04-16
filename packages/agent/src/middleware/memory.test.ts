@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from 'vitest';
 import { createMemoryMiddleware } from './memory.js';
 import { createDeepAgent } from '../agent.js';
@@ -465,7 +466,7 @@ This project uses React.`;
     );
 
     expect(invokeSpy).toHaveBeenCalled();
-    const systemPrompt = getSystemPromptFromSpy(invokeSpy);
+    const systemPrompt = getSystemPromptFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     expect(systemPrompt).toContain('ALPHA123');
     expect(systemPrompt).toContain('/AGENTS.md');
@@ -498,7 +499,7 @@ This project uses React.`;
     );
 
     expect(invokeSpy).toHaveBeenCalled();
-    const systemPrompt = getSystemPromptFromSpy(invokeSpy);
+    const systemPrompt = getSystemPromptFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     expect(systemPrompt).toContain('ALPHA123');
     expect(systemPrompt).toContain('This project uses React.');
@@ -528,7 +529,7 @@ This project uses React.`;
     );
 
     expect(invokeSpy).toHaveBeenCalled();
-    const systemPrompt = getSystemPromptFromSpy(invokeSpy);
+    const systemPrompt = getSystemPromptFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     expect(systemPrompt).toContain('(No memory loaded)');
     invokeSpy.mockRestore();
@@ -560,7 +561,7 @@ This project uses React.`;
     );
 
     expect(invokeSpy).toHaveBeenCalled();
-    const systemPrompt = getSystemPromptFromSpy(invokeSpy);
+    const systemPrompt = getSystemPromptFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     expect(systemPrompt).toContain('/memory/user/AGENTS.md');
     expect(systemPrompt).toContain('/memory/project/AGENTS.md');
@@ -592,7 +593,7 @@ This project uses React.`;
     );
 
     expect(invokeSpy).toHaveBeenCalled();
-    const systemPrompt = getSystemPromptFromSpy(invokeSpy);
+    const systemPrompt = getSystemPromptFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     expect(systemPrompt).toContain('/AGENTS.md');
     expect(systemPrompt).toContain('<memory_guidelines>');
@@ -626,7 +627,7 @@ This project uses React.`;
     ).resolves.toBeDefined();
 
     expect(invokeSpy).toHaveBeenCalled();
-    const systemPrompt = getSystemPromptFromSpy(invokeSpy);
+    const systemPrompt = getSystemPromptFromSpy(invokeSpy as ReturnType<typeof vi.spyOn>);
 
     expect(systemPrompt).toContain('(No memory loaded)');
     invokeSpy.mockRestore();
