@@ -401,10 +401,10 @@ export class LocalShellBackend extends FilesystemBackend implements SandboxBacke
         });
       });
 
-      child.on('close', (code, signal) => {
+      child.on('close', (code) => {
         clearTimeout(timer);
 
-        if (timedOut || signal === 'SIGTERM') {
+        if (timedOut) {
           resolve({
             output: `Error: Command timed out after ${this.#timeout.toFixed(1)} seconds.`,
             exitCode: 124,
