@@ -49,7 +49,7 @@
  * ## Usage
  *
  * ```typescript
- * import { createCompletionCallbackMiddleware } from "deepagents";
+ * import { createCompletionCallbackMiddleware } from "@universe-agent/agent";
  *
  * // Same deployment (callback agent and subagent share a server):
  * const notifier = createCompletionCallbackMiddleware({
@@ -242,7 +242,7 @@ export function extractLastMessage(state: Record<string, unknown>, taskId?: stri
  *
  * @example
  * ```typescript
- * import { createCompletionCallbackMiddleware } from "deepagents";
+ * import { createCompletionCallbackMiddleware } from "@universe-agent/agent";
  *
  * const notifier = createCompletionCallbackMiddleware({
  *   callbackGraphId: "supervisor",

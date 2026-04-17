@@ -1,0 +1,38 @@
+{
+  "name": "@universe-agent/examples",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix"
+  },
+  "dependencies": {
+    "@hono/node-server": "catalog:",
+    "@langchain/anthropic": "catalog:",
+    "@langchain/core": "catalog:",
+    "@langchain/langgraph": "catalog:",
+    "@langchain/langgraph-checkpoint": "catalog:",
+    "@langchain/openai": "catalog:",
+    "@langchain/tavily": "catalog:",
+    "@universe-agent/agent": "workspace:*",
+    "dedent": "catalog:",
+    "dotenv": "catalog:",
+    "hono": "catalog:",
+    "langchain": "catalog:",
+    "langsmith": "catalog:",
+    "pg": "catalog:",
+    "uuid": "catalog:",
+    "yaml": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/pg": "catalog:",
+    "@types/uuid": "catalog:",
+    "@universe-agent/config-eslint": "workspace:*",
+    "@universe-agent/config-ts": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

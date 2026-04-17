@@ -3,7 +3,7 @@
  *
  * @example
  * ```typescript
- * import { LangSmithSandbox, createDeepAgent } from "deepagents";
+ * import { LangSmithSandbox, createDeepAgent } from "@universe-agent/agent";
  *
  * const sandbox = await LangSmithSandbox.create({ templateName: "deepagents-cli" });
  *

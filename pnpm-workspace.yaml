@@ -8,38 +8,45 @@ catalog:
   # Core
 
   # LangChain ecosystem
-  langchain: ^1.3.3
-  '@langchain/core': ^1.1.40
-  '@langchain/langgraph': ^1.2.8
-  '@langchain/langgraph-checkpoint': ^1.0.1
-  '@langchain/langgraph-sdk': ^1.8.0
-  '@langchain/anthropic': ^1.3.26
-  langsmith: ^0.5.20
-
-  # Agent utilities
-  zod: ^4.3.6
-  yaml: ^2.8.2
-  micromatch: ^4.0.8
-  fast-glob: ^3.3.3
-  '@types/micromatch': ^4.0.9
 
   # Release
   '@changesets/cli': ^2.27.0
   '@hono/node-server': ^1.14.0
+  '@langchain/anthropic': ^1.3.26
+  '@langchain/core': ^1.1.40
+  '@langchain/langgraph': ^1.2.8
+  '@langchain/langgraph-checkpoint': ^1.0.1
+  '@langchain/langgraph-sdk': ^1.8.0
+  '@langchain/openai': ^1.4.4
+  '@langchain/tavily': ^1.2.0
+
+  # Test
+  '@testing-library/react': ^16.0.0
+  '@types/micromatch': ^4.0.9
   '@types/node': ^22.0.0
+  '@types/pg': ^8.20.0
   '@types/react': ^19.0.0
   '@types/react-dom': ^19.0.0
+  '@types/uuid': ^11.0.0
   '@vitejs/plugin-react': ^4.3.0
+  dedent: ^1.7.2
+  dotenv: ^17.4.2
 
   # Lint
   eslint: ^9.0.0
   eslint-config-prettier: ^9.0.0
   eslint-plugin-prettier: ^5.0.0
   eslint-plugin-react-hooks: ^5.2.0
-  prettier: ^3.0.0
+  fast-glob: ^3.3.3
+  'happy-dom': ^17.0.0
 
   # API
   hono: ^4.7.0
+  langchain: ^1.3.3
+  langsmith: ^0.5.20
+  micromatch: ^4.0.8
+  pg: ^8.20.0
+  prettier: ^3.0.0
 
   # React
   react: ^19.0.0
@@ -50,11 +57,12 @@ catalog:
   turbo: ^2.5.0
   typescript: ^5.8.0
   typescript-eslint: ^8.0.0
+  uuid: ^13.0.0
 
   # Build tools
   vite: ^7.0.0
-
-  # Test
-  '@testing-library/react': ^16.0.0
-  'happy-dom': ^17.0.0
   vitest: ^3.0.0
+  yaml: ^2.8.2
+
+  # Agent utilities
+  zod: ^4.3.6
