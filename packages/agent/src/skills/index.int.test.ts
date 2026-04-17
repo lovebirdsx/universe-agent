@@ -7,7 +7,7 @@ import { SystemMessage } from '@langchain/core/messages';
 import { createSettings } from '../config.js';
 import { listSkills } from './loader.js';
 import { createSkillsMiddleware } from '../middleware/skills.js';
-import { createAgentMemoryMiddleware } from '../middleware/agent-memory.js';
+import { createAgentMemoryMiddleware } from '../middleware/agentMemory.js';
 import { FilesystemBackend } from '../backends/filesystem.js';
 
 describe('Skills Integration Tests', () => {

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-import { AgentMemoryState, createAgentMemoryMiddleware } from './agent-memory.js';
+import { AgentMemoryState, createAgentMemoryMiddleware } from './agentMemory.js';
 import type { Settings } from '../config.js';
 import type { MiddlewareHandler } from './types.js';
 

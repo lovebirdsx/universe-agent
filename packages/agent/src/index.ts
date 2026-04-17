@@ -77,7 +77,7 @@ export { filesValue } from './values.js';
 export {
   createAgentMemoryMiddleware,
   type AgentMemoryMiddlewareOptions,
-} from './middleware/agent-memory.js';
+} from './middleware/agentMemory.js';
 
 // Export skills loader (utility functions for direct filesystem access)
 export {

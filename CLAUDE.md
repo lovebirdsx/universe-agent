@@ -27,8 +27,8 @@ apps/
 packages/
   shared/     # @universe-agent/shared — 纯工具函数，编译输出 dist/
   ui/         # @universe-agent/ui — React 组件库，编译输出 dist/
-  config-eslint/  # 共享 ESLint flat config（base / react）
-  config-ts/      # 共享 tsconfig 预设（base / react / node）
+  configEslint/  # 共享 ESLint flat config（base / react）
+  configTs/      # 共享 tsconfig 预设（base / react / node）
 ```
 
 ## 开发命令

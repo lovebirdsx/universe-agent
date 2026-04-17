@@ -9,7 +9,7 @@
  * immediately without any setup.
  *
  * To run this example:
- *   npx tsx examples/skills-memory/skills-memory-agent.ts
+ *   npx tsx examples/skillsMemory/skillsMemoryAgent.ts
  *
  * Prerequisites:
  *   - Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable

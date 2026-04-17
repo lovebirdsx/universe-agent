@@ -8,7 +8,7 @@
  *   [namespace, mode, data]
  *
  * Run:
- *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/multi-mode.ts
+ *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/multiMode.ts
  */
 import { createDeepAgent } from '@universe-agent/agent';
 import { tool, type ToolRuntime } from 'langchain';

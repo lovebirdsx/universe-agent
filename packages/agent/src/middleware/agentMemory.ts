@@ -14,7 +14,7 @@
  * Migration example:
  * ```typescript
  * // Before (deprecated):
- * import { createAgentMemoryMiddleware } from "./agent-memory.js";
+ * import { createAgentMemoryMiddleware } from "./agentMemory.js";
  * const middleware = createAgentMemoryMiddleware({ settings, assistantId });
  *
  * // After (recommended):

@@ -5,7 +5,7 @@
  * inside subagent tools using config.writer and the "custom" stream mode.
  *
  * Run:
- *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/custom-updates.ts
+ *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/customUpdates.ts
  */
 import { createDeepAgent } from '@universe-agent/agent';
 import { tool, type ToolRuntime } from 'langchain';

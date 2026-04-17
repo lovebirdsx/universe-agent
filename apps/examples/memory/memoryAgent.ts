@@ -8,7 +8,7 @@
  * project-specific context that is always loaded at agent startup.
  *
  * To run this example:
- *   npx tsx examples/memory/memory-agent.ts
+ *   npx tsx examples/memory/memoryAgent.ts
  *
  * Prerequisites:
  *   - Set ANTHROPIC_API_KEY environment variable

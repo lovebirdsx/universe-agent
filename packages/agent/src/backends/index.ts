@@ -54,7 +54,7 @@ export {
 } from './store.js';
 export { FilesystemBackend } from './filesystem.js';
 export { CompositeBackend } from './composite.js';
-export { LocalShellBackend, type LocalShellBackendOptions } from './local-shell.js';
+export { LocalShellBackend, type LocalShellBackendOptions } from './localShell.js';
 
 // Export BaseSandbox abstract class
 export { BaseSandbox } from './sandbox.js';

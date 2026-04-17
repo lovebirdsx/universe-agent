@@ -8,7 +8,7 @@
  * source of each token.
  *
  * Run:
- *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/filter-by-type.ts
+ *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/filterByType.ts
  */
 import { createDeepAgent } from '@universe-agent/agent';
 

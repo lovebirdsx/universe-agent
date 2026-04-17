@@ -6,7 +6,7 @@
  * and results as they happen in real time.
  *
  * Run:
- *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/tool-calls.ts
+ *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/toolCalls.ts
  */
 import { createDeepAgent } from '@universe-agent/agent';
 import { tool, AIMessageChunk, ToolMessage } from 'langchain';
