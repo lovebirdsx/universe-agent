@@ -180,6 +180,7 @@ export function createDeepAgent<
     name,
     memory,
     skills,
+    callbacks: userCallbacks,
   } = params;
 
   let resolvedModel: BaseLanguageModel | string | undefined = model;
@@ -384,6 +385,7 @@ export function createDeepAgent<
       ls_integration: 'deepagents',
       lc_agent_name: name,
     },
+    ...(userCallbacks && userCallbacks.length > 0 ? { callbacks: userCallbacks } : {}),
   });
 
   /**

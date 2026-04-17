@@ -10,6 +10,7 @@ import type {
   ToolStrategy,
   ProviderStrategy,
 } from 'langchain';
+import type { BaseCallbackHandler } from '@langchain/core/callbacks/base';
 import type { ClientTool, ServerTool, StructuredTool } from '@langchain/core/tools';
 import type { BaseLanguageModel } from '@langchain/core/language_models/base';
 import type { BaseCheckpointSaver, BaseStore } from '@langchain/langgraph-checkpoint';
@@ -415,4 +416,34 @@ export interface CreateDeepAgentParams<
    * ```
    */
   skills?: string[];
+  /**
+   * Optional LangChain callback handlers for observability integrations (e.g., Langfuse).
+   * These are passed directly to the agent's `.withConfig({ callbacks })`.
+   *
+   * @example
+   * ```typescript
+   * import { createLangfuseHandler } from '@universe-agent/agent';
+   *
+   * const agent = createDeepAgent({
+   *   callbacks: [await createLangfuseHandler()],
+   * });
+   * ```
+   */
+  callbacks?: BaseCallbackHandler[];
+}
+
+/**
+ * Configuration for Langfuse observability integration.
+ */
+export interface LangfuseHandlerOptions {
+  /** Session ID for grouping traces */
+  sessionId?: string;
+  /** User ID for attributing traces */
+  userId?: string;
+  /** Tags for categorizing traces */
+  tags?: string[];
+  /** Version for the traces */
+  version?: string;
+  /** Additional metadata to attach to all Langfuse traces */
+  metadata?: Record<string, unknown>;
 }

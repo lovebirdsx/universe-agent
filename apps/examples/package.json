@@ -21,6 +21,7 @@
     "dotenv": "catalog:",
     "hono": "catalog:",
     "langchain": "catalog:",
+    "@langfuse/langchain": "catalog:",
     "langsmith": "catalog:",
     "pg": "catalog:",
     "uuid": "catalog:",
@@ -30,7 +31,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
-"@universe-agent/config-eslint": "workspace:*",
+    "@universe-agent/config-eslint": "workspace:*",
     "@universe-agent/config-ts": "workspace:*",
     "typescript": "catalog:"
   }

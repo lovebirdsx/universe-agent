@@ -27,7 +27,12 @@ export type {
   // Response format type utilities
   SupportedResponseFormat,
   InferStructuredResponse,
+  // Langfuse config
+  LangfuseHandlerOptions,
 } from './types.js';
+
+// Export observability utilities
+export { createLangfuseHandler, flushLangfuseHandler } from './observability.js';
 
 // Export config
 export { createSettings, findProjectRoot, type Settings, type SettingsOptions } from './config.js';

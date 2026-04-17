@@ -3,6 +3,7 @@ packages:
   - 'packages/*'
 allowBuilds:
   esbuild: true
+  protobufjs: true
 
 catalog:
   # Core
@@ -19,6 +20,9 @@ catalog:
   '@langchain/langgraph-sdk': ^1.8.0
   '@langchain/openai': ^1.4.4
   '@langchain/tavily': ^1.2.0
+  '@langfuse/langchain': ^5.1.0
+  '@langfuse/otel': ^5.1.0
+  '@opentelemetry/sdk-node': ^0.214.0
 
   # Test
   '@testing-library/react': ^16.0.0
