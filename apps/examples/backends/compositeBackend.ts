@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { z } from 'zod';
 import { tool } from 'langchain';
 import { TavilySearch } from '@langchain/tavily';
-import { ChatAnthropic } from '@langchain/anthropic';
 import { HumanMessage } from '@langchain/core/messages';
 import { MemorySaver, InMemoryStore } from '@langchain/langgraph-checkpoint';
 import { v4 as uuidv4 } from 'uuid';
@@ -63,10 +62,6 @@ Use descriptive filenames like:
 - \`/memories/summary_market_analysis.md\``;
 
 export const agent = createDeepAgent({
-  model: new ChatAnthropic({
-    model: 'claude-sonnet-4-20250514',
-    temperature: 0,
-  }),
   tools: [internetSearch],
   systemPrompt,
   checkpointer: new MemorySaver(),
@@ -103,6 +98,4 @@ async function main() {
   );
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
-}
+main();
