@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import { ChatAnthropic } from '@langchain/anthropic';
 import { HumanMessage } from '@langchain/core/messages';
 import * as path from 'path';
 
@@ -26,10 +25,6 @@ This makes you perfect for real coding tasks that need to persist on disk.
 const workspaceDir = path.join(process.cwd(), 'workspace');
 
 export const agent = createDeepAgent({
-  model: new ChatAnthropic({
-    model: 'claude-sonnet-4-20250514',
-    temperature: 0,
-  }),
   systemPrompt,
   backend: new FilesystemBackend({
     rootDir: workspaceDir,
@@ -38,7 +33,7 @@ export const agent = createDeepAgent({
 });
 
 async function main() {
-  await agent.invoke(
+  const result = await agent.invoke(
     {
       messages: [
         new HumanMessage(
@@ -48,8 +43,14 @@ async function main() {
     },
     { recursionLimit: 50 },
   );
+
+  for (const message of result.messages) {
+    if (message instanceof HumanMessage) {
+      console.log('Human:', message.text);
+    } else {
+      console.log('Agent:', message.text);
+    }
+  }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
-}
+main();

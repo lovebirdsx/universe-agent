@@ -22,10 +22,11 @@
     "publish-packages": "changeset publish"
   },
   "devDependencies": {
-    "@universe-agent/config-eslint": "workspace:*",
     "@changesets/cli": "catalog:",
+    "@universe-agent/config-eslint": "workspace:*",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "tsx": "catalog:",
     "turbo": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

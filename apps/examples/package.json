@@ -30,8 +30,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
-    "@types/uuid": "catalog:",
-    "@universe-agent/config-eslint": "workspace:*",
+"@universe-agent/config-eslint": "workspace:*",
     "@universe-agent/config-ts": "workspace:*",
     "typescript": "catalog:"
   }

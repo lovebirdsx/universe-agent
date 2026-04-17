@@ -51,9 +51,6 @@ catalogs:
     '@types/react-dom':
       specifier: ^19.0.0
       version: 19.2.3
-    '@types/uuid':
-      specifier: ^11.0.0
-      version: 11.0.0
     '@vitejs/plugin-react':
       specifier: ^4.3.0
       version: 4.7.0
@@ -106,7 +103,7 @@ catalogs:
       specifier: ^19.0.0
       version: 19.2.5
     tsx:
-      specifier: ^4.19.0
+      specifier: ^4.21.0
       version: 4.21.0
     turbo:
       specifier: ^2.5.0
@@ -149,6 +146,9 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.8.3
+      tsx:
+        specifier: 'catalog:'
+        version: 4.21.0
       turbo:
         specifier: 'catalog:'
         version: 2.9.6
@@ -253,9 +253,6 @@ importers:
       '@types/pg':
         specifier: 'catalog:'
         version: 8.20.0
-      '@types/uuid':
-        specifier: 'catalog:'
-        version: 11.0.0
       '@universe-agent/config-eslint':
         specifier: workspace:*
         version: link:../../packages/configEslint
@@ -332,6 +329,9 @@ importers:
       '@langchain/langgraph-sdk':
         specifier: 'catalog:'
         version: 1.8.8(@langchain/core@1.1.40(openai@6.34.0(zod@4.3.6)))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@langchain/openai':
+        specifier: 'catalog:'
+        version: 1.4.4(@langchain/core@1.1.40(openai@6.34.0(zod@4.3.6)))
       '@universe-agent/shared':
         specifier: workspace:*
         version: link:../shared
@@ -1174,10 +1174,6 @@ packages:
 
   '@types/react@19.2.14':
     resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
-
-  '@types/uuid@11.0.0':
-    resolution: {integrity: sha512-HVyk8nj2m+jcFRNazzqyVKiZezyhDKrGUA3jlEcg/nZ6Ms+qHwocba1Y/AaVaznJTAM9xpdFSh+ptbNrhOGvZA==}
-    deprecated: This is a stub types definition. uuid provides its own type definitions, so you do not need this installed.
 
   '@typescript-eslint/eslint-plugin@8.58.2':
     resolution: {integrity: sha512-aC2qc5thQahutKjP+cl8cgN9DWe3ZUqVko30CMSZHnFEHyhOYoZSzkGtAI2mcwZ38xeImDucI4dnqsHiOYuuCw==}
@@ -3105,10 +3101,6 @@ snapshots:
   '@types/react@19.2.14':
     dependencies:
       csstype: 3.2.3
-
-  '@types/uuid@11.0.0':
-    dependencies:
-      uuid: 13.0.0
 
   '@typescript-eslint/eslint-plugin@8.58.2(@typescript-eslint/parser@8.58.2(eslint@9.39.4)(typescript@6.0.3))(eslint@9.39.4)(typescript@6.0.3)':
     dependencies:

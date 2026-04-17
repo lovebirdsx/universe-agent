@@ -25,6 +25,7 @@ import {
 import { StateBackend } from './backends/index.js';
 import { ConfigurationError } from './errors.js';
 import { InteropZodObject } from '@langchain/core/utils/types';
+import { ChatOpenAI } from '@langchain/openai';
 import { createCacheBreakpointMiddleware } from './middleware/cache.js';
 import { GENERAL_PURPOSE_SUBAGENT, type CompiledSubAgent } from './middleware/subagents.js';
 import type { AsyncSubAgent } from './middleware/async_subagents.js';
@@ -41,8 +42,6 @@ import type {
 /**
  * required for type inference
  */
-import type * as _messages from '@langchain/core/messages';
-import type * as _langgraph from '@langchain/langgraph';
 import type { BaseLanguageModel } from '@langchain/core/language_models/base';
 
 const BASE_AGENT_PROMPT = context`
@@ -167,7 +166,7 @@ export function createDeepAgent<
   > = {} as CreateDeepAgentParams<TResponse, ContextSchema, TMiddleware, TSubagents, TTools>,
 ) {
   const {
-    model = 'anthropic:claude-sonnet-4-6',
+    model,
     tools = [],
     systemPrompt,
     middleware: customMiddleware = [],
@@ -183,6 +182,21 @@ export function createDeepAgent<
     skills,
   } = params;
 
+  let resolvedModel: BaseLanguageModel | string | undefined = model;
+  if (!resolvedModel) {
+    if (process.env.OPENAI_API_BASEURL && process.env.OPENAI_API_KEY && process.env.OPENAI_MODEL) {
+      resolvedModel = new ChatOpenAI({
+        model: process.env.OPENAI_MODEL,
+        apiKey: process.env.OPENAI_API_KEY,
+        configuration: {
+          baseURL: process.env.OPENAI_API_BASEURL,
+        },
+      });
+    } else {
+      resolvedModel = 'anthropic:claude-sonnet-4-6';
+    }
+  }
+
   const collidingTools = tools
     .map((t) => t.name)
     .filter((n) => typeof n === 'string' && BUILTIN_TOOL_NAMES.has(n));
@@ -195,7 +209,7 @@ export function createDeepAgent<
     );
   }
 
-  const anthropicModel = isAnthropicModel(model);
+  const anthropicModel = isAnthropicModel(resolvedModel);
   const cacheMiddleware: LooseAgentMiddleware[] = anthropicModel
     ? [createAnthropicCacheMiddleware(), createCacheBreakpointMiddleware() as LooseAgentMiddleware]
     : [];
@@ -256,7 +270,7 @@ export function createDeepAgent<
   if (!inlineSubagents.some((item) => item.name === GENERAL_PURPOSE_SUBAGENT['name'])) {
     const generalPurposeSpec = normalizeSubagentSpec({
       ...GENERAL_PURPOSE_SUBAGENT,
-      model,
+      model: resolvedModel,
       tools: tools as StructuredTool[],
       ...(skills != null ? { skills } : {}),
     });
@@ -284,7 +298,7 @@ export function createDeepAgent<
     fsMiddleware as LooseAgentMiddleware,
     // Enables delegation to specialized subagents for complex tasks.
     createSubAgentMiddleware({
-      defaultModel: model,
+      defaultModel: resolvedModel,
       defaultTools: tools as StructuredTool[],
       subagents: inlineSubagents,
       generalPurposeAgent: false,
@@ -355,7 +369,7 @@ export function createDeepAgent<
           });
 
   const agent = createAgent({
-    model,
+    model: resolvedModel,
     systemPrompt: finalSystemPrompt,
     tools: tools as StructuredTool[],
     middleware: middleware as readonly AgentMiddleware[],
