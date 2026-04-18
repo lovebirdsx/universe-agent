@@ -2,12 +2,7 @@ import 'dotenv/config';
 import { HumanMessage } from '@langchain/core/messages';
 import * as path from 'path';
 
-import {
-  createDeepAgent,
-  FilesystemBackend,
-  createLangfuseHandler,
-  flushLangfuseHandler,
-} from '@universe-agent/agent';
+import { createDeepAgent, FilesystemBackend } from '@universe-agent/agent';
 
 const systemPrompt = `You are an expert coding assistant with access to the real filesystem.
 
@@ -29,15 +24,12 @@ This makes you perfect for real coding tasks that need to persist on disk.
 
 const workspaceDir = path.join(process.cwd(), 'workspace');
 
-const langfuseHandler = await createLangfuseHandler();
-
 export const agent = createDeepAgent({
   systemPrompt,
   backend: new FilesystemBackend({
     rootDir: workspaceDir,
     virtualMode: true,
   }),
-  callbacks: [langfuseHandler],
 });
 
 async function main() {
@@ -59,8 +51,6 @@ async function main() {
       console.log('Agent:', message.text);
     }
   }
-
-  await flushLangfuseHandler(langfuseHandler);
 }
 
 main();

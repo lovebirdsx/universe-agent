@@ -24,6 +24,7 @@ import {
 } from './middleware/index.js';
 import { StateBackend } from './backends/index.js';
 import { ConfigurationError } from './errors.js';
+import { autoCreateLangfuseHandler } from './observability.js';
 import { InteropZodObject } from '@langchain/core/utils/types';
 import { ChatOpenAI } from '@langchain/openai';
 import { createCacheBreakpointMiddleware } from './middleware/cache.js';
@@ -369,6 +370,13 @@ export function createDeepAgent<
             contentBlocks: [{ type: 'text', text: BASE_AGENT_PROMPT }],
           });
 
+  // Auto-detect Langfuse environment variables and merge with user callbacks
+  const autoLangfuseHandler = autoCreateLangfuseHandler();
+  const allCallbacks = [
+    ...(autoLangfuseHandler ? [autoLangfuseHandler] : []),
+    ...(userCallbacks ?? []),
+  ];
+
   const agent = createAgent({
     model: resolvedModel,
     systemPrompt: finalSystemPrompt,
@@ -385,7 +393,7 @@ export function createDeepAgent<
       ls_integration: 'deepagents',
       lc_agent_name: name,
     },
-    ...(userCallbacks && userCallbacks.length > 0 ? { callbacks: userCallbacks } : {}),
+    ...(allCallbacks.length > 0 ? { callbacks: allCallbacks } : {}),
   });
 
   /**

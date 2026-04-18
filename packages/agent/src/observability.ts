@@ -6,6 +6,7 @@ import { LangfuseSpanProcessor } from '@langfuse/otel';
 
 let sdk: NodeSDK | undefined = undefined;
 const callbackHandlerSet = new Set<BaseCallbackHandler>();
+let exitHandlerRegistered = false;
 
 function initializeSdk() {
   if (sdk) return;
@@ -32,6 +33,37 @@ async function removeCallbackHandler(handler: BaseCallbackHandler) {
   await sdk.shutdown();
 
   sdk = undefined;
+}
+
+function registerExitHandler() {
+  if (exitHandlerRegistered) return;
+  exitHandlerRegistered = true;
+
+  process.on('beforeExit', async () => {
+    if (callbackHandlerSet.size === 0) return;
+
+    const handlers = [...callbackHandlerSet];
+    for (const handler of handlers) {
+      await removeCallbackHandler(handler);
+    }
+  });
+}
+
+function getUserId(): string {
+  const user =
+    process.env['LANGFUSE_USER'] ||
+    process.env['USER'] ||
+    process.env['USERNAME'] ||
+    'unknown_user';
+  return user;
+}
+
+function getTags(): string[] {
+  const tagsEnv = process.env['LANGFUSE_TAGS'];
+  if (!tagsEnv) {
+    return ['universe-agent'];
+  }
+  return tagsEnv.split(',').map((tag) => tag.trim());
 }
 
 /**
@@ -66,7 +98,26 @@ export async function createLangfuseHandler(
   config?: LangfuseHandlerOptions,
 ): Promise<BaseCallbackHandler> {
   initializeSdk();
+  registerExitHandler();
   const handler = new CallbackHandler(config);
+  addCallbackHandler(handler);
+  return handler;
+}
+
+/**
+ * Automatically creates a Langfuse handler if LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY
+ * environment variables are set. Returns undefined if not configured.
+ *
+ * This is a synchronous function suitable for use in createDeepAgent().
+ */
+export function autoCreateLangfuseHandler(): BaseCallbackHandler | undefined {
+  if (!process.env['LANGFUSE_PUBLIC_KEY'] || !process.env['LANGFUSE_SECRET_KEY']) {
+    return undefined;
+  }
+
+  initializeSdk();
+  registerExitHandler();
+  const handler = new CallbackHandler({ userId: getUserId(), tags: getTags() });
   addCallbackHandler(handler);
   return handler;
 }
