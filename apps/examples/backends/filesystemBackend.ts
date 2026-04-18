@@ -1,3 +1,8 @@
+/**
+ * 测试使用 FilesystemBackend 的示例，展示了如何创建一个能够直接读写文件的智能体。
+ * 注意：模型必须要使用tool调用功能完善的模型（gpt5-nano目前是不行的，claude-haiku-4.5可以）
+ */
+
 import 'dotenv/config';
 import { HumanMessage } from '@langchain/core/messages';
 import * as path from 'path';
