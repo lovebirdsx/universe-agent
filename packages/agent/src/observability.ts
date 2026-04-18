@@ -1,6 +1,6 @@
 import type { BaseCallbackHandler } from '@langchain/core/callbacks/base';
 import { CallbackHandler } from '@langfuse/langchain';
-import type { LangfuseHandlerOptions } from './types.js';
+import type { LangfuseHandlerOptions, ObservabilityConfig } from './types.js';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { LangfuseSpanProcessor } from '@langfuse/otel';
 
@@ -66,6 +66,21 @@ function getTags(): string[] {
   return tagsEnv.split(',').map((tag) => tag.trim());
 }
 
+function formatDateTime(date = new Date()) {
+  return (
+    date.getFullYear() +
+    String(date.getMonth() + 1).padStart(2, '0') +
+    String(date.getDate()).padStart(2, '0') +
+    String(date.getHours()).padStart(2, '0') +
+    String(date.getMinutes()).padStart(2, '0') +
+    String(date.getSeconds()).padStart(2, '0')
+  );
+}
+
+function getSessionId(): string {
+  return `session-${formatDateTime()}`;
+}
+
 /**
  * Dynamically creates a Langfuse CallbackHandler for LangChain observability.
  * Uses dynamic import to avoid hard dependency on langfuse-langchain.
@@ -110,14 +125,23 @@ export async function createLangfuseHandler(
  *
  * This is a synchronous function suitable for use in createDeepAgent().
  */
-export function autoCreateLangfuseHandler(): BaseCallbackHandler | undefined {
+export function autoCreateLangfuseHandler(
+  observabilityConfig?: ObservabilityConfig,
+): BaseCallbackHandler | undefined {
   if (!process.env['LANGFUSE_PUBLIC_KEY'] || !process.env['LANGFUSE_SECRET_KEY']) {
     return undefined;
   }
 
   initializeSdk();
   registerExitHandler();
-  const handler = new CallbackHandler({ userId: getUserId(), tags: getTags() });
+
+  const handler = new CallbackHandler({
+    userId: getUserId(),
+    tags: getTags(),
+    sessionId: getSessionId(),
+    ...observabilityConfig,
+  });
+
   addCallbackHandler(handler);
   return handler;
 }

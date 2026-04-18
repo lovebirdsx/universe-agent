@@ -324,6 +324,14 @@ export type InferSubagentReactAgentType<TSubagent extends SubAgent | CompiledSub
         >
       : never;
 
+export interface ObservabilityConfig {
+  sessionId?: string;
+  userId?: string;
+  tags?: string[];
+  version?: string;
+  metadata?: Record<string, unknown>;
+}
+
 /**
  * Configuration parameters for creating a Deep Agent
  * Matches Python's create_deep_agent parameters
@@ -430,6 +438,9 @@ export interface CreateDeepAgentParams<
    * ```
    */
   callbacks?: BaseCallbackHandler[];
+
+  // Observability config (for internal use when creating Langfuse handlers)
+  observabilityConfig?: ObservabilityConfig;
 }
 
 /**
