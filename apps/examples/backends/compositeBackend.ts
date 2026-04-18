@@ -3,14 +3,15 @@ import { z } from 'zod';
 import { tool } from 'langchain';
 import { TavilySearch } from '@langchain/tavily';
 import { HumanMessage } from '@langchain/core/messages';
-import { MemorySaver, InMemoryStore } from '@langchain/langgraph-checkpoint';
+import { MemorySaver } from '@langchain/langgraph-checkpoint';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
   createDeepAgent,
   CompositeBackend,
-  StateBackend,
+  JsonFileStore,
   StoreBackend,
+  StateBackend,
 } from '@universe-agent/agent';
 
 const internetSearch = tool(
@@ -61,11 +62,19 @@ Use descriptive filenames like:
 - \`/memories/findings_quantum_computing.md\`
 - \`/memories/summary_market_analysis.md\``;
 
+const store = new JsonFileStore({ filePath: './.data/store.json' });
+store.start();
+
+// 注意：claude-haiku-4.5在调用时，并不会优先去之前存储的内容，而是优先去进行网络搜索
+// 由此可见，模型的理解力决定了它能否按照提示词的要求去执行指令
+// 该示例中，claude-sonnet-4.6能够正确地优先使用之前存储的内容，故而此处显示地将模型设置为claude-sonnet-4.6
+process.env.OPENAI_MODEL = 'claude-sonnet-4.6';
+
 export const agent = createDeepAgent({
   tools: [internetSearch],
   systemPrompt,
   checkpointer: new MemorySaver(),
-  store: new InMemoryStore(),
+  store,
   backend: new CompositeBackend(new StateBackend(), {
     '/memories/': new StoreBackend(),
   }),
@@ -74,7 +83,7 @@ export const agent = createDeepAgent({
 async function main() {
   const threadId = uuidv4();
 
-  await agent.invoke(
+  const result1 = await agent.invoke(
     {
       messages: [new HumanMessage('Research the latest trends in AI agents for 2025')],
     },
@@ -84,8 +93,16 @@ async function main() {
     },
   );
 
+  for (const message of result1.messages) {
+    if (message instanceof HumanMessage) {
+      console.log('Human:', message.text);
+    } else {
+      console.log('Agent:', message.text);
+    }
+  }
+
   const threadId2 = uuidv4();
-  await agent.invoke(
+  const result2 = await agent.invoke(
     {
       messages: [
         new HumanMessage('Do you have any info on the latest trends in AI agents for 2025?'),
@@ -96,6 +113,14 @@ async function main() {
       configurable: { thread_id: threadId2 },
     },
   );
+
+  for (const message of result2.messages) {
+    if (message instanceof HumanMessage) {
+      console.log('Human:', message.text);
+    } else {
+      console.log('Agent:', message.text);
+    }
+  }
 }
 
 main();

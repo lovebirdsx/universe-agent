@@ -52,5 +52,22 @@
       ],
       "console": "integratedTerminal"
     },
+    {
+      "name": "test composite backend",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--import",
+        "tsx",
+      ],
+      "program": "${workspaceFolder}/apps/examples/backends/compositeBackend.ts",
+      "args": [],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "console": "integratedTerminal"
+    },
   ]
 }
