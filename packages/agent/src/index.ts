@@ -92,6 +92,9 @@ export {
   type ListSkillsOptions,
 } from './skills/index.js';
 
+// Export store implementations
+export { JsonFileStore } from './store/jsonFileStore.js';
+
 // Export backends
 export {
   StateBackend,

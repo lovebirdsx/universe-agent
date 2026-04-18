@@ -2,11 +2,10 @@ import 'dotenv/config';
 import { z } from 'zod';
 import { tool } from 'langchain';
 import { TavilySearch } from '@langchain/tavily';
-import { ChatAnthropic } from '@langchain/anthropic';
 import { HumanMessage } from '@langchain/core/messages';
-import { MemorySaver, InMemoryStore } from '@langchain/langgraph-checkpoint';
+import { MemorySaver } from '@langchain/langgraph-checkpoint';
 
-import { createDeepAgent, StoreBackend } from '@universe-agent/agent';
+import { createDeepAgent, StoreBackend, JsonFileStore } from '@universe-agent/agent';
 import { v4 as uuidv4 } from 'uuid';
 
 const internetSearch = tool(
@@ -45,15 +44,19 @@ Your files persist across all conversations and threads using the store.
 All files you create are shared across ALL conversations. This means you can reference
 previous research in new conversations.`;
 
+const store = new JsonFileStore({ filePath: './.data/store.json' });
+store.start();
+
+// 注意：claude-haiku-4.5在调用时，并不会优先去之前存储的内容，而是优先去进行网络搜索
+// 由此可见，模型的理解力决定了它能否按照提示词的要求去执行指令
+// 该示例中，claude-sonnet-4.6能够正确地优先使用之前存储的内容，故而此处显示地将模型设置为claude-sonnet-4.6
+process.env.OPENAI_MODEL = 'claude-sonnet-4.6';
+
 export const agent = createDeepAgent({
-  model: new ChatAnthropic({
-    model: 'claude-sonnet-4-20250514',
-    temperature: 0,
-  }),
   tools: [internetSearch],
   systemPrompt,
   checkpointer: new MemorySaver(),
-  store: new InMemoryStore(),
+  store,
   backend: new StoreBackend(),
 });
 
@@ -61,13 +64,21 @@ async function main() {
   const threadId = uuidv4();
 
   const message = new HumanMessage('Research the latest trends in AI agents for 2025');
-  await agent.invoke(
+  const result1 = await agent.invoke(
     { messages: [message] },
     { recursionLimit: 50, configurable: { thread_id: threadId } },
   );
 
+  for (const message of result1.messages) {
+    if (message instanceof HumanMessage) {
+      console.log('Human:', message.text);
+    } else {
+      console.log('Agent:', message.text);
+    }
+  }
+
   const threadId2 = uuidv4();
-  await agent.invoke(
+  const result2 = await agent.invoke(
     {
       messages: [
         new HumanMessage('Do you have any info on the latest trends in AI agents for 2025?'),
@@ -78,8 +89,14 @@ async function main() {
       configurable: { thread_id: threadId2 },
     },
   );
+
+  for (const message of result2.messages) {
+    if (message instanceof HumanMessage) {
+      console.log('Human:', message.text);
+    } else {
+      console.log('Agent:', message.text);
+    }
+  }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
-}
+main();
