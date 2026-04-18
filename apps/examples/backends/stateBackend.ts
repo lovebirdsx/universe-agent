@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { z } from 'zod';
 import { tool } from 'langchain';
 import { TavilySearch } from '@langchain/tavily';
-import { ChatAnthropic } from '@langchain/anthropic';
 import { HumanMessage } from '@langchain/core/messages';
 
 import { createDeepAgent, StateBackend } from '@universe-agent/agent';
@@ -39,24 +38,26 @@ Your files are stored in memory and will be lost when the conversation ends.
 4. Once you have enough information, write a final summary to \`summary.md\``;
 
 export const agent = createDeepAgent({
-  model: new ChatAnthropic({
-    model: 'claude-sonnet-4-20250514',
-    temperature: 0,
-  }),
   tools: [internetSearch],
   systemPrompt,
   backend: new StateBackend(),
 });
 
 async function main() {
-  await agent.invoke(
+  const result = await agent.invoke(
     {
       messages: [new HumanMessage('Research the latest trends in AI agents for 2025')],
     },
     { recursionLimit: 50 },
   );
+
+  for (const message of result.messages) {
+    if (message instanceof HumanMessage) {
+      console.log('Human:', message.text);
+    } else {
+      console.log('Agent:', message.text);
+    }
+  }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
-}
+main();
