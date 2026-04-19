@@ -17,6 +17,7 @@ import type { BaseCheckpointSaver, BaseStore } from '@langchain/langgraph-checkp
 
 import type { AnyBackendProtocol } from './backends/index.js';
 import type { AsyncSubAgent, SubAgent } from './middleware/index.js';
+import type { RecordingConfig } from './recording.js';
 import type { InteropZodObject } from '@langchain/core/utils/types';
 import type { AnnotationRoot } from '@langchain/langgraph';
 import type { CompiledSubAgent } from './middleware/subagents.js';
@@ -438,6 +439,14 @@ export interface CreateDeepAgentParams<
    * ```
    */
   callbacks?: BaseCallbackHandler[];
+
+  /**
+   * 录像配置。
+   * - `record`: 录制模型输出到本地文件
+   * - `replay`: 从录像文件回放，使用 fakeModel 替代真实 LLM
+   * - `auto`: 录像存在且完整则回放，否则录制
+   */
+  recording?: RecordingConfig;
 
   // Observability config (for internal use when creating Langfuse handlers)
   observabilityConfig?: ObservabilityConfig;

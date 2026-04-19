@@ -25,6 +25,17 @@ import {
 import { StateBackend } from './backends/index.js';
 import { ConfigurationError } from './errors.js';
 import { autoCreateLangfuseHandler } from './observability.js';
+import {
+  resolveDefaultId,
+  resolveRecordingDir,
+  resolveEffectiveMode,
+  buildReplayModel,
+  createRecordingModel,
+  Recorder,
+  loadToolResults,
+  createToolRecordingMiddleware,
+  createToolReplayMiddleware,
+} from './recording.js';
 import { InteropZodObject } from '@langchain/core/utils/types';
 import { ChatOpenAI } from '@langchain/openai';
 import { createCacheBreakpointMiddleware } from './middleware/cache.js';
@@ -182,6 +193,7 @@ export function createDeepAgent<
     memory,
     skills,
     callbacks: userCallbacks,
+    recording,
   } = params;
 
   let resolvedModel: BaseLanguageModel | string | undefined = model;
@@ -196,6 +208,39 @@ export function createDeepAgent<
       });
     } else {
       resolvedModel = 'anthropic:claude-sonnet-4-6';
+    }
+  }
+
+  // --- Recording: resolve mode and apply model substitution ---
+  let recorder: Recorder | undefined;
+  let recordingDirPath: string | undefined;
+  let recordingId: string | undefined;
+  let recordingToolMiddleware: LooseAgentMiddleware | undefined;
+  let effectiveMode: ReturnType<typeof resolveEffectiveMode> | undefined = undefined;
+
+  if (recording) {
+    recordingId = recording.id ?? resolveDefaultId();
+    const recConfig = { ...recording, id: recordingId };
+    recordingDirPath = resolveRecordingDir(recConfig);
+    effectiveMode = resolveEffectiveMode(recording.mode, recordingDirPath);
+
+    if (effectiveMode === 'replay') {
+      resolvedModel = buildReplayModel(recordingDirPath);
+      const toolResults = loadToolResults(recordingDirPath);
+      if (toolResults.size > 0) {
+        recordingToolMiddleware = createToolReplayMiddleware({
+          toolResults,
+        }) as LooseAgentMiddleware;
+      }
+    } else {
+      recorder = new Recorder();
+      if (typeof resolvedModel !== 'string') {
+        resolvedModel = createRecordingModel(resolvedModel, recorder, name ?? 'main');
+      }
+      recordingToolMiddleware = createToolRecordingMiddleware({
+        recorder,
+        agentName: name ?? 'main',
+      }) as LooseAgentMiddleware;
     }
   }
 
@@ -320,6 +365,8 @@ export function createDeepAgent<
   // Runtime middleware array: combine built-in + optional middleware.
   // Note: The full type is handled separately via AllMiddleware.
   const middleware: LooseAgentMiddleware[] = [
+    // Optional recording/replay tool middleware (must be first to intercept all tool calls).
+    ...(recordingToolMiddleware ? [recordingToolMiddleware] : []),
     // Built-in middleware with deterministic ordering.
     todoMiddleware,
     // Optional root-level skills.
@@ -370,8 +417,10 @@ export function createDeepAgent<
             contentBlocks: [{ type: 'text', text: BASE_AGENT_PROMPT }],
           });
 
-  // Auto-detect Langfuse environment variables and merge with user callbacks
-  const autoLangfuseHandler = autoCreateLangfuseHandler();
+  // 自动检测 Langfuse 环境变量，并与用户回调合并
+  // 如果在回放模式下，则不启用 Langfuse 以避免无效的事件发送
+  const autoLangfuseHandler =
+    recording && effectiveMode === 'replay' ? undefined : autoCreateLangfuseHandler();
   const allCallbacks = [
     ...(autoLangfuseHandler ? [autoLangfuseHandler] : []),
     ...(userCallbacks ?? []),
@@ -410,6 +459,25 @@ export function createDeepAgent<
     ...TMiddleware,
     ...FlattenSubAgentMiddleware<TSubagents>,
   ];
+
+  // --- Recording: wrap invoke for record mode ---
+  if (recorder && recordingDirPath && recordingId) {
+    const recDir = recordingDirPath;
+    const recId = recordingId;
+    const rec = recorder;
+    const originalInvoke = agent.invoke.bind(agent);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (agent as any).invoke = async (input: any, options?: any) => {
+      try {
+        const result = await originalInvoke(input, options);
+        rec.flush(recDir, recId, 'completed');
+        return result;
+      } catch (error) {
+        rec.flush(recDir, recId, 'error');
+        throw error;
+      }
+    };
+  }
 
   /**
    * Return as DeepAgent with proper DeepAgentTypeConfig

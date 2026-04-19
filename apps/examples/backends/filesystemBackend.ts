@@ -6,6 +6,7 @@
 import 'dotenv/config';
 import { HumanMessage } from '@langchain/core/messages';
 import * as path from 'path';
+import * as fs from 'fs';
 
 import { createDeepAgent, FilesystemBackend } from '@universe-agent/agent';
 
@@ -27,7 +28,10 @@ This makes you perfect for real coding tasks that need to persist on disk.
 - You can use standard filesystem tools (ls, read_file, write_file, edit_file)
 - Files persist after the conversation ends`;
 
-const workspaceDir = path.join(process.cwd(), 'workspace');
+const workspaceDir = path.join(process.cwd(), 'workspace/filesystemBackend');
+if (!fs.existsSync(workspaceDir)) {
+  fs.mkdirSync(workspaceDir, { recursive: true });
+}
 
 export const agent = createDeepAgent({
   systemPrompt,
@@ -35,6 +39,9 @@ export const agent = createDeepAgent({
     rootDir: workspaceDir,
     virtualMode: true,
   }),
+  recording: {
+    mode: 'auto',
+  },
 });
 
 async function main() {

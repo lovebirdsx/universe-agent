@@ -95,6 +95,14 @@ export {
 // Export store implementations
 export { JsonFileStore } from './store/jsonFileStore.js';
 
+// Export recording
+export {
+  type RecordingConfig,
+  type ManifestData,
+  type AgentRecording,
+  type SequenceEntry,
+} from './recording.js';
+
 // Export backends
 export {
   StateBackend,

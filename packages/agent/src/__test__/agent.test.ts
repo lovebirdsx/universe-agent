@@ -1,10 +1,22 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import * as os from 'node:os';
 import { createDeepAgent, isAnthropicModel } from '../agent.js';
 import { FakeListChatModel } from '@langchain/core/utils/testing';
-import { HumanMessage, SystemMessage, type BaseMessage } from '@langchain/core/messages';
+import {
+  AIMessage,
+  HumanMessage,
+  SystemMessage,
+  ToolMessage,
+  type BaseMessage,
+} from '@langchain/core/messages';
 import { MemorySaver } from '@langchain/langgraph';
+import { z } from 'zod/v4';
+import { tool } from 'langchain';
 import { createFileData } from '../backends/utils.js';
 import { ConfigurationError } from '../errors.js';
+import { Recorder, loadManifest, loadAgentRecording } from '../recording.js';
 
 describe('isAnthropicModel', () => {
   it('should detect claude model strings', () => {
@@ -164,5 +176,299 @@ describe('Built-in tool name collision detection', () => {
 
   it('should not throw when tool names do not collide', () => {
     expect(() => createDeepAgent({ model, tools: [makeTool('my_custom_tool')] })).not.toThrow();
+  });
+});
+
+describe('createDeepAgent recording integration', () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-rec-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('should record model outputs and flush manifest on successful invoke', async () => {
+    const model = new FakeListChatModel({ responses: ['Done'] });
+    const checkpointer = new MemorySaver();
+
+    const agent = createDeepAgent({
+      model,
+      recording: { mode: 'record', path: tmpDir, id: 'test-rec' },
+      checkpointer,
+    });
+
+    await agent.invoke(
+      { messages: [new HumanMessage('Hello')] },
+      { configurable: { thread_id: `rec-test-${Date.now()}` }, recursionLimit: 50 },
+    );
+
+    const recDir = path.join(tmpDir, 'test-rec');
+    const manifest = loadManifest(recDir);
+    expect(manifest.status).toBe('completed');
+    expect(manifest.id).toBe('test-rec');
+    expect(manifest.sequence.length).toBeGreaterThan(0);
+  });
+
+  it('should flush manifest with error status when invoke fails', async () => {
+    const model = new FakeListChatModel({ responses: [] });
+    const checkpointer = new MemorySaver();
+
+    const agent = createDeepAgent({
+      model,
+      recording: { mode: 'record', path: tmpDir, id: 'error-rec' },
+      checkpointer,
+    });
+
+    try {
+      await agent.invoke(
+        { messages: [new HumanMessage('Hello')] },
+        { configurable: { thread_id: `err-test-${Date.now()}` }, recursionLimit: 50 },
+      );
+    } catch {
+      // Expected to throw
+    }
+
+    const recDir = path.join(tmpDir, 'error-rec');
+    const manifest = loadManifest(recDir);
+    expect(manifest.status).toBe('error');
+    expect(manifest.id).toBe('error-rec');
+  });
+
+  it('should replay from recording instead of calling real model', async () => {
+    // Build a recording manually
+    const recId = 'replay-test';
+    const recDir = path.join(tmpDir, recId);
+    const recorder = new Recorder();
+    recorder.record('main', new AIMessage({ content: 'Replayed response' }));
+    recorder.flush(recDir, recId, 'completed');
+
+    // Create a spy model that should NOT be called
+    const spyModel = new FakeListChatModel({ responses: ['Should not appear'] });
+    const invokeSpy = vi.spyOn(spyModel, 'invoke');
+
+    const checkpointer = new MemorySaver();
+    const agent = createDeepAgent({
+      model: spyModel,
+      recording: { mode: 'replay', path: tmpDir, id: recId },
+      checkpointer,
+    });
+
+    const result = await agent.invoke(
+      { messages: [new HumanMessage('Hi')] },
+      { configurable: { thread_id: `replay-test-${Date.now()}` }, recursionLimit: 50 },
+    );
+
+    // The spy model should NOT have been called — replay uses fakeModel
+    expect(invokeSpy).not.toHaveBeenCalled();
+
+    // Result should contain the replayed content
+    const aiMessages = result.messages.filter(AIMessage.isInstance);
+    expect(aiMessages.some((m) => (m.content as string).includes('Replayed response'))).toBe(true);
+
+    invokeSpy.mockRestore();
+  });
+
+  it('should record in auto mode when no recording exists', async () => {
+    const model = new FakeListChatModel({ responses: ['Auto recorded'] });
+    const checkpointer = new MemorySaver();
+
+    const agent = createDeepAgent({
+      model,
+      recording: { mode: 'auto', path: tmpDir, id: 'auto-test' },
+      checkpointer,
+    });
+
+    await agent.invoke(
+      { messages: [new HumanMessage('Hi')] },
+      { configurable: { thread_id: `auto-test-${Date.now()}` }, recursionLimit: 50 },
+    );
+
+    const recDir = path.join(tmpDir, 'auto-test');
+    const manifest = loadManifest(recDir);
+    expect(manifest.status).toBe('completed');
+    expect(manifest.id).toBe('auto-test');
+  });
+
+  it('should replay in auto mode when completed recording exists', async () => {
+    // Build a completed recording manually
+    const recId = 'auto-replay';
+    const recDir = path.join(tmpDir, recId);
+    const recorder = new Recorder();
+    recorder.record('main', new AIMessage({ content: 'Auto replayed' }));
+    recorder.flush(recDir, recId, 'completed');
+
+    // Spy model should NOT be called
+    const spyModel = new FakeListChatModel({ responses: ['Should not appear'] });
+    const invokeSpy = vi.spyOn(spyModel, 'invoke');
+
+    const checkpointer = new MemorySaver();
+    const agent = createDeepAgent({
+      model: spyModel,
+      recording: { mode: 'auto', path: tmpDir, id: recId },
+      checkpointer,
+    });
+
+    const result = await agent.invoke(
+      { messages: [new HumanMessage('Hi')] },
+      { configurable: { thread_id: `auto-replay-${Date.now()}` }, recursionLimit: 50 },
+    );
+
+    expect(invokeSpy).not.toHaveBeenCalled();
+
+    const aiMessages = result.messages.filter(AIMessage.isInstance);
+    expect(aiMessages.some((m) => (m.content as string).includes('Auto replayed'))).toBe(true);
+
+    invokeSpy.mockRestore();
+  });
+
+  it('should not crash when using string model name with record mode', () => {
+    expect(() =>
+      createDeepAgent({
+        recording: { mode: 'record', path: tmpDir, id: 'str-model' },
+      }),
+    ).not.toThrow();
+  });
+
+  it('should record and replay tool results', async () => {
+    const recId = 'tool-rec';
+    const recDir = path.join(tmpDir, recId);
+    const checkpointer = new MemorySaver();
+
+    // Create a custom tool with a spy to verify it's called/not called
+    const toolSpy = vi.fn().mockResolvedValue('tool executed');
+    const myTool = tool(toolSpy, {
+      name: 'my_custom_tool',
+      description: 'A test tool',
+      schema: z.object({
+        input: z.string().describe('Input string'),
+      }),
+    });
+
+    // --- Build a recording manually with tool results ---
+    const recorder = new Recorder();
+
+    const toolCallId = 'test_tool_call_1';
+    const aiMsgWithToolCall = new AIMessage({
+      content: '',
+      tool_calls: [{ id: toolCallId, name: 'my_custom_tool', args: { input: 'hello' } }],
+    });
+    recorder.record('main', aiMsgWithToolCall);
+
+    const toolResultMsg = new ToolMessage({
+      content: 'tool executed',
+      tool_call_id: toolCallId,
+      name: 'my_custom_tool',
+    });
+    recorder.recordToolResult('main', toolResultMsg, toolCallId);
+
+    const finalAiMsg = new AIMessage({ content: 'Done with tool result' });
+    recorder.record('main', finalAiMsg);
+
+    recorder.flush(recDir, recId, 'completed');
+
+    // Verify recording structure
+    const manifest = loadManifest(recDir);
+    expect(manifest.status).toBe('completed');
+    expect(manifest.sequence).toHaveLength(3);
+    expect(manifest.sequence[0]).toEqual({ type: 'model', agent: 'main', index: 0 });
+    expect(manifest.sequence[1]).toEqual({
+      type: 'tool',
+      agent: 'main',
+      index: 0,
+      toolCallId,
+    });
+    expect(manifest.sequence[2]).toEqual({ type: 'model', agent: 'main', index: 1 });
+
+    const mainRec = loadAgentRecording(recDir, 'main');
+    expect(mainRec.toolResults).toBeDefined();
+    expect(mainRec.toolResults).toHaveLength(1);
+
+    // --- Replay phase ---
+    const spyModel = new FakeListChatModel({ responses: ['Should not appear'] });
+    const invokeSpy = vi.spyOn(spyModel, 'invoke');
+
+    const replayAgent = createDeepAgent({
+      model: spyModel,
+      tools: [myTool],
+      recording: { mode: 'replay', path: tmpDir, id: recId },
+      checkpointer,
+    });
+
+    const replayResult = await replayAgent.invoke(
+      { messages: [new HumanMessage('Use the tool')] },
+      { configurable: { thread_id: `tool-replay-${Date.now()}` }, recursionLimit: 50 },
+    );
+
+    // Spy model should NOT have been called — replay uses fakeModel
+    expect(invokeSpy).not.toHaveBeenCalled();
+
+    // Tool should NOT have been called during replay
+    expect(toolSpy).not.toHaveBeenCalled();
+
+    // Verify replay contains ToolMessage with the recorded result
+    const toolMessages = replayResult.messages.filter(ToolMessage.isInstance);
+    expect(toolMessages.length).toBeGreaterThan(0);
+    expect(toolMessages.some((m) => m.content.toString().includes('tool executed'))).toBe(true);
+
+    invokeSpy.mockRestore();
+  });
+
+  it('should replay write_file tool results without hitting backend', async () => {
+    const recId = 'write-file-rec';
+    const recDir = path.join(tmpDir, recId);
+    const checkpointer = new MemorySaver();
+
+    // --- Build a recording manually that simulates write_file ---
+    const recorder = new Recorder();
+
+    const toolCallId = 'write_call_1';
+    const aiMsgWithToolCall = new AIMessage({
+      content: '',
+      tool_calls: [
+        {
+          id: toolCallId,
+          name: 'write_file',
+          args: { file_path: '/test_output.txt', content: 'hello world' },
+        },
+      ],
+    });
+    recorder.record('main', aiMsgWithToolCall);
+
+    const toolResultMsg = new ToolMessage({
+      content: "Successfully wrote to '/test_output.txt'",
+      tool_call_id: toolCallId,
+      name: 'write_file',
+    });
+    recorder.recordToolResult('main', toolResultMsg, toolCallId);
+
+    const finalAiMsg = new AIMessage({ content: 'File written successfully' });
+    recorder.record('main', finalAiMsg);
+
+    recorder.flush(recDir, recId, 'completed');
+
+    // --- Replay phase ---
+    const spyModel = new FakeListChatModel({ responses: ['Should not appear'] });
+
+    const replayAgent = createDeepAgent({
+      model: spyModel,
+      recording: { mode: 'replay', path: tmpDir, id: recId },
+      checkpointer,
+    });
+
+    // This should succeed — tool results are replayed, write_file is NOT actually executed
+    const replayResult = await replayAgent.invoke(
+      { messages: [new HumanMessage('Write a file')] },
+      { configurable: { thread_id: `write-replay-${Date.now()}` }, recursionLimit: 50 },
+    );
+
+    // Verify replay contains ToolMessage with write confirmation (not re-executed)
+    const toolMessages = replayResult.messages.filter(ToolMessage.isInstance);
+    expect(toolMessages.length).toBeGreaterThan(0);
+    expect(toolMessages.some((m) => m.content.toString().includes('Successfully wrote'))).toBe(
+      true,
+    );
   });
 });

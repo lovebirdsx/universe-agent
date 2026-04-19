@@ -41,6 +41,9 @@ export const agent = createDeepAgent({
   tools: [internetSearch],
   systemPrompt,
   backend: new StateBackend(),
+  recording: {
+    mode: 'auto',
+  },
 });
 
 async function main() {

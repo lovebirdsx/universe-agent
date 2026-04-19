@@ -4,6 +4,7 @@ import { tool } from 'langchain';
 import { TavilySearch } from '@langchain/tavily';
 import { HumanMessage } from '@langchain/core/messages';
 import { MemorySaver } from '@langchain/langgraph-checkpoint';
+import * as fs from 'fs';
 
 import { createDeepAgent, StoreBackend, JsonFileStore } from '@universe-agent/agent';
 import { v4 as uuidv4 } from 'uuid';
@@ -44,6 +45,10 @@ Your files persist across all conversations and threads using the store.
 All files you create are shared across ALL conversations. This means you can reference
 previous research in new conversations.`;
 
+const storeFilePath = './.data/store.json';
+if (fs.existsSync(storeFilePath)) {
+  fs.rmSync(storeFilePath);
+}
 const store = new JsonFileStore({ filePath: './.data/store.json' });
 store.start();
 
@@ -58,6 +63,9 @@ export const agent = createDeepAgent({
   checkpointer: new MemorySaver(),
   store,
   backend: new StoreBackend(),
+  recording: {
+    mode: 'auto',
+  },
 });
 
 async function main() {
