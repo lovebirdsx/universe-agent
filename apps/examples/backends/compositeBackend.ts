@@ -78,6 +78,9 @@ export const agent = createDeepAgent({
   backend: new CompositeBackend(new StateBackend(), {
     '/memories/': new StoreBackend(),
   }),
+  recording: {
+    mode: 'auto',
+  },
 });
 
 async function main() {
