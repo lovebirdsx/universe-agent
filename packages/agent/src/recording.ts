@@ -343,6 +343,14 @@ export function buildReplayModel(dirPath: string): BaseLanguageModel {
     }
   }
 
+  // Fix: FakeBuiltModel.bindTools 每次创建新实例并**值拷贝** _callIndex，
+  // 导致 agent 每步调用 bindTools 时计数器被重置为 0，回放永远返回第一条录像。
+  // 直接覆写 bindTools，返回 model.withConfig({}) 创建的 RunnableBinding，
+  // 这样所有 binding 共享同一个 model 实例和 _callIndex。
+  const originalWithConfig = model.withConfig.bind(model);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (model as any).bindTools = () => originalWithConfig({});
+
   return model as unknown as BaseLanguageModel;
 }
 

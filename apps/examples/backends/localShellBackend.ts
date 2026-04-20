@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import path from 'node:path';
 
-import { ChatAnthropic } from '@langchain/anthropic';
 import { HumanMessage } from '@langchain/core/messages';
 
 import { createDeepAgent, LocalShellBackend } from '@universe-agent/agent';
@@ -29,10 +28,6 @@ and running build tools, tests, or other CLI commands.
 const workspaceDir = path.join(process.cwd(), 'workspace');
 
 export const agent = createDeepAgent({
-  model: new ChatAnthropic({
-    model: 'claude-sonnet-4-5',
-    temperature: 0,
-  }),
   systemPrompt,
   backend: new LocalShellBackend({
     rootDir: workspaceDir,
@@ -40,9 +35,12 @@ export const agent = createDeepAgent({
     inheritEnv: true,
     timeout: 60,
   }),
+  recording: {
+    mode: 'auto',
+  },
 });
 
-await agent.invoke(
+const result = await agent.invoke(
   {
     messages: [
       new HumanMessage(
@@ -52,3 +50,11 @@ await agent.invoke(
   },
   { recursionLimit: 50 },
 );
+
+for (const message of result.messages) {
+  if (message instanceof HumanMessage) {
+    console.log('Human:', message.text);
+  } else {
+    console.log('Agent:', message.text);
+  }
+}

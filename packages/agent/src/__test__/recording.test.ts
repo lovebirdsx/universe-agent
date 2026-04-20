@@ -15,6 +15,7 @@ import {
   loadAgentRecording,
   createRecordingModel,
 } from '../recording.js';
+import { BaseLanguageModel } from '@langchain/core/language_models/base';
 
 describe('recording', () => {
   let tmpDir: string;
@@ -541,6 +542,36 @@ describe('recording', () => {
 
       const r6 = await replayModel.invoke([new HumanMessage('q6')]);
       expect(r6.content).toBe('M3');
+    });
+
+    it('should advance callIndex correctly when bindTools is called between invocations', async () => {
+      // Reproduces the bug where FakeBuiltModel.bindTools() copies _callIndex by value,
+      // causing every bindTools() call to reset the counter to 0.
+      // The agent framework calls model.bindTools(tools) on every loop step.
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'replay-bindtools');
+
+      recorder.record('main', new AIMessage({ content: 'M1' }));
+      recorder.record('main', new AIMessage({ content: 'M2' }));
+      recorder.record('main', new AIMessage({ content: 'M3' }));
+      recorder.flush(recDir, 'bt-id', 'completed');
+
+      const replayModel = buildReplayModel(recDir) as BaseLanguageModel & {
+        bindTools: (tools: unknown[]) => BaseLanguageModel;
+      };
+
+      // Simulate agent framework: bindTools before each invoke
+      const bound1 = replayModel.bindTools([]);
+      const r1 = await bound1.invoke([new HumanMessage('q1')]);
+      expect(r1.content).toBe('M1');
+
+      const bound2 = replayModel.bindTools([]);
+      const r2 = await bound2.invoke([new HumanMessage('q2')]);
+      expect(r2.content).toBe('M2');
+
+      const bound3 = replayModel.bindTools([]);
+      const r3 = await bound3.invoke([new HumanMessage('q3')]);
+      expect(r3.content).toBe('M3');
     });
 
     it('should handle missing agent recording gracefully', async () => {
