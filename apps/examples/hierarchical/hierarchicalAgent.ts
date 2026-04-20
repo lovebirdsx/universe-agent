@@ -24,6 +24,8 @@
  *
  * @see https://github.com/anthropics/deepagentsjs/issues/206
  */
+import 'dotenv/config';
+
 import { tool } from 'langchain';
 import { z } from 'zod';
 import { HumanMessage } from '@langchain/core/messages';

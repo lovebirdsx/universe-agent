@@ -103,5 +103,22 @@
       ],
       "console": "integratedTerminal"
     },
+    {
+      "name": "test hierarchical agent",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--import",
+        "tsx",
+      ],
+      "program": "${workspaceFolder}/apps/examples/hierarchical/hierarchicalAgent.ts",
+      "args": [],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "console": "integratedTerminal"
+    },
   ]
 }
