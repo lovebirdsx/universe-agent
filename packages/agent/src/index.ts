@@ -101,6 +101,9 @@ export {
   type ManifestData,
   type AgentRecording,
   type SequenceEntry,
+  type ModelTurn,
+  type ToolTurn,
+  type Turn,
 } from './recording.js';
 
 // Export backends

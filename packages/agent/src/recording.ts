@@ -9,6 +9,9 @@ import {
 import type { StoredMessage } from '@langchain/core/messages';
 import { fakeModel } from '@langchain/core/testing';
 import type { BaseLanguageModel } from '@langchain/core/language_models/base';
+import type { FunctionDefinition } from '@langchain/core/language_models/base';
+import { convertToOpenAIFunction } from '@langchain/core/utils/function_calling';
+import type { StructuredToolInterface } from '@langchain/core/tools';
 import { createMiddleware, ToolMessage } from 'langchain';
 import { isCommand } from '@langchain/langgraph';
 
@@ -29,7 +32,7 @@ export interface SequenceEntry {
   type?: 'model' | 'tool';
   /** agent 名称（"main" 或 subagent name） */
   agent: string;
-  /** 在该 agent 的 responses/toolResults 数组中的索引 */
+  /** 在该 agent 的 turns 数组中对应类型条目的索引 */
   index: number;
   /** tool 条目专用：tool call ID，用于回放时按 ID 匹配 */
   toolCallId?: string;
@@ -43,10 +46,42 @@ export interface ManifestData {
   sequence: SequenceEntry[];
 }
 
+// ---------------------------------------------------------------------------
+// Turn-based recording types (V2)
+// ---------------------------------------------------------------------------
+
+export interface ModelTurn {
+  type: 'model';
+  index: number;
+  /** 增量请求消息：本次新增的消息（首次调用包含完整历史） */
+  request: StoredMessage[];
+  /** 完整输入的消息总数 */
+  requestTotalLength: number;
+  /** 模型响应 */
+  response: StoredMessage;
+}
+
+export interface ToolTurn {
+  type: 'tool';
+  index: number;
+  toolCallId: string;
+  toolName?: string;
+  toolArgs?: Record<string, unknown>;
+  /** 工具执行结果 */
+  result: StoredMessage;
+}
+
+export type Turn = ModelTurn | ToolTurn;
+
+/** 序列化后的工具定义（OpenAI function calling 格式） */
+export type SerializedToolDefinition = FunctionDefinition;
+
 export interface AgentRecording {
+  version: 2;
   agent: string;
-  responses: StoredMessage[];
-  toolResults?: StoredMessage[];
+  /** 该 agent 绑定的工具定义列表 */
+  tools?: SerializedToolDefinition[];
+  turns: Turn[];
 }
 
 // ---------------------------------------------------------------------------
@@ -147,6 +182,18 @@ function writeJsonAtomic(filePath: string, data: unknown): void {
   fs.renameSync(tmpPath, filePath);
 }
 
+/**
+ * 原子写入文本文件。
+ */
+function writeTextAtomic(filePath: string, text: string): void {
+  const dir = path.dirname(filePath);
+  fs.mkdirSync(dir, { recursive: true });
+
+  const tmpPath = filePath + '.tmp';
+  fs.writeFileSync(tmpPath, text, 'utf-8');
+  fs.renameSync(tmpPath, filePath);
+}
+
 export function loadManifest(dirPath: string): ManifestData {
   const content = fs.readFileSync(manifestPath(dirPath), 'utf-8');
   return JSON.parse(content) as ManifestData;
@@ -167,10 +214,33 @@ export class Recorder {
   readonly toolResults = new Map<string, StoredMessage[]>();
   readonly sequence: SequenceEntry[] = [];
 
+  /** 每个 agent 的请求增量数组（每次 model 调用的新增消息） */
+  readonly requests = new Map<string, StoredMessage[][]>();
+  /** 每次调用的完整输入长度 */
+  readonly requestLengths = new Map<string, number[]>();
+  /** 追踪上次输入长度（用于计算增量） */
+  private readonly lastInputLength = new Map<string, number>();
+
+  /** 工具名称，按 agent 和 index 索引 */
+  readonly toolNames = new Map<string, (string | undefined)[]>();
+  /** 工具参数，按 agent 和 index 索引 */
+  readonly toolArgs = new Map<string, (Record<string, unknown> | undefined)[]>();
+
+  /** 每个 agent 绑定的工具定义（序列化后） */
+  readonly agentTools = new Map<string, SerializedToolDefinition[]>();
+
   /**
-   * 记录一条模型输出。
+   * 注册 agent 的工具列表，序列化为 OpenAI function 格式用于录像。
    */
-  record(agentName: string, message: BaseMessage): void {
+  registerTools(agentName: string, tools: StructuredToolInterface[]): void {
+    const serialized = tools.map((t) => convertToOpenAIFunction(t));
+    this.agentTools.set(agentName, serialized);
+  }
+
+  /**
+   * 记录一条模型输出及其输入。
+   */
+  record(agentName: string, message: BaseMessage, inputMessages?: BaseMessage[]): void {
     const stored = mapChatMessagesToStoredMessages([message]);
     const first = stored[0];
     if (!first) return;
@@ -183,13 +253,61 @@ export class Recorder {
 
     const index = agentResponses.length;
     agentResponses.push(first);
+
+    // 记录请求增量
+    if (inputMessages) {
+      const rawLastLen = this.lastInputLength.get(agentName) ?? 0;
+      // 当消息列表长度小于等于上次记录长度时（例如新 thread/会话），
+      // 重置为 0 以记录完整输入，防止 slice 越界返回空数组。
+      const lastLen = inputMessages.length <= rawLastLen ? 0 : rawLastLen;
+      const delta = inputMessages.slice(lastLen);
+      const storedDelta = mapChatMessagesToStoredMessages(delta);
+
+      let agentRequests = this.requests.get(agentName);
+      if (!agentRequests) {
+        agentRequests = [];
+        this.requests.set(agentName, agentRequests);
+      }
+      agentRequests.push(storedDelta);
+
+      let agentLengths = this.requestLengths.get(agentName);
+      if (!agentLengths) {
+        agentLengths = [];
+        this.requestLengths.set(agentName, agentLengths);
+      }
+      agentLengths.push(inputMessages.length);
+
+      this.lastInputLength.set(agentName, inputMessages.length);
+    } else {
+      // 无输入消息时记录空增量
+      let agentRequests = this.requests.get(agentName);
+      if (!agentRequests) {
+        agentRequests = [];
+        this.requests.set(agentName, agentRequests);
+      }
+      agentRequests.push([]);
+
+      let agentLengths = this.requestLengths.get(agentName);
+      if (!agentLengths) {
+        agentLengths = [];
+        this.requestLengths.set(agentName, agentLengths);
+      }
+      agentLengths.push(0);
+    }
+
     this.sequence.push({ type: 'model', agent: agentName, index });
   }
 
   /**
    * 记录一条工具执行结果。
    */
-  recordToolResult(agentName: string, message: BaseMessage, toolCallId: string): void {
+  recordToolResult(
+    agentName: string,
+    message: BaseMessage,
+    toolCallId: string,
+    toolName?: string,
+    toolArgs?: Record<string, unknown>,
+  ): void {
     const stored = mapChatMessagesToStoredMessages([message]);
     const first = stored[0];
     if (!first) return;
@@ -202,6 +320,22 @@ export class Recorder {
 
     const index = agentToolResults.length;
     agentToolResults.push(first);
+
+    // 记录工具元数据
+    let names = this.toolNames.get(agentName);
+    if (!names) {
+      names = [];
+      this.toolNames.set(agentName, names);
+    }
+    names.push(toolName);
+
+    let args = this.toolArgs.get(agentName);
+    if (!args) {
+      args = [];
+      this.toolArgs.set(agentName, args);
+    }
+    args.push(toolArgs);
+
     this.sequence.push({ type: 'tool', agent: agentName, index, toolCallId });
   }
 
@@ -219,20 +353,341 @@ export class Recorder {
 
     writeJsonAtomic(manifestPath(dirPath), manifest);
 
-    // 收集所有出现过的 agent 名称（包括只有 toolResults 的 agent）
+    // 收集所有出现过的 agent 名称
     const allAgentNames = new Set([...this.responses.keys(), ...this.toolResults.keys()]);
 
+    // 按 agent 构建 turns 数组
+    const agentTurns = new Map<string, Turn[]>();
     for (const agentName of allAgentNames) {
-      const storedMessages = this.responses.get(agentName) ?? [];
-      const storedToolResults = this.toolResults.get(agentName) ?? [];
+      agentTurns.set(agentName, []);
+    }
+
+    for (const entry of this.sequence) {
+      const turns = agentTurns.get(entry.agent);
+      if (!turns) continue;
+
+      if (entry.type === 'tool') {
+        const storedResult = this.toolResults.get(entry.agent)?.[entry.index];
+        if (storedResult) {
+          const toolName = this.toolNames.get(entry.agent)?.[entry.index];
+          const toolArgsVal = this.toolArgs.get(entry.agent)?.[entry.index];
+          const turn: ToolTurn = {
+            type: 'tool',
+            index: entry.index,
+            toolCallId: entry.toolCallId ?? '',
+            ...(toolName !== undefined ? { toolName } : {}),
+            ...(toolArgsVal !== undefined ? { toolArgs: toolArgsVal } : {}),
+            result: storedResult,
+          };
+          turns.push(turn);
+        }
+      } else {
+        // model
+        const storedResponse = this.responses.get(entry.agent)?.[entry.index];
+        if (storedResponse) {
+          const request = this.requests.get(entry.agent)?.[entry.index] ?? [];
+          const requestTotalLength = this.requestLengths.get(entry.agent)?.[entry.index] ?? 0;
+          const turn: ModelTurn = {
+            type: 'model',
+            index: entry.index,
+            request,
+            requestTotalLength,
+            response: storedResponse,
+          };
+          turns.push(turn);
+        }
+      }
+    }
+
+    // 写入各 agent 的录像文件
+    for (const agentName of allAgentNames) {
+      const turns = agentTurns.get(agentName) ?? [];
+      const tools = this.agentTools.get(agentName);
       const recording: AgentRecording = {
+        version: 2,
         agent: agentName,
-        responses: storedMessages,
-        ...(storedToolResults.length > 0 ? { toolResults: storedToolResults } : {}),
+        ...(tools !== undefined && tools.length > 0 ? { tools } : {}),
+        turns,
       };
       writeJsonAtomic(agentRecordingPath(dirPath, agentName), recording);
     }
+
+    // 生成 transcript.md
+    this.flushTranscript(dirPath, id, status, manifest, agentTurns);
   }
+
+  /**
+   * 生成可读的 Markdown 对话记录。
+   */
+  private flushTranscript(
+    dirPath: string,
+    id: string,
+    status: string,
+    manifest: ManifestData,
+    agentTurns: Map<string, Turn[]>,
+  ): void {
+    const lines: string[] = [];
+    lines.push(`# Recording: ${id}`);
+    lines.push(`Status: ${status} | ${manifest.createdAt}`);
+    lines.push('');
+
+    // 输出各 agent 的工具声明
+    for (const [agentName] of agentTurns) {
+      const tools = this.agentTools.get(agentName);
+      if (!tools || tools.length === 0) continue;
+
+      lines.push(`## 🛠️ [${agentName}] Tools (${tools.length})`);
+      lines.push('');
+      for (const tool of tools) {
+        lines.push(`### \`${tool.name}\``);
+        lines.push('');
+        if (tool.description) {
+          lines.push('````markdown');
+          lines.push(tool.description);
+          lines.push('````');
+          lines.push('');
+        }
+        if (tool.parameters) {
+          lines.push('```json');
+          lines.push(JSON.stringify(tool.parameters, null, 2));
+          lines.push('```');
+          lines.push('');
+        }
+      }
+    }
+
+    // 按全局 sequence 顺序输出
+    // 需要追踪每个 agent 的 turn 在 agentTurns 中的位置
+    const agentTurnIndex = new Map<string, number>();
+
+    for (const entry of this.sequence) {
+      const agentKey = entry.agent;
+      const turnIdx = agentTurnIndex.get(agentKey) ?? 0;
+      const turns = agentTurns.get(agentKey);
+      const turn = turns?.[turnIdx];
+      if (!turn) continue;
+      agentTurnIndex.set(agentKey, turnIdx + 1);
+
+      lines.push('---');
+      lines.push('');
+
+      if (turn.type === 'model') {
+        lines.push(`## 🤖 [${agentKey}] Model #${turn.index}`);
+        lines.push('');
+
+        // 输出请求
+        const requestMessages = mapStoredMessagesToChatMessages(turn.request);
+        const newCount = requestMessages.length;
+        const totalCount = turn.requestTotalLength;
+        if (turn.index === 0) {
+          lines.push(`### Input (${newCount} messages, total context: ${totalCount})`);
+        } else {
+          lines.push(`### Input (${newCount} new messages, total context: ${totalCount})`);
+        }
+        lines.push('');
+        for (const msg of requestMessages) {
+          const roleHeading = formatRoleHeading(msg._getType());
+          lines.push(`#### ${roleHeading}`);
+          lines.push('');
+          lines.push(...formatMessageContent(msg.content));
+          lines.push('');
+        }
+
+        // 输出响应
+        lines.push('### Output');
+        lines.push('');
+        const responseMessages = mapStoredMessagesToChatMessages([turn.response]);
+        const responseMsg = responseMessages[0];
+        if (responseMsg) {
+          lines.push('#### 🤖 AI');
+          lines.push('');
+          lines.push(...formatMessageContent(responseMsg.content));
+          lines.push('');
+          // 输出 tool calls
+          if (
+            'tool_calls' in responseMsg &&
+            Array.isArray(responseMsg.tool_calls) &&
+            responseMsg.tool_calls.length > 0
+          ) {
+            lines.push('**Tool calls:**');
+            lines.push('');
+            for (const tc of responseMsg.tool_calls as Array<{ name: string; args: unknown }>) {
+              lines.push(`- \`${tc.name}\``);
+              lines.push('');
+              lines.push('```json');
+              lines.push(JSON.stringify(tc.args, null, 2));
+              lines.push('```');
+              lines.push('');
+            }
+          }
+        }
+      } else {
+        // tool turn
+        const toolLabel = turn.toolName ? turn.toolName : 'tool';
+        lines.push(`## 🔧 [${agentKey}] ${toolLabel} #${turn.index}`);
+        lines.push('');
+        if (turn.toolArgs !== undefined) {
+          lines.push('### Input');
+          lines.push('');
+          lines.push('```json');
+          lines.push(JSON.stringify(turn.toolArgs, null, 2));
+          lines.push('```');
+          lines.push('');
+        }
+
+        const resultMessages = mapStoredMessagesToChatMessages([turn.result]);
+        const resultMsg = resultMessages[0];
+        if (resultMsg) {
+          const content =
+            typeof resultMsg.content === 'string'
+              ? resultMsg.content
+              : JSON.stringify(resultMsg.content, null, 2);
+          lines.push('### Output');
+          lines.push('');
+          lines.push('```');
+          lines.push(content);
+          lines.push('```');
+          lines.push('');
+        }
+      }
+    }
+
+    const transcriptPath = path.join(dirPath, 'transcript.md');
+    writeTextAtomic(transcriptPath, lines.join('\n'));
+  }
+}
+
+/**
+ * 将消息类型转换为带 emoji 的角色标题文本（不含 # 前缀）。
+ */
+function formatRoleHeading(type: string): string {
+  switch (type) {
+    case 'system':
+      return '⚙️ System';
+    case 'human':
+      return '👤 User';
+    case 'ai':
+      return '🤖 AI';
+    case 'tool':
+      return '🔧 Tool';
+    default:
+      return type;
+  }
+}
+
+/**
+ * Content block 的可能类型。
+ */
+interface ContentBlock {
+  type: string;
+  text?: string;
+  image_url?: { url: string };
+  source?: { type: string; media_type?: string; data?: string };
+  [key: string]: unknown;
+}
+
+/**
+ * 将消息内容格式化为可读的 Markdown 行。
+ * - string 内容用 markdown 代码块包裹，避免消息中的 markdown 污染整体格式。
+ * - content block 数组按块编号输出（`#####` 层级），每块内容也用代码块包裹。
+ */
+function formatMessageContent(content: string | unknown[]): string[] {
+  if (typeof content === 'string') {
+    if (!content) return [];
+    return ['````markdown', content, '````'];
+  }
+
+  if (!Array.isArray(content) || content.length === 0) {
+    return [];
+  }
+
+  // 单个 text block 不编号，直接输出
+  if (
+    content.length === 1 &&
+    typeof content[0] === 'object' &&
+    content[0] !== null &&
+    (content[0] as ContentBlock).type === 'text'
+  ) {
+    const text = (content[0] as ContentBlock).text ?? '';
+    if (!text) return [];
+    return ['````markdown', text, '````'];
+  }
+
+  // 多个 block，编号输出
+  const lines: string[] = [];
+  for (let i = 0; i < content.length; i++) {
+    const block = content[i] as ContentBlock;
+    if (typeof block !== 'object' || block === null) {
+      lines.push(`##### ${i + 1}. \`${JSON.stringify(block)}\``);
+      lines.push('');
+      continue;
+    }
+
+    const blockType = block.type ?? 'unknown';
+
+    if (blockType === 'text') {
+      const text = block.text ?? '';
+      lines.push(`##### ${i + 1}. text`);
+      lines.push('');
+      lines.push('````markdown');
+      lines.push(text);
+      lines.push('````');
+      lines.push('');
+    } else if (blockType === 'image_url') {
+      lines.push(`##### ${i + 1}. image`);
+      lines.push('');
+      const url = block.image_url?.url ?? '[image data]';
+      if (url.startsWith('data:')) {
+        lines.push(`_[inline image, ${url.length} chars]_`);
+      } else {
+        lines.push(`![image](${url})`);
+      }
+      lines.push('');
+    } else if (blockType === 'tool_use') {
+      lines.push(`##### ${i + 1}. tool_use — \`${block.name ?? 'unknown'}\``);
+      lines.push('');
+      if (block.input !== undefined) {
+        lines.push('```json');
+        lines.push(JSON.stringify(block.input, null, 2));
+        lines.push('```');
+      }
+      lines.push('');
+    } else if (blockType === 'tool_result') {
+      lines.push(`##### ${i + 1}. tool_result`);
+      lines.push('');
+      const resultContent = block.content;
+      if (typeof resultContent === 'string') {
+        lines.push('```');
+        lines.push(resultContent);
+        lines.push('```');
+      } else {
+        lines.push('```json');
+        lines.push(JSON.stringify(resultContent, null, 2));
+        lines.push('```');
+      }
+      lines.push('');
+    } else {
+      // thinking, redacted_thinking, 或其他未知类型
+      lines.push(`##### ${i + 1}. ${blockType}`);
+      lines.push('');
+      if (block.text) {
+        lines.push('```');
+        lines.push(block.text);
+        lines.push('```');
+      } else {
+        const { type: _type, ...rest } = block;
+        const keys = Object.keys(rest);
+        if (keys.length > 0) {
+          lines.push('```json');
+          lines.push(JSON.stringify(rest, null, 2));
+          lines.push('```');
+        }
+      }
+      lines.push('');
+    }
+  }
+
+  return lines;
 }
 
 // ---------------------------------------------------------------------------
@@ -264,7 +719,9 @@ export function createRecordingModel<T extends BaseLanguageModel>(
             // 从 config 中尝试获取 agent name
             const config = args[1] as Record<string, unknown> | undefined;
             const name = resolveAgentName(config, agentName);
-            recorder.record(name, result as BaseMessage);
+            // 捕获输入消息
+            const inputMessages = Array.isArray(args[0]) ? (args[0] as BaseMessage[]) : undefined;
+            recorder.record(name, result as BaseMessage, inputMessages);
           }
           return result;
         };
@@ -320,15 +777,15 @@ export function buildReplayModel(dirPath: string): BaseLanguageModel {
 
   // 按 agent 加载所有录像
   const agentNames = [...new Set(manifest.sequence.map((s) => s.agent))];
-  const agentRecordings = new Map<string, BaseMessage[]>();
+  const agentModelTurns = new Map<string, ModelTurn[]>();
 
   for (const name of agentNames) {
     try {
       const recording = loadAgentRecording(dirPath, name);
-      const messages = mapStoredMessagesToChatMessages(recording.responses);
-      agentRecordings.set(name, messages);
+      const modelTurns = recording.turns.filter((t): t is ModelTurn => t.type === 'model');
+      agentModelTurns.set(name, modelTurns);
     } catch {
-      agentRecordings.set(name, []);
+      agentModelTurns.set(name, []);
     }
   }
 
@@ -336,10 +793,14 @@ export function buildReplayModel(dirPath: string): BaseLanguageModel {
   const model = fakeModel();
   for (const entry of manifest.sequence) {
     if (entry.type === 'tool') continue;
-    const messages = agentRecordings.get(entry.agent);
-    const message = messages?.[entry.index];
-    if (message) {
-      model.respond(message);
+    const modelTurns = agentModelTurns.get(entry.agent);
+    const turn = modelTurns?.find((t) => t.index === entry.index);
+    if (turn) {
+      const messages = mapStoredMessagesToChatMessages([turn.response]);
+      const message = messages[0];
+      if (message) {
+        model.respond(message);
+      }
     }
   }
 
@@ -369,14 +830,14 @@ export function loadToolResults(dirPath: string): Map<string, BaseMessage> {
   const agentNames = [
     ...new Set(manifest.sequence.filter((s) => s.type === 'tool').map((s) => s.agent)),
   ];
-  const agentToolResults = new Map<string, BaseMessage[]>();
+  const agentToolTurns = new Map<string, ToolTurn[]>();
 
   for (const name of agentNames) {
     try {
       const recording = loadAgentRecording(dirPath, name);
-      if (recording.toolResults && recording.toolResults.length > 0) {
-        const messages = mapStoredMessagesToChatMessages(recording.toolResults);
-        agentToolResults.set(name, messages);
+      const toolTurns = recording.turns.filter((t): t is ToolTurn => t.type === 'tool');
+      if (toolTurns.length > 0) {
+        agentToolTurns.set(name, toolTurns);
       }
     } catch {
       // Agent recording 不存在或无 toolResults
@@ -385,10 +846,14 @@ export function loadToolResults(dirPath: string): Map<string, BaseMessage> {
 
   for (const entry of manifest.sequence) {
     if (entry.type !== 'tool' || !entry.toolCallId) continue;
-    const messages = agentToolResults.get(entry.agent);
-    const message = messages?.[entry.index];
-    if (message) {
-      result.set(entry.toolCallId, message);
+    const toolTurns = agentToolTurns.get(entry.agent);
+    const turn = toolTurns?.find((t) => t.index === entry.index);
+    if (turn) {
+      const messages = mapStoredMessagesToChatMessages([turn.result]);
+      const message = messages[0];
+      if (message) {
+        result.set(entry.toolCallId, message);
+      }
     }
   }
 
@@ -415,16 +880,18 @@ export function createToolRecordingMiddleware({
     wrapToolCall: async (request, handler) => {
       const result = await handler(request);
       const toolCallId = request.toolCall?.id;
+      const toolName = request.toolCall?.name;
+      const toolArgs = request.toolCall?.args as Record<string, unknown> | undefined;
 
       if (ToolMessage.isInstance(result) && toolCallId) {
-        recorder.recordToolResult(agentName, result, toolCallId);
+        recorder.recordToolResult(agentName, result, toolCallId, toolName, toolArgs);
       } else if (isCommand(result) && toolCallId) {
         // Command may contain ToolMessage(s) in its update.messages
         const update = result.update as Record<string, unknown> | undefined;
         const updateMessages = Array.isArray(update?.messages) ? update.messages : [];
         for (const msg of updateMessages) {
           if (ToolMessage.isInstance(msg)) {
-            recorder.recordToolResult(agentName, msg, toolCallId);
+            recorder.recordToolResult(agentName, msg, toolCallId, toolName, toolArgs);
             break; // 每个 tool call 只录制一条
           }
         }

@@ -383,8 +383,8 @@ describe('createDeepAgent recording integration', () => {
     expect(manifest.sequence[2]).toEqual({ type: 'model', agent: 'main', index: 1 });
 
     const mainRec = loadAgentRecording(recDir, 'main');
-    expect(mainRec.toolResults).toBeDefined();
-    expect(mainRec.toolResults).toHaveLength(1);
+    const toolTurns = mainRec.turns.filter((t) => t.type === 'tool');
+    expect(toolTurns).toHaveLength(1);
 
     // --- Replay phase ---
     const spyModel = new FakeListChatModel({ responses: ['Should not appear'] });

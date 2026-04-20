@@ -112,13 +112,18 @@ describe('subagent recording', () => {
       });
       expect(manifest.sequence[3]).toEqual({ type: 'model', agent: 'main', index: 1 });
 
-      // 验证各 agent 录像文件
+      // 验证各 agent 录像文件（v2 格式）
       const mainRec = loadAgentRecording(recDir, 'main');
-      expect(mainRec.responses).toHaveLength(2);
-      expect(mainRec.toolResults).toHaveLength(1);
+      expect(mainRec.version).toBe(2);
+      const mainModelTurns = mainRec.turns.filter((t) => t.type === 'model');
+      const mainToolTurns = mainRec.turns.filter((t) => t.type === 'tool');
+      expect(mainModelTurns).toHaveLength(2);
+      expect(mainToolTurns).toHaveLength(1);
 
       const subRec = loadAgentRecording(recDir, 'fact-checker');
-      expect(subRec.responses).toHaveLength(1);
+      expect(subRec.version).toBe(2);
+      const subModelTurns = subRec.turns.filter((t) => t.type === 'model');
+      expect(subModelTurns).toHaveLength(1);
     });
   });
 
@@ -157,6 +162,11 @@ describe('subagent recording', () => {
       expect(manifest.id).toBe('sub-research');
       expect(manifest.status).toBe('completed');
       expect(manifest.sequence.length).toBeGreaterThan(0);
+
+      // 验证录像是 v2 格式
+      const mainRec = loadAgentRecording(subDir, 'main');
+      expect(mainRec.version).toBe(2);
+      expect(mainRec.turns.length).toBeGreaterThan(0);
     });
   });
 
@@ -243,14 +253,20 @@ describe('subagent recording', () => {
       });
       expect(manifest.sequence[5]).toEqual({ type: 'model', agent: 'main', index: 1 });
 
-      // 验证各 agent 数据
+      // 验证各 agent 数据（v2 格式）
       const mainRec = loadAgentRecording(recDir, 'main');
-      expect(mainRec.responses).toHaveLength(2);
-      expect(mainRec.toolResults).toHaveLength(1);
+      expect(mainRec.version).toBe(2);
+      const mainModelTurns = mainRec.turns.filter((t) => t.type === 'model');
+      const mainToolTurns = mainRec.turns.filter((t) => t.type === 'tool');
+      expect(mainModelTurns).toHaveLength(2);
+      expect(mainToolTurns).toHaveLength(1);
 
       const researcherRec = loadAgentRecording(recDir, 'researcher');
-      expect(researcherRec.responses).toHaveLength(2);
-      expect(researcherRec.toolResults).toHaveLength(1);
+      expect(researcherRec.version).toBe(2);
+      const researcherModelTurns = researcherRec.turns.filter((t) => t.type === 'model');
+      const researcherToolTurns = researcherRec.turns.filter((t) => t.type === 'tool');
+      expect(researcherModelTurns).toHaveLength(2);
+      expect(researcherToolTurns).toHaveLength(1);
     });
 
     it('should handle parallel subagent recording correctly', () => {
@@ -291,11 +307,16 @@ describe('subagent recording', () => {
       const manifest = loadManifest(recDir);
       expect(manifest.sequence).toHaveLength(6);
 
-      // 验证三个 agent 的录像文件都存在
-      expect(loadAgentRecording(recDir, 'main').responses).toHaveLength(2);
-      expect(loadAgentRecording(recDir, 'agent-a').responses).toHaveLength(1);
-      expect(loadAgentRecording(recDir, 'agent-b').responses).toHaveLength(1);
-      expect(loadAgentRecording(recDir, 'main').toolResults).toHaveLength(2);
+      // 验证三个 agent 的录像文件都存在（v2 格式）
+      const mainRec = loadAgentRecording(recDir, 'main');
+      expect(mainRec.turns.filter((t) => t.type === 'model')).toHaveLength(2);
+      expect(mainRec.turns.filter((t) => t.type === 'tool')).toHaveLength(2);
+
+      const agentARec = loadAgentRecording(recDir, 'agent-a');
+      expect(agentARec.turns.filter((t) => t.type === 'model')).toHaveLength(1);
+
+      const agentBRec = loadAgentRecording(recDir, 'agent-b');
+      expect(agentBRec.turns.filter((t) => t.type === 'model')).toHaveLength(1);
     });
   });
 
@@ -605,6 +626,10 @@ describe('subagent recording', () => {
         (msg) => typeof msg.content === 'string' && msg.content.includes('Verified:'),
       );
       expect(hasVerifyResult).toBe(true);
+
+      // 验证录像文件是 v2 格式
+      const mainRec = loadAgentRecording(dir, 'main');
+      expect(mainRec.version).toBe(2);
     });
   });
 
@@ -691,6 +716,10 @@ describe('subagent recording', () => {
       // 至少有 1 个 tool 条目（task tool result）
       const toolEntries = parentManifest.sequence.filter((s) => s.type === 'tool');
       expect(toolEntries.length).toBeGreaterThanOrEqual(1);
+
+      // 验证父录像是 v2 格式
+      const parentRec = loadAgentRecording(parentDir, 'main');
+      expect(parentRec.version).toBe(2);
 
       // 验证子 agent 录像
       const childDir = path.join(childRecDir, 'child-research');

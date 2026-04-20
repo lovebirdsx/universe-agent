@@ -399,6 +399,15 @@ export function createDeepAgent<
     ...(interruptOn ? [createHitlMiddleware(interruptOn)] : []),
   ];
 
+  // Recording: 注册完整工具列表（用户工具 + 中间件工具）
+  if (recorder) {
+    const middlewareTools = middleware
+      .filter((m) => m.tools)
+      .flatMap((m) => m.tools as StructuredTool[]);
+    const allTools = [...(tools as StructuredTool[]), ...middlewareTools];
+    recorder.registerTools(name ?? 'main', allTools);
+  }
+
   // Combine system prompt parameter with BASE_AGENT_PROMPT
   const finalSystemPrompt =
     typeof systemPrompt === 'string'

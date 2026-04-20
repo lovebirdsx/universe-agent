@@ -2,8 +2,10 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { AIMessage, HumanMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { fakeModel } from '@langchain/core/testing';
+import { tool as langchainTool } from 'langchain';
+import { z } from 'zod';
 
 import {
   resolveDefaultId,
@@ -16,6 +18,7 @@ import {
   createRecordingModel,
 } from '../recording.js';
 import { BaseLanguageModel } from '@langchain/core/language_models/base';
+import type { ModelTurn, ToolTurn } from '../recording.js';
 
 describe('recording', () => {
   let tmpDir: string;
@@ -142,7 +145,7 @@ describe('recording', () => {
       expect(recorder.responses.get('general-purpose')).toHaveLength(1);
     });
 
-    it('should flush to directory with atomic writes', () => {
+    it('should flush to directory with v2 turn-based format', () => {
       const recorder = new Recorder();
       const recDir = path.join(tmpDir, 'flush-test');
 
@@ -158,14 +161,17 @@ describe('recording', () => {
       expect(manifest.sequence).toHaveLength(2);
       expect(manifest.completedAt).toBeTruthy();
 
-      // Verify agent recordings
+      // Verify agent recordings are v2 format
       const mainRec = loadAgentRecording(recDir, 'main');
+      expect(mainRec.version).toBe(2);
       expect(mainRec.agent).toBe('main');
-      expect(mainRec.responses).toHaveLength(1);
+      expect(mainRec.turns).toHaveLength(1);
+      expect(mainRec.turns[0]!.type).toBe('model');
 
       const subRec = loadAgentRecording(recDir, 'general-purpose');
+      expect(subRec.version).toBe(2);
       expect(subRec.agent).toBe('general-purpose');
-      expect(subRec.responses).toHaveLength(1);
+      expect(subRec.turns).toHaveLength(1);
     });
 
     it('should flush with error status', () => {
@@ -193,11 +199,345 @@ describe('recording', () => {
 
       // Reload and verify
       const mainRec = loadAgentRecording(recDir, 'main');
-      expect(mainRec.responses).toHaveLength(1);
-      const stored = mainRec.responses[0]!;
-      expect(stored.type).toBe('ai');
-      // additional_kwargs should contain tool_calls info
-      expect(stored.data.content).toBe('Let me search');
+      expect(mainRec.turns).toHaveLength(1);
+      const turn = mainRec.turns[0] as ModelTurn;
+      expect(turn.response.type).toBe('ai');
+      expect(turn.response.data.content).toBe('Let me search');
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Recorder: request recording (delta)
+  // -----------------------------------------------------------------------
+  describe('Recorder request recording', () => {
+    it('should record full input on first call and delta on subsequent calls', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'request-delta');
+
+      const sysMsg = new SystemMessage('You are a helper.');
+      const humanMsg1 = new HumanMessage('Hello');
+      const aiMsg1 = new AIMessage({ content: 'Hi there' });
+      const humanMsg2 = new HumanMessage('What is 2+2?');
+      const aiMsg2 = new AIMessage({ content: '4' });
+
+      // 第一次调用：输入 [system, human]
+      recorder.record('main', aiMsg1, [sysMsg, humanMsg1]);
+      // 第二次调用：输入 [system, human, ai, human]（新增 ai + human）
+      recorder.record('main', aiMsg2, [sysMsg, humanMsg1, aiMsg1, humanMsg2]);
+
+      recorder.flush(recDir, 'delta-id', 'completed');
+
+      const mainRec = loadAgentRecording(recDir, 'main');
+      expect(mainRec.turns).toHaveLength(2);
+
+      const turn1 = mainRec.turns[0] as ModelTurn;
+      expect(turn1.type).toBe('model');
+      expect(turn1.request).toHaveLength(2); // system + human
+      expect(turn1.requestTotalLength).toBe(2);
+      expect(turn1.request[0]!.type).toBe('system');
+      expect(turn1.request[1]!.type).toBe('human');
+
+      const turn2 = mainRec.turns[1] as ModelTurn;
+      expect(turn2.type).toBe('model');
+      expect(turn2.request).toHaveLength(2); // ai + human (delta)
+      expect(turn2.requestTotalLength).toBe(4);
+      expect(turn2.request[0]!.type).toBe('ai');
+      expect(turn2.request[1]!.type).toBe('human');
+    });
+
+    it('should track request deltas independently per agent', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'multi-agent-delta');
+
+      const sys = new SystemMessage('System');
+      const h1 = new HumanMessage('Q1');
+      const a1 = new AIMessage({ content: 'A1' });
+      const h2 = new HumanMessage('Q2');
+      const a2 = new AIMessage({ content: 'A2' });
+
+      // main agent 第一次
+      recorder.record('main', a1, [sys, h1]);
+      // subagent 第一次（独立的上下文）
+      recorder.record('sub', a2, [sys, h2]);
+      // main agent 第二次
+      recorder.record('main', new AIMessage({ content: 'A3' }), [
+        sys,
+        h1,
+        a1,
+        new HumanMessage('Q3'),
+      ]);
+
+      recorder.flush(recDir, 'ma-delta', 'completed');
+
+      const mainRec = loadAgentRecording(recDir, 'main');
+      const mainTurns = mainRec.turns.filter((t): t is ModelTurn => t.type === 'model');
+      expect(mainTurns).toHaveLength(2);
+      expect(mainTurns[0]!.request).toHaveLength(2); // full: sys + h1
+      expect(mainTurns[0]!.requestTotalLength).toBe(2);
+      expect(mainTurns[1]!.request).toHaveLength(2); // delta: a1 + Q3
+      expect(mainTurns[1]!.requestTotalLength).toBe(4);
+
+      const subRec = loadAgentRecording(recDir, 'sub');
+      const subTurns = subRec.turns.filter((t): t is ModelTurn => t.type === 'model');
+      expect(subTurns).toHaveLength(1);
+      expect(subTurns[0]!.request).toHaveLength(2); // full: sys + h2
+      expect(subTurns[0]!.requestTotalLength).toBe(2);
+    });
+
+    it('should handle record without inputMessages (empty request)', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'no-input');
+
+      recorder.record('main', new AIMessage({ content: 'Response' }));
+
+      recorder.flush(recDir, 'no-input-id', 'completed');
+
+      const mainRec = loadAgentRecording(recDir, 'main');
+      const turn = mainRec.turns[0] as ModelTurn;
+      expect(turn.request).toHaveLength(0);
+      expect(turn.requestTotalLength).toBe(0);
+    });
+
+    it('should reset delta when new invoke has shorter message list (new thread)', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'new-thread-delta');
+
+      const sys = new SystemMessage('You are a helper.');
+      const h1 = new HumanMessage('Hello');
+      const a1 = new AIMessage({ content: 'Hi there' });
+      const h2 = new HumanMessage('Follow up');
+      const a2 = new AIMessage({ content: 'Sure' });
+
+      // 第一轮 invoke：多次模型调用，消息列表不断增长
+      recorder.record('main', a1, [sys, h1]);
+      recorder.record('main', a2, [sys, h1, a1, h2]);
+      // 此时 lastInputLength = 4
+
+      // 第二轮 invoke（新 thread_id）：消息列表从头开始，长度 < lastInputLength
+      const newH = new HumanMessage('Brand new question');
+      const newA = new AIMessage({ content: 'New answer' });
+      recorder.record('main', newA, [sys, newH]);
+
+      recorder.flush(recDir, 'new-thread-id', 'completed');
+
+      const mainRec = loadAgentRecording(recDir, 'main');
+      expect(mainRec.turns).toHaveLength(3);
+
+      // 第三个 turn 应该包含完整的新消息列表（sys + newH），而非空数组
+      const turn3 = mainRec.turns[2] as ModelTurn;
+      expect(turn3.type).toBe('model');
+      expect(turn3.request).toHaveLength(2); // sys + newH
+      expect(turn3.requestTotalLength).toBe(2);
+      expect(turn3.request[0]!.type).toBe('system');
+      expect(turn3.request[1]!.type).toBe('human');
+      expect(turn3.request[1]!.data.content).toBe('Brand new question');
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Recorder: tool metadata recording
+  // -----------------------------------------------------------------------
+  describe('Recorder tool metadata', () => {
+    it('should record toolName and toolArgs in tool turns', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'tool-meta');
+
+      recorder.record(
+        'main',
+        new AIMessage({
+          content: '',
+          tool_calls: [{ id: 'call_1', name: 'search', args: { q: 'test' } }],
+        }),
+      );
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { ToolMessage: TM } = require('@langchain/core/messages');
+      recorder.recordToolResult(
+        'main',
+        new TM({ content: 'Result', tool_call_id: 'call_1', name: 'search' }),
+        'call_1',
+        'search',
+        { q: 'test' },
+      );
+
+      recorder.flush(recDir, 'tool-meta-id', 'completed');
+
+      const mainRec = loadAgentRecording(recDir, 'main');
+      const toolTurn = mainRec.turns.find((t): t is ToolTurn => t.type === 'tool');
+      expect(toolTurn).toBeDefined();
+      expect(toolTurn!.toolName).toBe('search');
+      expect(toolTurn!.toolArgs).toEqual({ q: 'test' });
+      expect(toolTurn!.toolCallId).toBe('call_1');
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Transcript generation
+  // -----------------------------------------------------------------------
+  describe('transcript.md generation', () => {
+    it('should generate transcript.md on flush', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'transcript-test');
+
+      const sys = new SystemMessage('You are a helper.');
+      const human = new HumanMessage('What is TypeScript?');
+      const ai = new AIMessage({ content: 'TypeScript is a typed superset of JavaScript.' });
+
+      recorder.record('main', ai, [sys, human]);
+      recorder.flush(recDir, 'transcript-id', 'completed');
+
+      const transcriptPath = path.join(recDir, 'transcript.md');
+      expect(fs.existsSync(transcriptPath)).toBe(true);
+
+      const content = fs.readFileSync(transcriptPath, 'utf-8');
+      expect(content).toContain('# Recording: transcript-id');
+      expect(content).toContain('Status: completed');
+      expect(content).toContain('## 🤖');
+      expect(content).toContain('[main] Model #0');
+      expect(content).toContain('#### ⚙️ System');
+      expect(content).toContain('#### 👤 User');
+      expect(content).toContain('You are a helper.');
+      expect(content).toContain('What is TypeScript?');
+      expect(content).toContain('TypeScript is a typed superset of JavaScript.');
+      // 内容应被 markdown 代码块包裹
+      expect(content).toContain('```markdown');
+      expect(content).toContain('#### 🤖 AI');
+    });
+
+    it('should include tool calls in transcript', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'transcript-tools');
+
+      const human = new HumanMessage('Search for info');
+      const aiWithTool = new AIMessage({
+        content: 'Let me search.',
+        tool_calls: [{ id: 'call_1', name: 'search', args: { q: 'info' } }],
+      });
+
+      recorder.record('main', aiWithTool, [human]);
+      recorder.flush(recDir, 'transcript-tool-id', 'completed');
+
+      const content = fs.readFileSync(path.join(recDir, 'transcript.md'), 'utf-8');
+      expect(content).toContain('**Tool calls:**');
+      expect(content).toContain('```json');
+      expect(content).toContain('search');
+    });
+
+    it('should not truncate long content in transcript', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'transcript-long');
+
+      const longContent = 'A'.repeat(2000);
+      const ai = new AIMessage({ content: longContent });
+      recorder.record('main', ai, [new HumanMessage('Give me a long response')]);
+      recorder.flush(recDir, 'long-id', 'completed');
+
+      const content = fs.readFileSync(path.join(recDir, 'transcript.md'), 'utf-8');
+      expect(content).toContain(longContent);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Tools registration
+  // -----------------------------------------------------------------------
+  describe('tools registration', () => {
+    it('should include tools in recording JSON', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'tools-json');
+
+      const searchTool = langchainTool((_input: { q: string }) => 'result', {
+        name: 'search',
+        description: 'Search the web',
+        schema: z.object({ q: z.string().describe('query string') }),
+      });
+
+      recorder.registerTools('main', [searchTool]);
+
+      const ai = new AIMessage({ content: 'hello' });
+      recorder.record('main', ai, [new HumanMessage('hi')]);
+      recorder.flush(recDir, 'tools-test', 'completed');
+
+      const recording = loadAgentRecording(recDir, 'main');
+      expect(recording.tools).toBeDefined();
+      expect(recording.tools).toHaveLength(1);
+      expect(recording.tools![0]!.name).toBe('search');
+      expect(recording.tools![0]!.description).toBe('Search the web');
+      expect(recording.tools![0]!.parameters).toBeDefined();
+    });
+
+    it('should include tools in transcript.md', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'tools-transcript');
+
+      const myTool = langchainTool((_input: { x: number }) => 'ok', {
+        name: 'calculate',
+        description: 'Perform calculation',
+        schema: z.object({ x: z.number() }),
+      });
+
+      recorder.registerTools('main', [myTool]);
+
+      const ai = new AIMessage({ content: 'done' });
+      recorder.record('main', ai, [new HumanMessage('calc')]);
+      recorder.flush(recDir, 'tools-transcript-test', 'completed');
+
+      const content = fs.readFileSync(path.join(recDir, 'transcript.md'), 'utf-8');
+      expect(content).toContain('## 🛠️ [main] Tools (1)');
+      expect(content).toContain('### `calculate`');
+      expect(content).toContain('````markdown\nPerform calculation\n````');
+      expect(content).toContain('"x"');
+    });
+
+    it('should omit tools field when no tools registered', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'no-tools');
+
+      const ai = new AIMessage({ content: 'hello' });
+      recorder.record('main', ai, [new HumanMessage('hi')]);
+      recorder.flush(recDir, 'no-tools-test', 'completed');
+
+      const recording = loadAgentRecording(recDir, 'main');
+      expect(recording.tools).toBeUndefined();
+
+      const content = fs.readFileSync(path.join(recDir, 'transcript.md'), 'utf-8');
+      expect(content).not.toContain('Tools');
+    });
+
+    it('should support multiple agents with different tools', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'multi-agent-tools');
+
+      const toolA = langchainTool((_input: { a: string }) => 'a', {
+        name: 'tool_a',
+        description: 'Tool A',
+        schema: z.object({ a: z.string() }),
+      });
+      const toolB = langchainTool((_input: { b: string }) => 'b', {
+        name: 'tool_b',
+        description: 'Tool B',
+        schema: z.object({ b: z.string() }),
+      });
+
+      recorder.registerTools('main', [toolA]);
+      recorder.registerTools('sub', [toolB]);
+
+      const ai1 = new AIMessage({ content: 'main response' });
+      recorder.record('main', ai1, [new HumanMessage('hi')]);
+      const ai2 = new AIMessage({ content: 'sub response' });
+      recorder.record('sub', ai2, [new HumanMessage('hello')]);
+      recorder.flush(recDir, 'multi-tools', 'completed');
+
+      const mainRec = loadAgentRecording(recDir, 'main');
+      expect(mainRec.tools).toHaveLength(1);
+      expect(mainRec.tools![0]!.name).toBe('tool_a');
+
+      const subRec = loadAgentRecording(recDir, 'sub');
+      expect(subRec.tools).toHaveLength(1);
+      expect(subRec.tools![0]!.name).toBe('tool_b');
+
+      const content = fs.readFileSync(path.join(recDir, 'transcript.md'), 'utf-8');
+      expect(content).toContain('[main] Tools (1)');
+      expect(content).toContain('[sub] Tools (1)');
     });
   });
 
@@ -205,7 +545,7 @@ describe('recording', () => {
   // createRecordingModel
   // -----------------------------------------------------------------------
   describe('createRecordingModel', () => {
-    it('should record model invoke results', async () => {
+    it('should record model invoke results with input messages', async () => {
       const recorder = new Recorder();
       const baseModel = fakeModel()
         .respond(new AIMessage({ content: 'Response 1' }))
@@ -214,10 +554,20 @@ describe('recording', () => {
       const recordingModel = createRecordingModel(baseModel, recorder, 'main');
 
       await recordingModel.invoke([new HumanMessage('Hi')]);
-      await recordingModel.invoke([new HumanMessage('Hello')]);
+      await recordingModel.invoke([
+        new HumanMessage('Hi'),
+        new AIMessage({ content: 'Response 1' }),
+        new HumanMessage('Hello'),
+      ]);
 
       expect(recorder.sequence).toHaveLength(2);
       expect(recorder.responses.get('main')).toHaveLength(2);
+
+      // Verify requests were captured
+      const requests = recorder.requests.get('main')!;
+      expect(requests).toHaveLength(2);
+      expect(requests[0]).toHaveLength(1); // [HumanMessage]
+      expect(requests[1]).toHaveLength(2); // delta: [AIMessage, HumanMessage]
     });
 
     it('should resolve agent name from config metadata', async () => {
@@ -287,13 +637,16 @@ describe('recording', () => {
       expect(manifest.sequence[5]).toEqual({ type: 'model', agent: 'main', index: 2 });
 
       const mainRec = loadAgentRecording(recDir, 'main');
-      expect(mainRec.responses).toHaveLength(3);
+      const mainModelTurns = mainRec.turns.filter((t) => t.type === 'model');
+      expect(mainModelTurns).toHaveLength(3);
 
       const researcherRec = loadAgentRecording(recDir, 'researcher');
-      expect(researcherRec.responses).toHaveLength(2);
+      const researcherModelTurns = researcherRec.turns.filter((t) => t.type === 'model');
+      expect(researcherModelTurns).toHaveLength(2);
 
       const coderRec = loadAgentRecording(recDir, 'coder');
-      expect(coderRec.responses).toHaveLength(1);
+      const coderModelTurns = coderRec.turns.filter((t) => t.type === 'model');
+      expect(coderModelTurns).toHaveLength(1);
     });
 
     it('should create nested directories on flush', () => {
@@ -334,7 +687,7 @@ describe('recording', () => {
 
       const agentRec = loadAgentRecording(recDir, 'my/custom:agent');
       expect(agentRec.agent).toBe('my/custom:agent');
-      expect(agentRec.responses).toHaveLength(1);
+      expect(agentRec.turns).toHaveLength(1);
     });
 
     it('should set recording status correctly', () => {
@@ -545,9 +898,6 @@ describe('recording', () => {
     });
 
     it('should advance callIndex correctly when bindTools is called between invocations', async () => {
-      // Reproduces the bug where FakeBuiltModel.bindTools() copies _callIndex by value,
-      // causing every bindTools() call to reset the counter to 0.
-      // The agent framework calls model.bindTools(tools) on every loop step.
       const recorder = new Recorder();
       const recDir = path.join(tmpDir, 'replay-bindtools');
 
