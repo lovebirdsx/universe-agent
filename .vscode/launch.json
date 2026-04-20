@@ -86,5 +86,22 @@
       ],
       "console": "integratedTerminal"
     },
+    {
+      "name": "test memory agent",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--import",
+        "tsx",
+      ],
+      "program": "${workspaceFolder}/apps/examples/memory/memoryAgent.ts",
+      "args": [],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "console": "integratedTerminal"
+    },
   ]
 }

@@ -19,9 +19,10 @@ import { HumanMessage } from '@langchain/core/messages';
 import * as path from 'node:path';
 
 import { createDeepAgent, FilesystemBackend } from '@universe-agent/agent';
+import { fileURLToPath } from 'node:url';
 
 // Path to this example directory (where AGENTS.md is located)
-const exampleDir = path.dirname(new URL(import.meta.url).pathname);
+const exampleDir = fileURLToPath(new URL('.', import.meta.url));
 
 async function main() {
   console.log('🧠 Memory Agent Example\n');
@@ -36,7 +37,6 @@ async function main() {
   // The `memory` parameter accepts an array of paths to AGENTS.md files
   // These are loaded at startup and injected into the system prompt
   const agent = createDeepAgent({
-    model: 'claude-haiku-4-5-20251001',
     systemPrompt: `You are a helpful coding assistant.
 When asked about project context, code style, or build commands,
 refer to the memory that was loaded from AGENTS.md files.`,
@@ -47,6 +47,9 @@ refer to the memory that was loaded from AGENTS.md files.`,
       // Load the AGENTS.md file from this example directory
       path.join(exampleDir, 'AGENTS.md'),
     ],
+    recording: {
+      mode: 'auto',
+    },
   });
 
   console.log('📁 Memory source:', path.join(exampleDir, 'AGENTS.md'));

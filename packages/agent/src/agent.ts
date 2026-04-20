@@ -273,6 +273,8 @@ export function createDeepAgent<
     // Uses createSummarizationMiddleware (deepagents version) with backend support
     // and auto-computed defaults from model profile.
     const subagentMiddleware: LooseAgentMiddleware[] = [
+      // Recording/replay tool middleware (must be first to intercept all tool calls).
+      ...(recordingToolMiddleware ? [recordingToolMiddleware] : []),
       // Provides todo list management capabilities for tracking tasks.
       todoListMiddleware() as LooseAgentMiddleware,
       // Enables filesystem operations and optional long-term memory storage.

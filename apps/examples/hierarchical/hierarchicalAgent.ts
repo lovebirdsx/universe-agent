@@ -115,6 +115,11 @@ const researchDeepAgent = createDeepAgent({
     '4. Write a concise summary of your research findings',
   tools: [getNews, analyzeData],
   subagents: [factCheckerSubAgent],
+  recording: {
+    mode: 'auto',
+    id: 'research-agent',
+    path: './.data/recordings/apps-examples-hierarchical-hierarchicalAgent',
+  },
 });
 
 // ─── Level 0: Main Orchestrator Agent ────────────────────────────────────────
@@ -143,6 +148,9 @@ export const mainAgent = createDeepAgent({
       runnable: researchDeepAgent,
     } satisfies CompiledSubAgent,
   ],
+  recording: {
+    mode: 'auto',
+  },
 });
 
 // ─── Run ─────────────────────────────────────────────────────────────────────
