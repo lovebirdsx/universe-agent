@@ -345,8 +345,11 @@ export class Recorder {
   flush(dirPath: string, id: string, status: ManifestData['status']): void {
     const manifest: ManifestData = {
       id,
-      createdAt: new Date().toISOString(),
-      completedAt: status !== 'recording' ? new Date().toISOString() : undefined,
+      createdAt: new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }),
+      completedAt:
+        status !== 'recording'
+          ? new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
+          : undefined,
       status,
       sequence: this.sequence,
     };
