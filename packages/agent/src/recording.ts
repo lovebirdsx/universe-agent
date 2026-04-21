@@ -446,137 +446,148 @@ export class Recorder {
     manifest: ManifestData,
     agentTurns: Map<string, Turn[]>,
   ): void {
-    const lines: string[] = [];
-    lines.push(`# Recording: ${id}`);
-    lines.push(
-      `Status: ${status} | ${manifest.createdAt} | viewVersion: ${manifest.viewVersion} | recordingVersion: ${manifest.recordingVersion}`,
-    );
+    writeTranscript(dirPath, id, status, manifest, this.sequence, agentTurns, this.agentTools);
+  }
+}
+
+/**
+ * 核心 transcript 写入逻辑，供 Recorder.flushTranscript 和 generateTranscript 复用。
+ */
+function writeTranscript(
+  dirPath: string,
+  id: string,
+  status: string,
+  manifest: ManifestData,
+  sequence: SequenceEntry[],
+  agentTurns: Map<string, Turn[]>,
+  agentTools: Map<string, SerializedToolDefinition[]>,
+): void {
+  const lines: string[] = [];
+  lines.push(`# Recording: ${id}`);
+  lines.push(
+    `Status: ${status} | ${manifest.createdAt} | viewVersion: ${manifest.viewVersion} | recordingVersion: ${manifest.recordingVersion}`,
+  );
+  lines.push('');
+
+  // 输出各 agent 的工具声明
+  for (const [agentName] of agentTurns) {
+    const tools = agentTools.get(agentName);
+    if (!tools || tools.length === 0) continue;
+
+    lines.push(`## 🛠️ [${agentName}] Tools (${tools.length})`);
+    lines.push('');
+    for (const tool of tools) {
+      lines.push(`### \`${tool.name}\``);
+      lines.push('');
+      if (tool.description) {
+        lines.push('````markdown');
+        lines.push(tool.description);
+        lines.push('````');
+        lines.push('');
+      }
+      if (tool.parameters) {
+        lines.push('```json');
+        lines.push(JSON.stringify(tool.parameters, null, 2));
+        lines.push('```');
+        lines.push('');
+      }
+    }
+  }
+
+  // 按全局 sequence 顺序输出
+  const agentTurnIndex = new Map<string, number>();
+
+  for (const entry of sequence) {
+    const agentKey = entry.agent;
+    const turnIdx = agentTurnIndex.get(agentKey) ?? 0;
+    const turns = agentTurns.get(agentKey);
+    const turn = turns?.[turnIdx];
+    if (!turn) continue;
+    agentTurnIndex.set(agentKey, turnIdx + 1);
+
+    lines.push('---');
     lines.push('');
 
-    // 输出各 agent 的工具声明
-    for (const [agentName] of agentTurns) {
-      const tools = this.agentTools.get(agentName);
-      if (!tools || tools.length === 0) continue;
-
-      lines.push(`## 🛠️ [${agentName}] Tools (${tools.length})`);
+    if (turn.type === 'model') {
+      lines.push(`## 🤖 [${agentKey}] Model #${turn.index}`);
       lines.push('');
-      for (const tool of tools) {
-        lines.push(`### \`${tool.name}\``);
-        lines.push('');
-        if (tool.description) {
-          lines.push('````markdown');
-          lines.push(tool.description);
-          lines.push('````');
-          lines.push('');
-        }
-        if (tool.parameters) {
-          lines.push('```json');
-          lines.push(JSON.stringify(tool.parameters, null, 2));
-          lines.push('```');
-          lines.push('');
-        }
+
+      const requestMessages = mapStoredMessagesToChatMessages(turn.request);
+      const newCount = requestMessages.length;
+      const totalCount = turn.requestTotalLength;
+      if (turn.index === 0) {
+        lines.push(`### Input (${newCount} messages, total context: ${totalCount})`);
+      } else {
+        lines.push(`### Input (${newCount} new messages, total context: ${totalCount})`);
       }
-    }
-
-    // 按全局 sequence 顺序输出
-    // 需要追踪每个 agent 的 turn 在 agentTurns 中的位置
-    const agentTurnIndex = new Map<string, number>();
-
-    for (const entry of this.sequence) {
-      const agentKey = entry.agent;
-      const turnIdx = agentTurnIndex.get(agentKey) ?? 0;
-      const turns = agentTurns.get(agentKey);
-      const turn = turns?.[turnIdx];
-      if (!turn) continue;
-      agentTurnIndex.set(agentKey, turnIdx + 1);
-
-      lines.push('---');
       lines.push('');
-
-      if (turn.type === 'model') {
-        lines.push(`## 🤖 [${agentKey}] Model #${turn.index}`);
+      for (const msg of requestMessages) {
+        const roleHeading = formatRoleHeading(msg._getType());
+        lines.push(`#### ${roleHeading}`);
         lines.push('');
-
-        // 输出请求
-        const requestMessages = mapStoredMessagesToChatMessages(turn.request);
-        const newCount = requestMessages.length;
-        const totalCount = turn.requestTotalLength;
-        if (turn.index === 0) {
-          lines.push(`### Input (${newCount} messages, total context: ${totalCount})`);
-        } else {
-          lines.push(`### Input (${newCount} new messages, total context: ${totalCount})`);
-        }
+        lines.push(...formatMessageContent(msg.content));
         lines.push('');
-        for (const msg of requestMessages) {
-          const roleHeading = formatRoleHeading(msg._getType());
-          lines.push(`#### ${roleHeading}`);
-          lines.push('');
-          lines.push(...formatMessageContent(msg.content));
-          lines.push('');
-        }
+      }
 
-        // 输出响应
-        lines.push('### Output');
+      lines.push('### Output');
+      lines.push('');
+      const responseMessages = mapStoredMessagesToChatMessages([turn.response]);
+      const responseMsg = responseMessages[0];
+      if (responseMsg) {
+        lines.push('#### 🤖 AI');
         lines.push('');
-        const responseMessages = mapStoredMessagesToChatMessages([turn.response]);
-        const responseMsg = responseMessages[0];
-        if (responseMsg) {
-          lines.push('#### 🤖 AI');
+        lines.push(...formatMessageContent(responseMsg.content));
+        lines.push('');
+        if (
+          'tool_calls' in responseMsg &&
+          Array.isArray(responseMsg.tool_calls) &&
+          responseMsg.tool_calls.length > 0
+        ) {
+          lines.push('**Tool calls:**');
           lines.push('');
-          lines.push(...formatMessageContent(responseMsg.content));
-          lines.push('');
-          // 输出 tool calls
-          if (
-            'tool_calls' in responseMsg &&
-            Array.isArray(responseMsg.tool_calls) &&
-            responseMsg.tool_calls.length > 0
-          ) {
-            lines.push('**Tool calls:**');
+          for (const tc of responseMsg.tool_calls as Array<{ name: string; args: unknown }>) {
+            lines.push(`- \`${tc.name}\``);
             lines.push('');
-            for (const tc of responseMsg.tool_calls as Array<{ name: string; args: unknown }>) {
-              lines.push(`- \`${tc.name}\``);
-              lines.push('');
-              lines.push('```json');
-              lines.push(JSON.stringify(tc.args, null, 2));
-              lines.push('```');
-              lines.push('');
-            }
+            lines.push('```json');
+            lines.push(JSON.stringify(tc.args, null, 2));
+            lines.push('```');
+            lines.push('');
           }
         }
-      } else {
-        // tool turn
-        const toolLabel = turn.toolName ? turn.toolName : 'tool';
-        lines.push(`## 🔧 [${agentKey}] ${toolLabel} #${turn.index}`);
+      }
+    } else {
+      // tool turn
+      const toolLabel = turn.toolName ? turn.toolName : 'tool';
+      lines.push(`## 🔧 [${agentKey}] ${toolLabel} #${turn.index}`);
+      lines.push('');
+      if (turn.toolArgs !== undefined) {
+        lines.push('### Input');
         lines.push('');
-        if (turn.toolArgs !== undefined) {
-          lines.push('### Input');
-          lines.push('');
-          lines.push('```json');
-          lines.push(JSON.stringify(turn.toolArgs, null, 2));
-          lines.push('```');
-          lines.push('');
-        }
+        lines.push('```json');
+        lines.push(JSON.stringify(turn.toolArgs, null, 2));
+        lines.push('```');
+        lines.push('');
+      }
 
-        const resultMessages = mapStoredMessagesToChatMessages([turn.result]);
-        const resultMsg = resultMessages[0];
-        if (resultMsg) {
-          const content =
-            typeof resultMsg.content === 'string'
-              ? resultMsg.content
-              : JSON.stringify(resultMsg.content, null, 2);
-          lines.push('### Output');
-          lines.push('');
-          lines.push('```');
-          lines.push(content);
-          lines.push('```');
-          lines.push('');
-        }
+      const resultMessages = mapStoredMessagesToChatMessages([turn.result]);
+      const resultMsg = resultMessages[0];
+      if (resultMsg) {
+        const content =
+          typeof resultMsg.content === 'string'
+            ? resultMsg.content
+            : JSON.stringify(resultMsg.content, null, 2);
+        lines.push('### Output');
+        lines.push('');
+        lines.push('```');
+        lines.push(content);
+        lines.push('```');
+        lines.push('');
       }
     }
-
-    const transcriptPath = path.join(dirPath, 'transcript.md');
-    writeTextAtomic(transcriptPath, lines.join('\n'));
   }
+
+  const transcriptPath = path.join(dirPath, 'transcript.md');
+  writeTextAtomic(transcriptPath, lines.join('\n'));
 }
 
 /**
@@ -968,4 +979,61 @@ export function createToolReplayMiddleware({
       throw new Error(`No recorded tool result found for tool call ID: ${toolCallId}`);
     },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Standalone transcript generation (from on-disk recording)
+// ---------------------------------------------------------------------------
+
+/**
+ * 从磁盘上已有的录像目录重新生成 transcript.md。
+ *
+ * 读取 manifest.json 和所有 *.recording.json，按全局 sequence 顺序
+ * 生成可读的 Markdown 对话记录，写入 dirPath/transcript.md。
+ */
+export function generateTranscript(dirPath: string): void {
+  const manifest = loadManifest(dirPath);
+
+  // 收集所有 recording 文件
+  const files = fs.readdirSync(dirPath).filter((f) => f.endsWith('.recording.json'));
+  const agentRecordings = new Map<string, AgentRecording>();
+  for (const file of files) {
+    const filePath = path.join(dirPath, file);
+    const rec = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as AgentRecording;
+    agentRecordings.set(rec.agent, rec);
+  }
+
+  // 从 recording 数据构建 agentTurns（按 sequence 引用的顺序排列）
+  const agentTurns = new Map<string, Turn[]>();
+  for (const entry of manifest.sequence) {
+    const rec = agentRecordings.get(entry.agent);
+    if (!rec) continue;
+    if (!agentTurns.has(entry.agent)) {
+      agentTurns.set(entry.agent, []);
+    }
+    const turn = rec.turns.find(
+      (t) => t.type === (entry.type ?? 'model') && t.index === entry.index,
+    );
+    if (turn) {
+      agentTurns.get(entry.agent)!.push(turn);
+    }
+  }
+
+  // 构建 agentTools 映射
+  const agentTools = new Map<string, SerializedToolDefinition[]>();
+  for (const [name, rec] of agentRecordings) {
+    if (rec.tools && rec.tools.length > 0) {
+      agentTools.set(name, rec.tools);
+    }
+  }
+
+  writeTranscript(
+    dirPath,
+    manifest.id,
+    manifest.status,
+    manifest,
+    manifest.sequence,
+    agentTurns,
+    agentTools,
+  );
 }
