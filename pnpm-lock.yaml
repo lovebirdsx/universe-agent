@@ -102,6 +102,9 @@ catalogs:
     pg:
       specifier: ^8.20.0
       version: 8.20.0
+    picocolors:
+      specifier: ^1.1.0
+      version: 1.1.1
     prettier:
       specifier: ^3.0.0
       version: 3.8.3
@@ -179,6 +182,46 @@ importers:
       hono:
         specifier: 'catalog:'
         version: 4.12.12
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.17
+      '@universe-agent/config-eslint':
+        specifier: workspace:*
+        version: link:../../packages/configEslint
+      '@universe-agent/config-ts':
+        specifier: workspace:*
+        version: link:../../packages/configTs
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.4
+      tsx:
+        specifier: 'catalog:'
+        version: 4.21.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.4(@types/node@22.19.17)(happy-dom@17.6.3)(tsx@4.21.0)(yaml@2.8.3)
+
+  apps/cli:
+    dependencies:
+      '@langchain/langgraph':
+        specifier: 'catalog:'
+        version: 1.2.8(@langchain/core@1.1.40(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.214.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.1))(openai@6.34.0(zod@4.3.6)))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zod@4.3.6)
+      '@universe-agent/agent':
+        specifier: workspace:*
+        version: link:../../packages/agent
+      dotenv:
+        specifier: 'catalog:'
+        version: 17.4.2
+      langchain:
+        specifier: 'catalog:'
+        version: 1.3.3(@langchain/core@1.1.40(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.214.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.1))(openai@6.34.0(zod@4.3.6)))(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.214.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.1))(openai@6.34.0(zod@4.3.6))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      picocolors:
+        specifier: 'catalog:'
+        version: 1.1.1
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

@@ -1,0 +1,40 @@
+{
+  "name": "@universe-agent/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "deepagent": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "cd ../../ && tsx apps/cli/src/index.ts",
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:int": "vitest run --config vitest.int.config.ts",
+    "test:watch": "vitest",
+    "test:unit:watch": "vitest --config vitest.unit.config.ts",
+    "test:int:watch": "vitest --config vitest.int.config.ts",
+    "start": "node dist/index.js",
+    "lint": "eslint src",
+    "lint:fix": "eslint --fix src",
+    "clean": "tsc --build --clean"
+  },
+  "dependencies": {
+    "@universe-agent/agent": "workspace:*",
+    "@langchain/langgraph": "catalog:",
+    "langchain": "catalog:",
+    "picocolors": "catalog:",
+    "dotenv": "catalog:"
+  },
+  "devDependencies": {
+    "@universe-agent/config-eslint": "workspace:*",
+    "@universe-agent/config-ts": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

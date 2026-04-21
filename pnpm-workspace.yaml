@@ -49,6 +49,7 @@ catalog:
   langsmith: ^0.5.20
   micromatch: ^4.0.8
   pg: ^8.20.0
+  picocolors: ^1.1.0
   prettier: ^3.0.0
 
   # React

@@ -2,6 +2,32 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "cli",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--enable-source-maps",
+        "--import",
+        "tsx",
+      ],
+      "program": "${workspaceFolder}/apps/cli/src/index.ts",
+      "args": [],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
       "name": "test replay",
       "type": "node",
       "request": "launch",
