@@ -15,18 +15,10 @@ import type { StructuredToolInterface } from '@langchain/core/tools';
 import { createMiddleware, ToolMessage } from 'langchain';
 import { isCommand } from '@langchain/langgraph';
 
-// ---------------------------------------------------------------------------
-// Version constants
-// ---------------------------------------------------------------------------
-
 /** 当前视图版本号 —— 格式变更但不影响回放时递增 */
 export const CURRENT_VIEW_VERSION = 1;
 /** 当前录像版本号 —— 不兼容变更时递增，版本不匹配的录像无法回放 */
 export const CURRENT_RECORDING_VERSION = 1;
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 
 export interface RecordingConfig {
   mode: 'record' | 'replay' | 'auto';
@@ -58,10 +50,6 @@ export interface ManifestData {
   status: 'recording' | 'completed' | 'error';
   sequence: SequenceEntry[];
 }
-
-// ---------------------------------------------------------------------------
-// Turn-based recording types (V2)
-// ---------------------------------------------------------------------------
 
 export interface ModelTurn {
   type: 'model';
@@ -96,10 +84,6 @@ export interface AgentRecording {
   tools?: SerializedToolDefinition[];
   turns: Turn[];
 }
-
-// ---------------------------------------------------------------------------
-// Path helpers
-// ---------------------------------------------------------------------------
 
 /**
  * 将 ID 中的路径分隔符和特殊字符替换为安全的文件名字符。
@@ -149,10 +133,6 @@ function agentRecordingPath(dirPath: string, agentName: string): string {
   return path.join(dirPath, `${sanitizeAgentName(agentName)}.recording.json`);
 }
 
-// ---------------------------------------------------------------------------
-// Mode resolution
-// ---------------------------------------------------------------------------
-
 /**
  * 解析实际生效的模式。
  * auto: manifest 存在且 status 为 completed 或 error → replay，否则 record。
@@ -180,10 +160,6 @@ export function resolveEffectiveMode(
   }
   return 'record';
 }
-
-// ---------------------------------------------------------------------------
-// File I/O (atomic writes)
-// ---------------------------------------------------------------------------
 
 /**
  * 原子写入 JSON 文件：先写 tmp 文件，再 rename。
@@ -219,10 +195,6 @@ export function loadAgentRecording(dirPath: string, agentName: string): AgentRec
   const content = fs.readFileSync(filePath, 'utf-8');
   return JSON.parse(content) as AgentRecording;
 }
-
-// ---------------------------------------------------------------------------
-// Recorder (data collector for record mode)
-// ---------------------------------------------------------------------------
 
 export class Recorder {
   readonly responses = new Map<string, StoredMessage[]>();
@@ -723,10 +695,6 @@ function formatMessageContent(content: string | unknown[]): string[] {
   return lines;
 }
 
-// ---------------------------------------------------------------------------
-// Recording Model (Proxy-based wrapper for record mode)
-// ---------------------------------------------------------------------------
-
 /**
  * 用 Proxy 包装模型，拦截 invoke 调用以录制输出。
  *
@@ -797,10 +765,6 @@ function resolveAgentName(config: Record<string, unknown> | undefined, fallback:
   return fallback;
 }
 
-// ---------------------------------------------------------------------------
-// Replay (build fakeModel from recording)
-// ---------------------------------------------------------------------------
-
 /**
  * 从录像目录构建 fakeModel，按全局 sequence 顺序填充响应队列。
  * 只处理 type === 'model'（或无 type 字段的旧录像）的条目。
@@ -855,10 +819,6 @@ export function buildReplayModel(dirPath: string): BaseLanguageModel {
   return model as unknown as BaseLanguageModel;
 }
 
-// ---------------------------------------------------------------------------
-// Tool Result Loading (for replay mode)
-// ---------------------------------------------------------------------------
-
 /**
  * 从录像目录加载所有 tool results，返回按 toolCallId 索引的 Map。
  * 用于回放模式下跳过真实 tool 执行。
@@ -908,10 +868,6 @@ export function loadToolResults(dirPath: string): Map<string, BaseMessage> {
   return result;
 }
 
-// ---------------------------------------------------------------------------
-// Tool Recording Middleware (record mode)
-// ---------------------------------------------------------------------------
-
 /**
  * 创建录制模式下的 tool 中间件。
  * 拦截所有 tool 调用，执行后将 ToolMessage 结果录制到 Recorder。
@@ -950,10 +906,6 @@ export function createToolRecordingMiddleware({
   });
 }
 
-// ---------------------------------------------------------------------------
-// Tool Replay Middleware (replay mode)
-// ---------------------------------------------------------------------------
-
 /**
  * 创建回放模式下的 tool 中间件。
  * 根据 toolCallId 匹配录制的 ToolMessage，跳过真实 tool 执行。
@@ -980,10 +932,6 @@ export function createToolReplayMiddleware({
     },
   });
 }
-
-// ---------------------------------------------------------------------------
-// Standalone transcript generation (from on-disk recording)
-// ---------------------------------------------------------------------------
 
 /**
  * 从磁盘上已有的录像目录重新生成 transcript.md。
