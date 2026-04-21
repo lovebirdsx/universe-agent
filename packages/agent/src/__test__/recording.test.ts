@@ -16,6 +16,9 @@ import {
   loadManifest,
   loadAgentRecording,
   createRecordingModel,
+  CURRENT_VIEW_VERSION,
+  CURRENT_RECORDING_VERSION,
+  loadToolResults,
 } from '../recording.js';
 import { BaseLanguageModel } from '@langchain/core/language_models/base';
 import type { ModelTurn, ToolTurn } from '../recording.js';
@@ -99,14 +102,28 @@ describe('recording', () => {
     it('should return replay when auto and manifest has completed status', () => {
       const dir = path.join(tmpDir, 'test-auto-complete');
       fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify({ status: 'completed' }));
+      fs.writeFileSync(
+        path.join(dir, 'manifest.json'),
+        JSON.stringify({
+          status: 'completed',
+          recordingVersion: CURRENT_RECORDING_VERSION,
+          viewVersion: CURRENT_VIEW_VERSION,
+        }),
+      );
       expect(resolveEffectiveMode('auto', dir)).toBe('replay');
     });
 
     it('should return replay when auto and manifest has error status', () => {
       const dir = path.join(tmpDir, 'test-auto-error');
       fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify({ status: 'error' }));
+      fs.writeFileSync(
+        path.join(dir, 'manifest.json'),
+        JSON.stringify({
+          status: 'error',
+          recordingVersion: CURRENT_RECORDING_VERSION,
+          viewVersion: CURRENT_VIEW_VERSION,
+        }),
+      );
       expect(resolveEffectiveMode('auto', dir)).toBe('replay');
     });
 
@@ -931,6 +948,8 @@ describe('recording', () => {
 
       const manifest = {
         id: 'missing-test',
+        viewVersion: CURRENT_VIEW_VERSION,
+        recordingVersion: CURRENT_RECORDING_VERSION,
         createdAt: new Date().toISOString(),
         completedAt: new Date().toISOString(),
         status: 'completed',
@@ -1086,6 +1105,133 @@ describe('recording', () => {
       });
       const basename = path.basename(dir);
       expect(basename).not.toMatch(/[/\\:*?"<>|]/);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Recording versioning
+  // -----------------------------------------------------------------------
+  describe('recording versioning', () => {
+    it('should write viewVersion and recordingVersion to manifest on flush', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'version-flush');
+
+      recorder.record('main', new AIMessage({ content: 'Hello' }));
+      recorder.flush(recDir, 'test-id', 'completed');
+
+      const manifest = loadManifest(recDir);
+      expect(manifest.viewVersion).toBe(CURRENT_VIEW_VERSION);
+      expect(manifest.recordingVersion).toBe(CURRENT_RECORDING_VERSION);
+    });
+
+    it('should return replay in auto mode when recordingVersion matches', () => {
+      const dir = path.join(tmpDir, 'version-match');
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(
+        path.join(dir, 'manifest.json'),
+        JSON.stringify({
+          viewVersion: CURRENT_VIEW_VERSION,
+          recordingVersion: CURRENT_RECORDING_VERSION,
+          status: 'completed',
+        }),
+      );
+      expect(resolveEffectiveMode('auto', dir)).toBe('replay');
+    });
+
+    it('should return record in auto mode when recordingVersion mismatches', () => {
+      const dir = path.join(tmpDir, 'version-mismatch');
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(
+        path.join(dir, 'manifest.json'),
+        JSON.stringify({
+          viewVersion: CURRENT_VIEW_VERSION,
+          recordingVersion: CURRENT_RECORDING_VERSION + 1,
+          status: 'completed',
+        }),
+      );
+      expect(resolveEffectiveMode('auto', dir)).toBe('record');
+    });
+
+    it('should return record in auto mode when recordingVersion is missing (legacy)', () => {
+      const dir = path.join(tmpDir, 'version-missing');
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify({ status: 'completed' }));
+      expect(resolveEffectiveMode('auto', dir)).toBe('record');
+    });
+
+    it('should replay successfully when recordingVersion matches', async () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'version-replay-ok');
+
+      recorder.record('main', new AIMessage({ content: 'response' }));
+      recorder.flush(recDir, 'test-id', 'completed');
+
+      const replayModel = buildReplayModel(recDir);
+      const result = await replayModel.invoke([new HumanMessage('q')]);
+      expect(result.content).toBe('response');
+    });
+
+    it('should throw error in replay mode when recordingVersion mismatches', () => {
+      const dir = path.join(tmpDir, 'version-replay-fail');
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(
+        path.join(dir, 'manifest.json'),
+        JSON.stringify({
+          viewVersion: CURRENT_VIEW_VERSION,
+          recordingVersion: CURRENT_RECORDING_VERSION + 1,
+          status: 'completed',
+          sequence: [],
+        }),
+      );
+
+      expect(() => buildReplayModel(dir)).toThrow(/录像版本号不匹配/);
+    });
+
+    it('should throw error in loadToolResults when recordingVersion mismatches', () => {
+      const dir = path.join(tmpDir, 'version-tools-fail');
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(
+        path.join(dir, 'manifest.json'),
+        JSON.stringify({
+          viewVersion: CURRENT_VIEW_VERSION,
+          recordingVersion: CURRENT_RECORDING_VERSION + 1,
+          status: 'completed',
+          sequence: [],
+        }),
+      );
+
+      expect(() => loadToolResults(dir)).toThrow(/录像版本号不匹配/);
+    });
+
+    it('should replay successfully when viewVersion differs but recordingVersion matches', async () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'view-version-diff');
+
+      recorder.record('main', new AIMessage({ content: 'still works' }));
+      recorder.flush(recDir, 'test-id', 'completed');
+
+      // 手动修改 viewVersion 为不同值
+      const manifestFilePath = path.join(recDir, 'manifest.json');
+      const manifest = JSON.parse(fs.readFileSync(manifestFilePath, 'utf-8'));
+      manifest.viewVersion = CURRENT_VIEW_VERSION + 99;
+      fs.writeFileSync(manifestFilePath, JSON.stringify(manifest));
+
+      // 仍应可正常回放
+      const replayModel = buildReplayModel(recDir);
+      const result = await replayModel.invoke([new HumanMessage('q')]);
+      expect(result.content).toBe('still works');
+    });
+
+    it('should include version info in transcript', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'version-transcript');
+
+      recorder.record('main', new AIMessage({ content: 'Hello' }));
+      recorder.flush(recDir, 'test-id', 'completed');
+
+      const transcript = fs.readFileSync(path.join(recDir, 'transcript.md'), 'utf-8');
+      expect(transcript).toContain(`viewVersion: ${CURRENT_VIEW_VERSION}`);
+      expect(transcript).toContain(`recordingVersion: ${CURRENT_RECORDING_VERSION}`);
     });
   });
 });

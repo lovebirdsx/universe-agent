@@ -16,6 +16,15 @@ import { createMiddleware, ToolMessage } from 'langchain';
 import { isCommand } from '@langchain/langgraph';
 
 // ---------------------------------------------------------------------------
+// Version constants
+// ---------------------------------------------------------------------------
+
+/** 当前视图版本号 —— 格式变更但不影响回放时递增 */
+export const CURRENT_VIEW_VERSION = 1;
+/** 当前录像版本号 —— 不兼容变更时递增，版本不匹配的录像无法回放 */
+export const CURRENT_RECORDING_VERSION = 1;
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -39,6 +48,10 @@ export interface SequenceEntry {
 }
 
 export interface ManifestData {
+  /** 视图版本号 —— 格式变更但不影响回放 */
+  viewVersion: number;
+  /** 录像版本号 —— 版本不匹配的录像无法回放 */
+  recordingVersion: number;
   id: string;
   createdAt: string;
   completedAt?: string;
@@ -158,6 +171,8 @@ export function resolveEffectiveMode(
   try {
     const manifest = JSON.parse(fs.readFileSync(mPath, 'utf-8')) as ManifestData;
     if (manifest.status === 'completed' || manifest.status === 'error') {
+      // 录像版本号不匹配时重新录制
+      if (manifest.recordingVersion !== CURRENT_RECORDING_VERSION) return 'record';
       return 'replay';
     }
   } catch {
@@ -344,6 +359,8 @@ export class Recorder {
    */
   flush(dirPath: string, id: string, status: ManifestData['status']): void {
     const manifest: ManifestData = {
+      viewVersion: CURRENT_VIEW_VERSION,
+      recordingVersion: CURRENT_RECORDING_VERSION,
       id,
       createdAt: new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }),
       completedAt:
@@ -431,7 +448,9 @@ export class Recorder {
   ): void {
     const lines: string[] = [];
     lines.push(`# Recording: ${id}`);
-    lines.push(`Status: ${status} | ${manifest.createdAt}`);
+    lines.push(
+      `Status: ${status} | ${manifest.createdAt} | viewVersion: ${manifest.viewVersion} | recordingVersion: ${manifest.recordingVersion}`,
+    );
     lines.push('');
 
     // 输出各 agent 的工具声明
@@ -778,6 +797,13 @@ function resolveAgentName(config: Record<string, unknown> | undefined, fallback:
 export function buildReplayModel(dirPath: string): BaseLanguageModel {
   const manifest = loadManifest(dirPath);
 
+  if (manifest.recordingVersion !== CURRENT_RECORDING_VERSION) {
+    throw new Error(
+      `录像版本号不匹配：录像文件为 ${String(manifest.recordingVersion ?? '<无>')}，当前为 ${String(CURRENT_RECORDING_VERSION)}。` +
+        `请使用 record 模式重新录制。`,
+    );
+  }
+
   // 按 agent 加载所有录像
   const agentNames = [...new Set(manifest.sequence.map((s) => s.agent))];
   const agentModelTurns = new Map<string, ModelTurn[]>();
@@ -828,6 +854,14 @@ export function buildReplayModel(dirPath: string): BaseLanguageModel {
  */
 export function loadToolResults(dirPath: string): Map<string, BaseMessage> {
   const manifest = loadManifest(dirPath);
+
+  if (manifest.recordingVersion !== CURRENT_RECORDING_VERSION) {
+    throw new Error(
+      `录像版本号不匹配：录像文件为 ${String(manifest.recordingVersion ?? '<无>')}，当前为 ${String(CURRENT_RECORDING_VERSION)}。` +
+        `请使用 record 模式重新录制。`,
+    );
+  }
+
   const result = new Map<string, BaseMessage>();
 
   const agentNames = [
