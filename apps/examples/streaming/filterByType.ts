@@ -6,10 +6,8 @@
  * based on whether they come from the main agent or a subagent.
  * Uses the "messages" stream mode with subgraphs to identify the
  * source of each token.
- *
- * Run:
- *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/filterByType.ts
  */
+import 'dotenv/config';
 import { createDeepAgent } from '@universe-agent/agent';
 
 const agent = createDeepAgent({
@@ -31,6 +29,9 @@ const agent = createDeepAgent({
         'You are a skilled writer. Write clear, engaging content. ' + 'Keep your response concise.',
     },
   ],
+  recording: {
+    mode: 'auto',
+  },
 });
 
 /**

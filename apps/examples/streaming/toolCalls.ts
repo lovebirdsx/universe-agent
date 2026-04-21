@@ -4,10 +4,8 @@
  * Demonstrates how to stream tool call events from subagent execution
  * using the "messages" stream mode. Shows tool call names, arguments,
  * and results as they happen in real time.
- *
- * Run:
- *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/toolCalls.ts
  */
+import 'dotenv/config';
 import { createDeepAgent } from '@universe-agent/agent';
 import { tool, AIMessageChunk, ToolMessage } from 'langchain';
 import { z } from 'zod';
@@ -47,6 +45,9 @@ const agent = createDeepAgent({
       tools: [searchWeb],
     },
   ],
+  recording: {
+    mode: 'auto',
+  },
 });
 
 for await (const [namespace, chunk] of await agent.stream(

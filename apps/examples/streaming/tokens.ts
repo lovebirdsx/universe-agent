@@ -4,10 +4,8 @@
  * Demonstrates how to stream individual LLM tokens from both the main agent
  * and subagents using the "messages" stream mode. Each token is labeled with
  * its source (main agent or subagent namespace).
- *
- * Run:
- *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/tokens.ts
  */
+import 'dotenv/config';
 import { createDeepAgent } from '@universe-agent/agent';
 
 const agent = createDeepAgent({
@@ -22,6 +20,9 @@ const agent = createDeepAgent({
       systemPrompt: 'You are a thorough researcher. Keep your response brief (2-3 sentences).',
     },
   ],
+  recording: {
+    mode: 'auto',
+  },
 });
 
 let currentSource = '';

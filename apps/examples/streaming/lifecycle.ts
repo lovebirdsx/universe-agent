@@ -6,10 +6,8 @@
  * pending → running → complete. Uses the "updates" stream mode
  * to detect when the main agent spawns subagents, when they begin
  * executing, and when their results return.
- *
- * Run:
- *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/lifecycle.ts
  */
+import 'dotenv/config';
 import { createDeepAgent } from '@universe-agent/agent';
 
 const agent = createDeepAgent({
@@ -25,6 +23,9 @@ const agent = createDeepAgent({
         'You are a thorough researcher. Provide a concise summary ' + 'in 2-3 sentences.',
     },
   ],
+  recording: {
+    mode: 'auto',
+  },
 });
 
 const activeSubagents = new Map<

@@ -6,10 +6,8 @@
  *
  * When using multiple modes with subgraphs, each stream item is a 3-tuple:
  *   [namespace, mode, data]
- *
- * Run:
- *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/multiMode.ts
  */
+import 'dotenv/config';
 import { createDeepAgent } from '@universe-agent/agent';
 import { tool, type ToolRuntime } from 'langchain';
 import { z } from 'zod';
@@ -55,6 +53,9 @@ const agent = createDeepAgent({
       tools: [analyzeData],
     },
   ],
+  recording: {
+    mode: 'auto',
+  },
 });
 
 // Skip internal middleware steps — only show meaningful node names

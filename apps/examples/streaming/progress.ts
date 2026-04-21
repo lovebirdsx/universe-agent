@@ -5,10 +5,8 @@
  * Demonstrates how to track subagent execution progress using the "updates"
  * stream mode. Each step completion from both the main agent and subagents
  * is reported as a streaming event.
- *
- * Run:
- *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/progress.ts
  */
+import 'dotenv/config';
 import { createDeepAgent } from '@universe-agent/agent';
 
 const agent = createDeepAgent({
@@ -24,6 +22,9 @@ const agent = createDeepAgent({
         'and provide a concise summary in 2-3 sentences.',
     },
   ],
+  recording: {
+    mode: 'auto',
+  },
 });
 
 for await (const [namespace, chunk] of await agent.stream(
