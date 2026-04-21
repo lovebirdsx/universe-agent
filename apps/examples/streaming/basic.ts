@@ -5,9 +5,8 @@
  * both the main agent and subagent execution. This is the simplest
  * streaming setup for deep agents.
  *
- * Run:
- *   ANTHROPIC_API_KEY="..." bun ./examples/streaming/basic.ts
  */
+import 'dotenv/config';
 import { createDeepAgent } from '@universe-agent/agent';
 
 const agent = createDeepAgent({

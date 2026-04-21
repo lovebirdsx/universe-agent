@@ -261,5 +261,31 @@
       ],
       "console": "integratedTerminal"
     },
+    {
+      "name": "test streaming basic",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--enable-source-maps",
+        "--import",
+        "tsx",
+      ],
+      "program": "${workspaceFolder}/apps/examples/streaming/basic.ts",
+      "args": [],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "console": "integratedTerminal"
+    },
   ]
 }
