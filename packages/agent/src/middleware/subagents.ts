@@ -590,8 +590,19 @@ function createTaskTool(options: {
       const subagentState = filterStateForSubagent(currentState);
       subagentState.messages = [new HumanMessage({ content: description })];
 
-      // Invoke the subagent
-      const result = (await subagent.invoke(subagentState, config)) as Record<string, unknown>;
+      // Invoke the subagent, overriding lc_agent_name so the recording system
+      // attributes model outputs and tool results to the correct subagent.
+      const subagentConfig = {
+        ...config,
+        metadata: {
+          ...(config.metadata as Record<string, unknown> | undefined),
+          lc_agent_name: subagent_type,
+        },
+      };
+      const result = (await subagent.invoke(subagentState, subagentConfig)) as Record<
+        string,
+        unknown
+      >;
 
       if (!config.toolCall?.id) {
         if (result.structuredResponse != null) {

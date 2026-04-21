@@ -634,7 +634,93 @@ describe('subagent recording', () => {
   });
 
   // -----------------------------------------------------------------------
-  // 7. createDeepAgent 父子 agent 完整录制与回放
+  // 7. inline SubAgent 模型输出应归属到正确的 agent 名（非 "main"）
+  // -----------------------------------------------------------------------
+  describe('inline SubAgent model outputs attributed to correct agent name', () => {
+    it('should record inline SubAgent model responses under subagent name, not "main"', async () => {
+      const recDir = path.join(tmpDir, 'agent-name-attr');
+
+      // inline SubAgent 的 fakeModel：先调用 verify_claim tool，再生成最终回复
+      const subagentModel = patchFakeModelBindTools(
+        fakeModel()
+          .respondWithTools([{ name: 'verify_claim', args: { claim: 'Water is wet' } }])
+          .respond(new AIMessage({ content: 'Claim verified: water is indeed wet' })),
+      );
+
+      // 父 agent 的 fakeModel：先调用 task tool 委派给 inline SubAgent，再生成最终回复
+      const parentModel = patchFakeModelBindTools(
+        fakeModel()
+          .respondWithTools([
+            {
+              name: 'task',
+              args: {
+                description: 'Verify that water is wet',
+                subagent_type: 'fact-checker',
+              },
+            },
+          ])
+          .respond(new AIMessage({ content: 'Done.' })),
+      );
+
+      const parentAgent = createDeepAgent({
+        model: parentModel,
+        systemPrompt: 'You are a coordinator.',
+        tools: [],
+        subagents: [
+          {
+            name: 'fact-checker',
+            description: 'Verifies factual claims.',
+            systemPrompt: 'You are a fact checker.',
+            tools: [verifyClaim],
+            model: subagentModel,
+          } satisfies SubAgent,
+        ],
+        recording: {
+          mode: 'record',
+          path: recDir,
+          id: 'agent-name-test',
+        },
+      });
+
+      await parentAgent.invoke(
+        { messages: [new HumanMessage('Verify that water is wet')] },
+        { recursionLimit: 50 },
+      );
+
+      const dir = path.join(recDir, 'agent-name-test');
+      const manifest = loadManifest(dir);
+      expect(manifest.status).toBe('completed');
+
+      // ── 核心断言：manifest.sequence 中的 model 条目应包含 agent="fact-checker" ──
+      const modelEntries = manifest.sequence.filter((s) => s.type === 'model');
+      const mainModelEntries = modelEntries.filter((s) => s.agent === 'main');
+      const subagentModelEntries = modelEntries.filter((s) => s.agent === 'fact-checker');
+
+      // 父 agent 有 2 个 model 条目（tool call + final response）
+      expect(mainModelEntries.length).toBe(2);
+      // 子 agent 有 2 个 model 条目（tool call + final response）
+      expect(subagentModelEntries.length).toBe(2);
+
+      // ── 确认没有子 agent 输出被错误归属到 "main" ──
+      // 总共应有 4 个 model 条目（main 2 + fact-checker 2），全部已覆盖
+      expect(modelEntries.length).toBe(4);
+
+      // ── tool 条目也应归属到正确的 agent ──
+      const toolEntries = manifest.sequence.filter((s) => s.type === 'tool');
+      const subagentToolEntries = toolEntries.filter((s) => s.agent === 'fact-checker');
+      // 子 agent 至少有 verify_claim 的 tool result
+      expect(subagentToolEntries.length).toBeGreaterThanOrEqual(1);
+
+      // ── 验证 fact-checker 的录像文件存在且包含正确的 turns ──
+      const factCheckerRec = loadAgentRecording(dir, 'fact-checker');
+      expect(factCheckerRec.version).toBe(2);
+      expect(factCheckerRec.agent).toBe('fact-checker');
+      expect(factCheckerRec.turns.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // 8. createDeepAgent 父子 agent 完整录制与回放
   // -----------------------------------------------------------------------
   describe('createDeepAgent hierarchical recording and replay', () => {
     it('should record both parent and child agent when both use createDeepAgent with recording', async () => {

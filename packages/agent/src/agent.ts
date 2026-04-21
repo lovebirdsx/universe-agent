@@ -272,9 +272,36 @@ export function createDeepAgent<
     // Middleware for custom subagents (does NOT include skills from main agent).
     // Uses createSummarizationMiddleware (deepagents version) with backend support
     // and auto-computed defaults from model profile.
+
+    // When recording, create per-subagent tool recording middleware so tool results
+    // are attributed to the subagent's name instead of "main".
+    const subagentToolRecMiddleware =
+      recorder && effectiveMode !== 'replay'
+        ? (createToolRecordingMiddleware({
+            recorder,
+            agentName: input.name,
+          }) as LooseAgentMiddleware)
+        : recordingToolMiddleware; // replay middleware is agent-name-agnostic
+
+    // When recording and the subagent specifies its own model, wrap it with
+    // createRecordingModel so model outputs are attributed to the subagent.
+    let subagentModel = input.model;
+    if (
+      recorder &&
+      effectiveMode !== 'replay' &&
+      subagentModel &&
+      typeof subagentModel !== 'string'
+    ) {
+      subagentModel = createRecordingModel(
+        subagentModel as BaseLanguageModel,
+        recorder,
+        input.name,
+      );
+    }
+
     const subagentMiddleware: LooseAgentMiddleware[] = [
       // Recording/replay tool middleware (must be first to intercept all tool calls).
-      ...(recordingToolMiddleware ? [recordingToolMiddleware] : []),
+      ...(subagentToolRecMiddleware ? [subagentToolRecMiddleware] : []),
       // Provides todo list management capabilities for tracking tasks.
       todoListMiddleware() as LooseAgentMiddleware,
       // Enables filesystem operations and optional long-term memory storage.
@@ -296,6 +323,7 @@ export function createDeepAgent<
     ];
     return {
       ...input,
+      ...(subagentModel !== undefined ? { model: subagentModel } : {}),
       tools: input.tools ?? [],
       middleware: subagentMiddleware,
     };
@@ -406,6 +434,16 @@ export function createDeepAgent<
       .flatMap((m) => m.tools as StructuredTool[]);
     const allTools = [...(tools as StructuredTool[]), ...middlewareTools];
     recorder.registerTools(name ?? 'main', allTools);
+
+    // 为每个 inline SubAgent 注册其工具列表，以便录像包含完整的工具定义
+    for (const sub of inlineSubagents) {
+      if ('runnable' in sub) continue; // CompiledSubAgent 自行管理
+      const subMiddlewareTools = (sub.middleware ?? [])
+        .filter((m) => m.tools)
+        .flatMap((m) => m.tools as StructuredTool[]);
+      const subAllTools = [...(sub.tools ?? []), ...subMiddlewareTools] as StructuredTool[];
+      recorder.registerTools(sub.name, subAllTools);
+    }
   }
 
   // Combine system prompt parameter with BASE_AGENT_PROMPT
