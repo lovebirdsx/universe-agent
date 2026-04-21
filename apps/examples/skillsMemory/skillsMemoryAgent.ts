@@ -11,12 +11,9 @@
  * To run this example:
  *   npx tsx examples/skillsMemory/skillsMemoryAgent.ts
  *
- * Prerequisites:
- *   - Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable
  */
 
-import { ChatOpenAI } from '@langchain/openai';
-import { ChatAnthropic } from '@langchain/anthropic';
+import 'dotenv/config';
 import { HumanMessage } from '@langchain/core/messages';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -133,12 +130,7 @@ async function main() {
   createSampleSkills(skillsDir);
 
   try {
-    // Create the model
-    const model = process.env.ANTHROPIC_API_KEY
-      ? new ChatAnthropic({ model: 'claude-sonnet-4-20250514' })
-      : new ChatOpenAI({ model: 'gpt-4o-mini' });
-
-    console.log(`🤖 Using model: ${process.env.ANTHROPIC_API_KEY ? 'Claude' : 'GPT-4o-mini'}\n`);
+    console.log(`🤖 Using model: ${process.env.OPENAI_MODEL}\n`);
 
     // Create memory middleware for long-term memory
     const memoryMiddleware = createAgentMemoryMiddleware({
@@ -151,10 +143,12 @@ async function main() {
     // - `middleware` adds the memory middleware
     // - `backend` provides filesystem access for skills loading
     const agent = await createDeepAgent({
-      model,
       backend: new FilesystemBackend({ rootDir: tempDir, virtualMode: true }),
       skills: ['/skills/'],
       middleware: [memoryMiddleware],
+      recording: {
+        mode: 'auto',
+      },
     });
 
     console.log('✅ Agent created with skills + memory\n');

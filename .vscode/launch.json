@@ -154,5 +154,22 @@
       ],
       "console": "integratedTerminal"
     },
+    {
+      "name": "test skill memory agent",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--import",
+        "tsx",
+      ],
+      "program": "${workspaceFolder}/apps/examples/skillsMemory/skillsMemoryAgent.ts",
+      "args": [],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "console": "integratedTerminal"
+    },
   ]
 }
