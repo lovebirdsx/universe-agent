@@ -1,8 +1,7 @@
 import 'dotenv/config';
 import { z } from 'zod';
-import { tool } from 'langchain';
+import { HumanMessage, tool } from 'langchain';
 import { TavilySearch } from '@langchain/tavily';
-import { ChatAnthropic } from '@langchain/anthropic';
 
 import { createDeepAgent, type SubAgent } from '@universe-agent/agent';
 
@@ -193,37 +192,30 @@ Use this to run an internet search for a given query. You can specify the number
 
 // Create the agent
 export const agent = createDeepAgent({
-  model: new ChatAnthropic({
-    model: 'claude-sonnet-4-20250514',
-    temperature: 0,
-  }),
-
   tools: [internetSearch],
   systemPrompt: researchInstructions,
   subagents: [critiqueSubAgent, researchSubAgent],
+  recording: {
+    mode: 'auto',
+  },
 });
 
-// // Invoke the agent
-// async function main() {
-//   const result = await agent.invoke(
-//     {
-//       messages: [new HumanMessage("what is langgraph?")],
-//     },
-//     { recursionLimit: 1000 }
-//   );
+// Invoke the agent
+async function main() {
+  const result = await agent.invoke(
+    {
+      messages: [new HumanMessage('what is langgraph?')],
+    },
+    { recursionLimit: 50 },
+  );
 
-//   console.log("🎉 Finished!");
-//   console.log(
-//     `\n\nAgent ToDo List:\n${result.todos.map((todo) => ` - ${todo.content} (${todo.status})`).join("\n")}`
-//   );
-//   console.log(
-//     `\n\nAgent Files:\n${Object.entries(result.files)
-//       .map(([key, value]) => ` - ${key}: ${value}`)
-//       .join("\n")}`
-//   );
-// }
+  for (const msg of result.messages) {
+    if (msg instanceof HumanMessage) {
+      console.log('Human:', msg.text);
+    } else {
+      console.log('AI:', typeof msg.content === 'string' ? msg.content : msg.content);
+    }
+  }
+}
 
-// // Run if this file is executed directly
-// if (import.meta.url === `file://${process.argv[1]}`) {
-//   main();
-// }
+main();
