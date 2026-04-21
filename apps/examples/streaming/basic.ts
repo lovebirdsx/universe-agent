@@ -18,6 +18,9 @@ const agent = createDeepAgent({
       systemPrompt: 'You are a thorough researcher.',
     },
   ],
+  recording: {
+    mode: 'auto',
+  },
 });
 
 for await (const [namespace, chunk] of await agent.stream(

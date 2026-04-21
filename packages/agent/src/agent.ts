@@ -133,6 +133,38 @@ export function isAnthropicModel(model: BaseLanguageModel | string): boolean {
 }
 
 /**
+ * 包装 async iterable，在迭代结束或出错时触发 recorder.flush()。
+ */
+async function* wrapAsyncGeneratorWithFlush<T>(
+  gen: AsyncGenerator<T>,
+  recorder: Recorder,
+  dir: string,
+  id: string,
+): AsyncGenerator<T> {
+  try {
+    yield* gen;
+    recorder.flush(dir, id, 'completed');
+  } catch (error) {
+    recorder.flush(dir, id, 'error');
+    throw error;
+  }
+}
+
+/**
+ * 包装 stream() 返回的 async iterable，在消费完毕后 flush 录像。
+ * 保持与原始返回值相同的接口（既是 AsyncIterable 又是 AsyncGenerator）。
+ */
+function wrapAsyncIterableWithFlush<T>(
+  iterable: AsyncIterable<T>,
+  recorder: Recorder,
+  dir: string,
+  id: string,
+): AsyncIterable<T> {
+  const gen = iterable[Symbol.asyncIterator]() as AsyncGenerator<T>;
+  return wrapAsyncGeneratorWithFlush(gen, recorder, dir, id);
+}
+
+/**
  * Create a Deep Agent.
  *
  * This is the main entry point for building a production-style agent with
@@ -509,11 +541,12 @@ export function createDeepAgent<
     ...FlattenSubAgentMiddleware<TSubagents>,
   ];
 
-  // --- Recording: wrap invoke for record mode ---
+  // --- Recording: wrap invoke & stream for record mode ---
   if (recorder && recordingDirPath && recordingId) {
     const recDir = recordingDirPath;
     const recId = recordingId;
     const rec = recorder;
+
     const originalInvoke = agent.invoke.bind(agent);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (agent as any).invoke = async (input: any, options?: any) => {
@@ -525,6 +558,13 @@ export function createDeepAgent<
         rec.flush(recDir, recId, 'error');
         throw error;
       }
+    };
+
+    const originalStream = agent.stream.bind(agent);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (agent as any).stream = async function (input: any, options?: any) {
+      const iterator = await originalStream(input, options);
+      return wrapAsyncIterableWithFlush(iterator, rec, recDir, recId);
     };
   }
 

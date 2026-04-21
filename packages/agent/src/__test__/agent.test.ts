@@ -471,4 +471,131 @@ describe('createDeepAgent recording integration', () => {
       true,
     );
   });
+
+  it('should record model outputs and flush manifest on successful stream', async () => {
+    const model = new FakeListChatModel({ responses: ['Streamed'] });
+    const checkpointer = new MemorySaver();
+
+    const agent = createDeepAgent({
+      model,
+      recording: { mode: 'record', path: tmpDir, id: 'stream-rec' },
+      checkpointer,
+    });
+
+    // Consume the stream fully
+    for await (const _chunk of await agent.stream(
+      { messages: [new HumanMessage('Hello')] },
+      {
+        streamMode: 'updates',
+        configurable: { thread_id: `stream-rec-${Date.now()}` },
+        recursionLimit: 50,
+      },
+    )) {
+      // just consume
+    }
+
+    const recDir = path.join(tmpDir, 'stream-rec');
+    const manifest = loadManifest(recDir);
+    expect(manifest.status).toBe('completed');
+    expect(manifest.id).toBe('stream-rec');
+    expect(manifest.sequence.length).toBeGreaterThan(0);
+  });
+
+  it('should replay from stream-recorded data via stream', async () => {
+    // --- Record phase via stream ---
+    const recId = 'stream-replay';
+    const model = new FakeListChatModel({ responses: ['Stream replayed'] });
+    const checkpointer = new MemorySaver();
+
+    const recordAgent = createDeepAgent({
+      model,
+      recording: { mode: 'record', path: tmpDir, id: recId },
+      checkpointer,
+    });
+
+    for await (const _chunk of await recordAgent.stream(
+      { messages: [new HumanMessage('Hello')] },
+      {
+        streamMode: 'updates',
+        configurable: { thread_id: `stream-rec-${Date.now()}` },
+        recursionLimit: 50,
+      },
+    )) {
+      // consume
+    }
+
+    // --- Replay phase via stream ---
+    const spyModel = new FakeListChatModel({ responses: ['Should not appear'] });
+    const invokeSpy = vi.spyOn(spyModel, 'invoke');
+
+    const replayAgent = createDeepAgent({
+      model: spyModel,
+      recording: { mode: 'replay', path: tmpDir, id: recId },
+      checkpointer,
+    });
+
+    const chunks: unknown[] = [];
+    for await (const chunk of await replayAgent.stream(
+      { messages: [new HumanMessage('Hi')] },
+      {
+        streamMode: 'updates',
+        configurable: { thread_id: `stream-replay-${Date.now()}` },
+        recursionLimit: 50,
+      },
+    )) {
+      chunks.push(chunk);
+    }
+
+    // Spy model should NOT have been called — replay uses fakeModel
+    expect(invokeSpy).not.toHaveBeenCalled();
+    // Should have received stream chunks
+    expect(chunks.length).toBeGreaterThan(0);
+
+    invokeSpy.mockRestore();
+  });
+
+  it('should replay stream-recorded data via invoke', async () => {
+    // --- Record phase via stream ---
+    const recId = 'stream-to-invoke';
+    const model = new FakeListChatModel({ responses: ['Cross replay'] });
+    const checkpointer = new MemorySaver();
+
+    const recordAgent = createDeepAgent({
+      model,
+      recording: { mode: 'record', path: tmpDir, id: recId },
+      checkpointer,
+    });
+
+    for await (const _chunk of await recordAgent.stream(
+      { messages: [new HumanMessage('Hello')] },
+      {
+        streamMode: 'updates',
+        configurable: { thread_id: `cross-rec-${Date.now()}` },
+        recursionLimit: 50,
+      },
+    )) {
+      // consume
+    }
+
+    // --- Replay phase via invoke (cross-mode replay) ---
+    const spyModel = new FakeListChatModel({ responses: ['Should not appear'] });
+    const invokeSpy = vi.spyOn(spyModel, 'invoke');
+
+    const replayAgent = createDeepAgent({
+      model: spyModel,
+      recording: { mode: 'replay', path: tmpDir, id: recId },
+      checkpointer,
+    });
+
+    const result = await replayAgent.invoke(
+      { messages: [new HumanMessage('Hi')] },
+      { configurable: { thread_id: `cross-replay-${Date.now()}` }, recursionLimit: 50 },
+    );
+
+    expect(invokeSpy).not.toHaveBeenCalled();
+    const aiMessages = result.messages.filter(AIMessage.isInstance);
+    expect(aiMessages.some((m) => (m.content as string).includes('Cross replay'))).toBe(true);
+
+    invokeSpy.mockRestore();
+  });
 });
