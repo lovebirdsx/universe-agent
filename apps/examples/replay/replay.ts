@@ -104,27 +104,56 @@ const RESEARCH_RECORDING_ID = 'research-agent';
 
 // ─── FakeModel 构造 ─────────────────────────────────────────────────────────
 
+// 注意：不使用 respondWithTools()，因为它内部调用 deriveContent(messages) 将所有输入
+// 消息拼接成 AIMessage.content，导致录像中 tool_call 响应的 content 包含 system prompt
+// 等垃圾数据。改用 respond(new AIMessage({...})) 手动构造 tool_calls 来避免此问题。
+
 // Fact Checker: 调用 verify_claim → 回复总结
 const factCheckerModel = patchFakeModelBindTools(
   fakeModel()
-    .respondWithTools([{ name: 'verify_claim', args: { claim: 'renewable energy growth' } }])
+    .respond(
+      new AIMessage({
+        content: '',
+        tool_calls: [
+          { id: 'tc_1', name: 'verify_claim', args: { claim: 'renewable energy growth' } },
+        ],
+      }),
+    )
     .respond(new AIMessage({ content: 'Claim verified with high confidence.' })),
 );
 
 // Research Specialist: get_news → analyze_data → 委派 fact-checker → 回复总结
 const researchModel = patchFakeModelBindTools(
   fakeModel()
-    .respondWithTools([{ name: 'get_news', args: { topic: 'renewable energy' } }])
-    .respondWithTools([{ name: 'analyze_data', args: { data: 'renewable energy trends' } }])
-    .respondWithTools([
-      {
-        name: 'task',
-        args: {
-          description: 'Verify the claim about renewable energy growth',
-          subagent_type: 'fact-checker',
-        },
-      },
-    ])
+    .respond(
+      new AIMessage({
+        content: '',
+        tool_calls: [{ id: 'tc_2', name: 'get_news', args: { topic: 'renewable energy' } }],
+      }),
+    )
+    .respond(
+      new AIMessage({
+        content: '',
+        tool_calls: [
+          { id: 'tc_3', name: 'analyze_data', args: { data: 'renewable energy trends' } },
+        ],
+      }),
+    )
+    .respond(
+      new AIMessage({
+        content: '',
+        tool_calls: [
+          {
+            id: 'tc_4',
+            name: 'task',
+            args: {
+              description: 'Verify the claim about renewable energy growth',
+              subagent_type: 'fact-checker',
+            },
+          },
+        ],
+      }),
+    )
     .respond(
       new AIMessage({
         content: 'Research complete: renewable energy is advancing rapidly.',
@@ -136,22 +165,33 @@ const researchModel = patchFakeModelBindTools(
 const mainModel = patchFakeModelBindTools(
   fakeModel()
     // Query 1: 天气查询
-    .respondWithTools([{ name: 'get_weather', args: { location: 'San Francisco' } }])
+    .respond(
+      new AIMessage({
+        content: '',
+        tool_calls: [{ id: 'tc_5', name: 'get_weather', args: { location: 'San Francisco' } }],
+      }),
+    )
     .respond(
       new AIMessage({
         content: 'The weather in San Francisco is sunny and 72°F.',
       }),
     )
     // Query 2: 研究查询，委派给 research-specialist
-    .respondWithTools([
-      {
-        name: 'task',
-        args: {
-          description: 'Research the latest developments in renewable energy',
-          subagent_type: 'research-specialist',
-        },
-      },
-    ])
+    .respond(
+      new AIMessage({
+        content: '',
+        tool_calls: [
+          {
+            id: 'tc_6',
+            name: 'task',
+            args: {
+              description: 'Research the latest developments in renewable energy',
+              subagent_type: 'research-specialist',
+            },
+          },
+        ],
+      }),
+    )
     .respond(
       new AIMessage({
         content:
