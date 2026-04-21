@@ -8,11 +8,20 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "node",
       "runtimeArgs": [
+        "--enable-source-maps",
         "--import",
         "tsx",
       ],
       "program": "${workspaceFolder}/apps/examples/replay/replay.ts",
       "args": [],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -25,11 +34,20 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "node",
       "runtimeArgs": [
+        "--enable-source-maps",
         "--import",
         "tsx",
       ],
       "program": "${workspaceFolder}/apps/examples/backends/filesystemBackend.ts",
       "args": [],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -42,11 +60,20 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "node",
       "runtimeArgs": [
+        "--enable-source-maps",
         "--import",
         "tsx",
       ],
       "program": "${workspaceFolder}/apps/examples/backends/stateBackend.ts",
       "args": [],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -59,11 +86,20 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "node",
       "runtimeArgs": [
+        "--enable-source-maps",
         "--import",
         "tsx",
       ],
       "program": "${workspaceFolder}/apps/examples/backends/storeBackend.ts",
       "args": [],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -76,11 +112,20 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "node",
       "runtimeArgs": [
+        "--enable-source-maps",
         "--import",
         "tsx",
       ],
       "program": "${workspaceFolder}/apps/examples/backends/compositeBackend.ts",
       "args": [],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -93,11 +138,20 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "node",
       "runtimeArgs": [
+        "--enable-source-maps",
         "--import",
         "tsx",
       ],
       "program": "${workspaceFolder}/apps/examples/backends/localShellBackend.ts",
       "args": [],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -110,11 +164,20 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "node",
       "runtimeArgs": [
+        "--enable-source-maps",
         "--import",
         "tsx",
       ],
       "program": "${workspaceFolder}/apps/examples/memory/memoryAgent.ts",
       "args": [],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -127,11 +190,20 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "node",
       "runtimeArgs": [
+        "--enable-source-maps",
         "--import",
         "tsx",
       ],
       "program": "${workspaceFolder}/apps/examples/hierarchical/hierarchicalAgent.ts",
       "args": [],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -144,11 +216,20 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "node",
       "runtimeArgs": [
+        "--enable-source-maps",
         "--import",
         "tsx",
       ],
       "program": "${workspaceFolder}/apps/examples/research/researchAgent.ts",
       "args": [],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -161,11 +242,20 @@
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "node",
       "runtimeArgs": [
+        "--enable-source-maps",
         "--import",
         "tsx",
       ],
       "program": "${workspaceFolder}/apps/examples/skillsMemory/skillsMemoryAgent.ts",
       "args": [],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
       "skipFiles": [
         "<node_internals>/**"
       ],
