@@ -17,7 +17,8 @@ export function createProgram(): Command {
   program
     .name('universe-agent')
     .description('UniverseAgent CLI - AI编程助手')
-    .version(readVersion())
+    .version(readVersion(), '-v, --version', '显示版本信息')
+    .helpOption('-h, --help', '显示帮助信息')
     .argument('[prompt...]', '一次性提示（不提供则进入交互式 REPL）')
     .option('-s, --system <prompt>', '自定义系统提示')
     .option('-p, --project <dir>', '项目目录', process.cwd())

@@ -1,3 +1,5 @@
+import { CommanderError } from 'commander';
+
 import { createProgram } from '../cli.js';
 import { CliConfigSchema, type CliConfig } from './schema.js';
 import { loadConfigFile } from './load-file.js';
@@ -21,7 +23,22 @@ export function createConfig(
     writeOut: () => {},
     writeErr: () => {},
   });
-  program.parse(argv);
+
+  // 处理 --help 和 --version 输出
+  try {
+    program.parse(argv);
+  } catch (err) {
+    if (err instanceof CommanderError && err.code === 'commander.helpDisplayed') {
+      console.log(program.helpInformation());
+      process.exit(0);
+    }
+    if (err instanceof CommanderError && err.code === 'commander.version') {
+      console.log(program.version());
+      process.exit(0);
+    }
+    throw err;
+  }
+
   const opts = program.opts<{
     system?: string;
     project: string;
