@@ -98,6 +98,8 @@ export { JsonFileStore } from './store/jsonFileStore.js';
 // Export recording
 export {
   generateTranscript,
+  resolveRecordingDir,
+  loadManifest,
   type RecordingConfig,
   type ManifestData,
   type AgentRecording,

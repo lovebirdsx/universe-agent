@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { CliConfigSchema, FileConfigSchema } from '../schema.js';
+import { CliConfigSchema, FileConfigSchema, ReplayConfigSchema } from '../schema.js';
 
 describe('FileConfigSchema', () => {
   it('accepts an empty object', () => {
@@ -12,6 +12,11 @@ describe('FileConfigSchema', () => {
     const result = FileConfigSchema.parse({ model: 'gpt-4o', verbose: true });
     expect(result.model).toBe('gpt-4o');
     expect(result.verbose).toBe(true);
+  });
+
+  it('accepts record field', () => {
+    const result = FileConfigSchema.parse({ record: true });
+    expect(result.record).toBe(true);
   });
 
   it('rejects invalid types', () => {
@@ -26,6 +31,7 @@ describe('CliConfigSchema', () => {
     expect(result.memory).toBe(true);
     expect(result.skills).toBe(true);
     expect(result.verbose).toBe(false);
+    expect(result.record).toBe(false);
   });
 
   it('allows overriding defaults', () => {
@@ -54,5 +60,33 @@ describe('CliConfigSchema', () => {
     expect(result.apiKey).toBe('sk-test');
     expect(result.apiBaseUrl).toBe('https://api.example.com');
     expect(result.systemPrompt).toBe('You are helpful');
+  });
+
+  it('accepts record flag', () => {
+    const result = CliConfigSchema.parse({
+      projectDir: '/tmp',
+      record: true,
+    });
+    expect(result.record).toBe(true);
+  });
+});
+
+describe('ReplayConfigSchema', () => {
+  it('applies defaults', () => {
+    const result = ReplayConfigSchema.parse({ projectDir: '/tmp' });
+    expect(result.verbose).toBe(false);
+    expect(result.recordingId).toBeUndefined();
+  });
+
+  it('accepts recordingId', () => {
+    const result = ReplayConfigSchema.parse({
+      projectDir: '/tmp',
+      recordingId: 'test-id',
+    });
+    expect(result.recordingId).toBe('test-id');
+  });
+
+  it('requires projectDir', () => {
+    expect(() => ReplayConfigSchema.parse({})).toThrow();
   });
 });

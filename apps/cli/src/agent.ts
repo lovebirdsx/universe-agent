@@ -1,4 +1,5 @@
 import { createUniverseAgent, LocalShellBackend, createSettings } from '@universe-agent/agent';
+import type { RecordingConfig } from '@universe-agent/agent';
 import { ChatOpenAI } from '@langchain/openai';
 import { MemorySaver } from '@langchain/langgraph';
 import type { BaseLanguageModel } from '@langchain/core/language_models/base';
@@ -32,7 +33,10 @@ function resolveModel(config: CliConfig): BaseLanguageModel | string {
   return config.model;
 }
 
-export async function createCliAgent(config: CliConfig): Promise<CliAgent> {
+export async function createCliAgent(
+  config: CliConfig,
+  recording?: RecordingConfig,
+): Promise<CliAgent> {
   const settings = createSettings({ startPath: config.projectDir });
 
   const backend = new LocalShellBackend({
@@ -57,6 +61,7 @@ export async function createCliAgent(config: CliConfig): Promise<CliAgent> {
     checkpointer: new MemorySaver(),
     ...(memory.length > 0 ? { memory } : {}),
     ...(skills.length > 0 ? { skills } : {}),
+    ...(recording ? { recording } : {}),
   });
 
   await backend.initialize();

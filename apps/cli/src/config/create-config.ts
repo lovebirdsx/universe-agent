@@ -1,7 +1,12 @@
 import { CommanderError } from 'commander';
 
 import { createProgram } from '../cli.js';
-import { CliConfigSchema, type CliConfig } from './schema.js';
+import {
+  CliConfigSchema,
+  ReplayConfigSchema,
+  type CliConfig,
+  type ReplayConfig,
+} from './schema.js';
 import { loadConfigFile } from './load-file.js';
 
 export interface ConfigSources {
@@ -10,9 +15,11 @@ export interface ConfigSources {
   configPath?: string;
 }
 
-export function createConfig(
-  sources: ConfigSources = {},
-): CliConfig & { prompt: string | undefined } {
+export type ConfigResult =
+  | { command: 'default'; config: CliConfig & { prompt: string | undefined } }
+  | { command: 'replay'; replayConfig: ReplayConfig };
+
+export function createConfig(sources: ConfigSources = {}): ConfigResult {
   const env = sources.env ?? (process.env as Record<string, string | undefined>);
   const argv = sources.argv ?? process.argv;
 
@@ -47,19 +54,32 @@ export function createConfig(
     verbose: boolean;
     model?: string;
     config?: string;
+    record: boolean;
+    replay?: string | true;
   }>();
+
+  // 2. --replay 模式
+  if (opts.replay !== undefined) {
+    const replayConfig = ReplayConfigSchema.parse({
+      projectDir: opts.project,
+      recordingId: typeof opts.replay === 'string' ? opts.replay : undefined,
+      verbose: opts.verbose,
+    });
+    return { command: 'replay', replayConfig };
+  }
+
   const promptArgs = program.args;
 
-  // 2. 确定项目目录（CLI > cwd）
+  // 3. 确定项目目录（CLI > cwd）
   const projectDir = opts.project;
 
-  // 3. 加载配置文件
+  // 4. 加载配置文件
   const fileConfig = loadConfigFile({
     explicitPath: sources.configPath ?? opts.config,
     projectDir,
   });
 
-  // 4. 将环境变量映射到配置形状
+  // 5. 将环境变量映射到配置形状
   const envVarConfig = stripUndefined({
     model: env.OPENAI_MODEL,
     apiKey: env.OPENAI_API_KEY,
@@ -67,7 +87,7 @@ export function createConfig(
     tavilyApiKey: env.TAVILY_API_KEY,
   });
 
-  // 5. 将 CLI 选项映射到配置形状（仅包括显式设置的值）
+  // 6. 将 CLI 选项映射到配置形状（仅包括显式设置的值）
   const cliConfig = stripUndefined({
     model: opts.model,
     systemPrompt: opts.system,
@@ -75,21 +95,25 @@ export function createConfig(
     memory: opts.memory,
     skills: opts.skills,
     verbose: opts.verbose,
+    record: opts.record,
   });
 
-  // 6. 合并：defaults < file < envVars < cli
+  // 7. 合并：defaults < file < envVars < cli
   const merged = {
     ...stripUndefined(fileConfig ?? {}),
     ...envVarConfig,
     ...cliConfig,
   };
 
-  // 7. 使用 Zod 验证
+  // 8. 使用 Zod 验证
   const config = CliConfigSchema.parse(merged);
 
   return {
-    ...config,
-    prompt: promptArgs.length > 0 ? promptArgs.join(' ') : undefined,
+    command: 'default',
+    config: {
+      ...config,
+      prompt: promptArgs.length > 0 ? promptArgs.join(' ') : undefined,
+    },
   };
 }
 

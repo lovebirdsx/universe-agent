@@ -26,7 +26,9 @@ export function createProgram(): Command {
     .option('--no-skills', '禁用 skills 加载')
     .option('--verbose', '显示调试信息', false)
     .option('-m, --model <model>', '模型名称')
-    .option('-c, --config <path>', '配置文件路径');
+    .option('-c, --config <path>', '配置文件路径')
+    .option('--record', '录制当前会话', false)
+    .option('--replay [id]', '播放录像（可选指定录像 ID）');
 
   return program;
 }

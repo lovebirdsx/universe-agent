@@ -9,6 +9,7 @@ export const FileConfigSchema = z.object({
   memory: z.boolean().optional(),
   skills: z.boolean().optional(),
   verbose: z.boolean().optional(),
+  record: z.boolean().optional(),
 });
 
 export type FileConfig = z.infer<typeof FileConfigSchema>;
@@ -23,6 +24,15 @@ export const CliConfigSchema = z.object({
   memory: z.boolean().default(true),
   skills: z.boolean().default(true),
   verbose: z.boolean().default(false),
+  record: z.boolean().default(false),
 });
 
 export type CliConfig = z.infer<typeof CliConfigSchema>;
+
+export const ReplayConfigSchema = z.object({
+  projectDir: z.string(),
+  recordingId: z.string().optional(),
+  verbose: z.boolean().default(false),
+});
+
+export type ReplayConfig = z.infer<typeof ReplayConfigSchema>;

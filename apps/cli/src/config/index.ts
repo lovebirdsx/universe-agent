@@ -1,18 +1,25 @@
-export { CliConfigSchema, FileConfigSchema, type CliConfig, type FileConfig } from './schema.js';
+export {
+  CliConfigSchema,
+  FileConfigSchema,
+  ReplayConfigSchema,
+  type CliConfig,
+  type FileConfig,
+  type ReplayConfig,
+} from './schema.js';
 export { loadConfigFile, type LoadFileOptions } from './load-file.js';
-export { createConfig, type ConfigSources } from './create-config.js';
+export { createConfig, type ConfigSources, type ConfigResult } from './create-config.js';
 
-import type { CliConfig } from './schema.js';
+import type { ConfigResult } from './create-config.js';
 import { createConfig, type ConfigSources } from './create-config.js';
 
-let _config: (CliConfig & { prompt: string | undefined }) | undefined;
+let _config: ConfigResult | undefined;
 
-export function initConfig(sources?: ConfigSources): CliConfig & { prompt: string | undefined } {
+export function initConfig(sources?: ConfigSources): ConfigResult {
   _config = createConfig(sources);
   return _config;
 }
 
-export function getConfig(): CliConfig & { prompt: string | undefined } {
+export function getConfig(): ConfigResult {
   if (!_config) {
     throw new Error('Config not initialized. Call initConfig() first.');
   }

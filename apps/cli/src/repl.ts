@@ -6,7 +6,11 @@ import type { CliAgent } from './agent.js';
 import { renderStream } from './renderer.js';
 import { fmt, createSpinner } from './format.js';
 
-function printReplHelp(): void {
+function printReplHelp(isRecording: boolean): void {
+  const recordLine = isRecording
+    ? '  /record        显示录像状态'
+    : '  /record        显示录像状态（使用 --record 启用）';
+
   console.log(
     `
 ${fmt.bold('REPL 命令:')}
@@ -14,12 +18,18 @@ ${fmt.bold('REPL 命令:')}
   /clear         新建会话（清除对话历史）
   /help          显示此帮助
   /model         显示当前模型
+  ${recordLine}
 `.trim(),
   );
 }
 
-export async function startRepl({ agent }: CliAgent, config: CliConfig): Promise<void> {
-  let threadId = crypto.randomUUID();
+export async function startRepl(
+  { agent }: CliAgent,
+  config: CliConfig & { prompt: string | undefined },
+  threadId?: string,
+): Promise<void> {
+  let currentThreadId = threadId ?? crypto.randomUUID();
+  const isRecording = config.record;
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -29,6 +39,9 @@ export async function startRepl({ agent }: CliAgent, config: CliConfig): Promise
 
   console.log(fmt.bold('UniverseAgent CLI'));
   console.log(fmt.dim(`模型: ${config.model} | 项目: ${config.projectDir}`));
+  if (isRecording) {
+    console.log(fmt.info(`录制中: ${currentThreadId}`));
+  }
   console.log(fmt.dim('输入 /help 查看命令，Ctrl+D 退出'));
   console.log();
 
@@ -48,20 +61,33 @@ export async function startRepl({ agent }: CliAgent, config: CliConfig): Promise
     }
 
     if (input === '/clear') {
-      threadId = crypto.randomUUID();
+      currentThreadId = crypto.randomUUID();
       console.log(fmt.info('会话已清除'));
+      if (isRecording) {
+        console.log(fmt.dim(`注意: 录像将继续在同一录像文件中记录`));
+      }
       rl.prompt();
       continue;
     }
 
     if (input === '/help') {
-      printReplHelp();
+      printReplHelp(isRecording);
       rl.prompt();
       continue;
     }
 
     if (input === '/model') {
       console.log(fmt.info(`当前模型: ${config.model}`));
+      rl.prompt();
+      continue;
+    }
+
+    if (input === '/record') {
+      if (isRecording) {
+        console.log(fmt.info(`录制中: ${currentThreadId}`));
+      } else {
+        console.log(fmt.info('录像未启用。使用 --record 选项启动 CLI 来启用录像。'));
+      }
       rl.prompt();
       continue;
     }
@@ -82,7 +108,7 @@ export async function startRepl({ agent }: CliAgent, config: CliConfig): Promise
         {
           streamMode: 'messages' as const,
           subgraphs: true,
-          configurable: { thread_id: threadId },
+          configurable: { thread_id: currentThreadId },
           recursionLimit: 10000,
         },
       );
@@ -110,5 +136,8 @@ export async function startRepl({ agent }: CliAgent, config: CliConfig): Promise
   }
 
   rl.close();
+  if (isRecording) {
+    console.log(fmt.dim(`\n录像已保存: ${currentThreadId}`));
+  }
   console.log(fmt.dim('\n再见!'));
 }
