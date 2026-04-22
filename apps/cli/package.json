@@ -7,7 +7,7 @@
     "deepagent": "./dist/index.js"
   },
   "scripts": {
-    "dev": "cd ../../ && tsx apps/cli/src/index.ts",
+    "start:dev": "cd ../../ && tsx apps/cli/src/index.ts",
     "build": "tsc --build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
