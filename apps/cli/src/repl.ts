@@ -8,8 +8,8 @@ import { fmt, createSpinner } from './format.js';
 
 function printReplHelp(isRecording: boolean): void {
   const recordLine = isRecording
-    ? '  /record        显示录像状态'
-    : '  /record        显示录像状态（使用 --record 启用）';
+    ? '/record        显示录像状态'
+    : '/record        显示录像状态（使用 --record 启用）';
 
   console.log(
     `
