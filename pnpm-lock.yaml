@@ -63,6 +63,9 @@ catalogs:
     '@vitejs/plugin-react':
       specifier: ^4.3.0
       version: 4.7.0
+    commander:
+      specifier: ^14.0.0
+      version: 14.0.3
     dedent:
       specifier: ^1.7.2
       version: 1.7.2
@@ -207,12 +210,21 @@ importers:
 
   apps/cli:
     dependencies:
+      '@langchain/core':
+        specifier: 'catalog:'
+        version: 1.1.40(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.214.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.1))(openai@6.34.0(zod@4.3.6))
       '@langchain/langgraph':
         specifier: 'catalog:'
         version: 1.2.8(@langchain/core@1.1.40(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.214.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.1))(openai@6.34.0(zod@4.3.6)))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zod@4.3.6)
+      '@langchain/openai':
+        specifier: 'catalog:'
+        version: 1.4.4(@langchain/core@1.1.40(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.214.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.1))(openai@6.34.0(zod@4.3.6)))
       '@universe-agent/agent':
         specifier: workspace:*
         version: link:../../packages/agent
+      commander:
+        specifier: 'catalog:'
+        version: 14.0.3
       dotenv:
         specifier: 'catalog:'
         version: 17.4.2
@@ -222,6 +234,9 @@ importers:
       picocolors:
         specifier: 'catalog:'
         version: 1.1.1
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -1698,6 +1713,10 @@ packages:
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+
+  commander@14.0.3:
+    resolution: {integrity: sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw==}
+    engines: {node: '>=20'}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -4034,6 +4053,8 @@ snapshots:
       color-name: 1.1.4
 
   color-name@1.1.4: {}
+
+  commander@14.0.3: {}
 
   concat-map@0.0.1: {}
 

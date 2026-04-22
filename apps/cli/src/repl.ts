@@ -1,7 +1,7 @@
 import readline from 'node:readline';
 import crypto from 'node:crypto';
 
-import type { CliConfig } from './config.js';
+import type { CliConfig } from './config/index.js';
 import type { CliAgent } from './agent.js';
 import { renderStream } from './renderer.js';
 import { fmt, createSpinner } from './format.js';
@@ -28,7 +28,7 @@ export async function startRepl({ agent }: CliAgent, config: CliConfig): Promise
   });
 
   console.log(fmt.bold('DeepAgent CLI'));
-  console.log(fmt.dim(`模型: ${process.env.OPENAI_MODEL} | 项目: ${config.projectDir}`));
+  console.log(fmt.dim(`模型: ${config.model} | 项目: ${config.projectDir}`));
   console.log(fmt.dim('输入 /help 查看命令，Ctrl+D 退出'));
   console.log();
 
@@ -61,7 +61,7 @@ export async function startRepl({ agent }: CliAgent, config: CliConfig): Promise
     }
 
     if (input === '/model') {
-      console.log(fmt.info(`当前模型: ${process.env.OPENAI_MODEL}`));
+      console.log(fmt.info(`当前模型: ${config.model}`));
       rl.prompt();
       continue;
     }

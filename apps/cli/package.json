@@ -23,10 +23,14 @@
   },
   "dependencies": {
     "@universe-agent/agent": "workspace:*",
+    "@langchain/core": "catalog:",
     "@langchain/langgraph": "catalog:",
+    "@langchain/openai": "catalog:",
+    "commander": "catalog:",
     "langchain": "catalog:",
     "picocolors": "catalog:",
-    "dotenv": "catalog:"
+    "dotenv": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@universe-agent/config-eslint": "workspace:*",
