@@ -100,6 +100,7 @@ export {
   generateTranscript,
   resolveRecordingDir,
   loadManifest,
+  loadAgentRecording,
   type RecordingConfig,
   type ManifestData,
   type AgentRecording,

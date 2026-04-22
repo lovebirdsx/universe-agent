@@ -1,4 +1,4 @@
-import { AIMessageChunk, ToolMessage } from 'langchain';
+import { AIMessage, AIMessageChunk, ToolMessage } from 'langchain';
 
 import { fmt } from './format.js';
 
@@ -93,6 +93,24 @@ export async function renderStream(
       continue;
     }
 
+    // 非流式 AIMessage 的工具调用（回放模式：fakeModel 产生 AIMessage 而非 AIMessageChunk）
+    if (
+      AIMessage.isInstance(message) &&
+      !AIMessageChunk.isInstance(message) &&
+      message.tool_calls?.length
+    ) {
+      for (const tc of message.tool_calls) {
+        // 刷新前一个待打印的工具头部
+        if (currentToolName && !toolHeaderPrinted) {
+          process.stdout.write(formatToolHeader(currentToolName, currentToolArgs));
+        }
+        currentToolName = tc.name;
+        currentToolArgs = JSON.stringify(tc.args);
+        toolHeaderPrinted = false;
+      }
+      continue;
+    }
+
     // 工具结果
     if (ToolMessage.isInstance(message)) {
       // 如果尚未打印工具头部则打印
@@ -127,8 +145,8 @@ export async function renderStream(
       continue;
     }
 
-    // 常规 AI 文本令牌
-    if (AIMessageChunk.isInstance(message) && message.text) {
+    // 常规 AI 文本令牌（流式 AIMessageChunk 或非流式 AIMessage）
+    if (AIMessage.isInstance(message) && message.text) {
       // 刷新待处理的工具头部
       if (currentToolName && !toolHeaderPrinted) {
         process.stdout.write(formatToolHeader(currentToolName, currentToolArgs));

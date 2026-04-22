@@ -2,7 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
 
-import type { ManifestData } from '@universe-agent/agent';
+import {
+  type ManifestData,
+  loadManifest,
+  loadAgentRecording,
+  type ModelTurn,
+} from '@universe-agent/agent';
+import { mapStoredMessagesToChatMessages } from '@langchain/core/messages';
 
 import type { ReplayConfig } from './config/index.js';
 import { createCliAgent } from './agent.js';
@@ -200,6 +206,52 @@ export async function handleReplay(replayConfig: ReplayConfig): Promise<void> {
   );
   console.log();
 
+  // 从录像中提取每轮用户消息
+  const recordingDirPath = selected.dirPath;
+  const manifest = loadManifest(recordingDirPath);
+  const mainRecording = loadAgentRecording(recordingDirPath, 'main');
+  const modelTurns = mainRecording.turns.filter((t): t is ModelTurn => t.type === 'model');
+
+  // 从 sequence 中找出主 agent 的 model 条目，提取每轮用户输入
+  const mainModelEntries = manifest.sequence.filter((s) => s.agent === 'main' && s.type !== 'tool');
+
+  // 收集每轮的用户消息（从 request 增量中提取 HumanMessage）
+  interface ReplayTurn {
+    userContent: string;
+    turnIndex: number;
+  }
+  const replayTurns: ReplayTurn[] = [];
+
+  for (const entry of mainModelEntries) {
+    const turn = modelTurns.find((t) => t.index === entry.index);
+    if (!turn) continue;
+
+    // 从请求增量中提取用户消息
+    const requestMessages = mapStoredMessagesToChatMessages(turn.request);
+    const humanMessages = requestMessages.filter((m) => m.getType() === 'human');
+    // 取最后一条用户消息作为本轮提示词
+    const lastHuman = humanMessages[humanMessages.length - 1];
+    if (!lastHuman) continue;
+
+    const content = typeof lastHuman.content === 'string' ? lastHuman.content : '';
+    if (!content) continue;
+
+    // 只记录包含新用户输入的轮次（跳过工具调用后的模型续答）
+    // 判断依据：如果这个 turn 的 request 中有 human 消息，说明是新一轮对话
+    replayTurns.push({ userContent: content, turnIndex: entry.index });
+  }
+
+  // 去重：同一用户消息可能对应多个 model turn（工具调用后续答），只保留首次出现
+  const seenContent = new Set<string>();
+  const uniqueTurns: ReplayTurn[] = [];
+  for (const t of replayTurns) {
+    const key = `${String(t.turnIndex)}:${t.userContent}`;
+    if (!seenContent.has(key)) {
+      seenContent.add(key);
+      uniqueTurns.push(t);
+    }
+  }
+
   const cliAgent = await createCliAgent(
     {
       model: 'replay', // replay 模式不使用真实模型
@@ -217,16 +269,23 @@ export async function handleReplay(replayConfig: ReplayConfig): Promise<void> {
   );
 
   try {
-    const stream = await cliAgent.agent.stream(
-      { messages: [{ role: 'user', content: '' }] },
-      {
-        streamMode: 'messages' as const,
-        subgraphs: true,
-        configurable: { thread_id: selected.id },
-        recursionLimit: 10000,
-      },
-    );
-    await renderStream(stream, { verbose: replayConfig.verbose });
+    for (const turn of uniqueTurns) {
+      // 显示用户提示词
+      console.log(fmt.bold(`> ${turn.userContent}`));
+      console.log();
+
+      const stream = await cliAgent.agent.stream(
+        { messages: [{ role: 'user', content: turn.userContent }] },
+        {
+          streamMode: 'messages' as const,
+          subgraphs: true,
+          configurable: { thread_id: selected.id },
+          recursionLimit: 10000,
+        },
+      );
+      await renderStream(stream, { verbose: replayConfig.verbose });
+      console.log();
+    }
   } finally {
     await cliAgent.backend.close();
   }
