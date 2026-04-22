@@ -25,8 +25,8 @@ export function createProgram(): Command {
     .option('--no-memory', '禁用 AGENTS.md 记忆加载')
     .option('--no-skills', '禁用 skills 加载')
     .option('--verbose', '显示调试信息', false)
-    .option('--model <model>', '模型名称')
-    .option('--config <path>', '配置文件路径');
+    .option('-m, --model <model>', '模型名称')
+    .option('-c, --config <path>', '配置文件路径');
 
   return program;
 }

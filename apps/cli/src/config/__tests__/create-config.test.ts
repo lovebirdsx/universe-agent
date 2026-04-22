@@ -114,8 +114,8 @@ describe('createConfig merge priority', () => {
   const baseArgv = ['node', 'universe-agent'];
 
   it('env vars override file defaults (via schema defaults)', () => {
-    // Schema default for model is 'anthropic:claude-sonnet-4-6'
-    // Env var should override it
+    // 模型的默认值是 'anthropic:claude-sonnet-4-6'
+    // 环境变量应该覆盖它
     const config = createConfig({
       argv: baseArgv,
       env: { OPENAI_MODEL: 'env-override' },

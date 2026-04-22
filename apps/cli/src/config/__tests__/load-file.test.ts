@@ -57,7 +57,7 @@ describe('loadConfigFile', () => {
     const result = loadConfigFile({ projectDir: '/project' });
 
     expect(result).toEqual({ model: 'project-model' });
-    // Should only read once (first match)
+    // 应该只读取一次（第一个匹配项）
     expect(fs.readFileSync).toHaveBeenCalledTimes(1);
   });
 
@@ -73,7 +73,7 @@ describe('loadConfigFile', () => {
     vi.mocked(fs.readFileSync).mockReturnValue('{ invalid json }');
 
     const result = loadConfigFile({ projectDir: '/project' });
-    // readJsonFile catches parse errors and returns undefined, so it falls through
+    // readJsonFile 捕获解析错误并返回 undefined，因此它会继续
     expect(result).toBeUndefined();
   });
 });

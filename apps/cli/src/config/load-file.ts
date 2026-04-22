@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { parse } from 'jsonc-parser';
 
 import { FileConfigSchema, type FileConfig } from './schema.js';
 
@@ -39,7 +40,7 @@ function buildCandidates(options: LoadFileOptions): string[] {
 function readJsonFile(filePath: string): unknown | undefined {
   try {
     const raw = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(raw) as unknown;
+    return parse(raw) as unknown;
   } catch {
     return undefined;
   }

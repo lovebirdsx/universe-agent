@@ -31,7 +31,7 @@ function formatToolHeader(toolName: string, argsJson: string): string {
       const args = JSON.parse(argsJson) as { subagent_type?: string; description?: string };
       return `\n  ${fmt.toolName('task')} ${fmt.dim('\u2192')} ${fmt.subagent(args.subagent_type ?? 'unknown')}`;
     } catch {
-      // args may be incomplete
+      // 参数可能不完整
     }
   }
 
@@ -42,7 +42,7 @@ function formatToolHeader(toolName: string, argsJson: string): string {
         return `\n  ${fmt.toolName(toolName)}(${fmt.dim(JSON.stringify(args.path))})`;
       }
     } catch {
-      // ignore
+      // 忽略
     }
   }
 
@@ -53,7 +53,7 @@ function formatToolHeader(toolName: string, argsJson: string): string {
         return `\n  ${fmt.toolName(toolName)}(${fmt.dim(JSON.stringify(args.command))})`;
       }
     } catch {
-      // ignore
+      // 忽略
     }
   }
 
@@ -75,11 +75,11 @@ export async function renderStream(
     const [message] = chunk as [unknown];
     const isSubagent = namespace.some((s: string) => s.startsWith('tools:'));
 
-    // Tool call chunks (streaming tool invocations)
+    // 工具调用分块（流式工具调用）
     if (AIMessageChunk.isInstance(message) && message.tool_call_chunks?.length) {
       for (const tc of message.tool_call_chunks) {
         if (tc.name) {
-          // New tool call starting — flush previous if needed
+          // 新的工具调用开始 — 必要时刷新前一个
           if (currentToolName && !toolHeaderPrinted) {
             process.stdout.write(formatToolHeader(currentToolName, currentToolArgs));
           }
@@ -93,9 +93,9 @@ export async function renderStream(
       continue;
     }
 
-    // Tool results
+    // 工具结果
     if (ToolMessage.isInstance(message)) {
-      // Print tool header if not yet printed
+      // 如果尚未打印工具头部则打印
       if (currentToolName && !toolHeaderPrinted) {
         process.stdout.write(formatToolHeader(currentToolName, currentToolArgs));
         toolHeaderPrinted = true;
@@ -118,7 +118,7 @@ export async function renderStream(
         process.stdout.write(`\n    ${fmt.dim(`\u2713 wrote ${String(lineCount)} lines`)}`);
       }
 
-      // Reset tool state
+      // 重置工具状态
       currentToolName = '';
       currentToolArgs = '';
       toolHeaderPrinted = false;
@@ -127,9 +127,9 @@ export async function renderStream(
       continue;
     }
 
-    // Regular AI text tokens
+    // 常规 AI 文本令牌
     if (AIMessageChunk.isInstance(message) && message.text) {
-      // Flush pending tool header
+      // 刷新待处理的工具头部
       if (currentToolName && !toolHeaderPrinted) {
         process.stdout.write(formatToolHeader(currentToolName, currentToolArgs));
         toolHeaderPrinted = true;

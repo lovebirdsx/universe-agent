@@ -42,7 +42,7 @@ export async function startRepl({ agent }: CliAgent, config: CliConfig): Promise
       continue;
     }
 
-    // Built-in commands
+    // 内置命令
     if (input === '/quit' || input === '/exit') {
       break;
     }
@@ -72,7 +72,7 @@ export async function startRepl({ agent }: CliAgent, config: CliConfig): Promise
       continue;
     }
 
-    // Send to agent
+    // 发送给 Agent
     const spinner = createSpinner('思考中...');
     let spinnerStopped = false;
 
@@ -87,7 +87,7 @@ export async function startRepl({ agent }: CliAgent, config: CliConfig): Promise
         },
       );
 
-      // Stop spinner on first output
+      // 第一个输出时停止 spinner
       const wrappedStream = (async function* () {
         for await (const item of stream) {
           if (!spinnerStopped) {

@@ -13,7 +13,7 @@ async function main(): Promise<void> {
 
   try {
     if (config.prompt) {
-      // One-shot mode
+      // 一次性模式
       const stream = await cliAgent.agent.stream(
         { messages: [{ role: 'user', content: config.prompt }] },
         {
@@ -24,7 +24,7 @@ async function main(): Promise<void> {
       );
       await renderStream(stream, { verbose: config.verbose });
     } else {
-      // Interactive REPL mode
+      // 交互式 REPL 模式
       await startRepl(cliAgent, config);
     }
   } finally {

@@ -22,20 +22,21 @@
     "clean": "tsc --build --clean"
   },
   "dependencies": {
-    "@universe-agent/agent": "workspace:*",
     "@langchain/core": "catalog:",
     "@langchain/langgraph": "catalog:",
     "@langchain/openai": "catalog:",
+    "@universe-agent/agent": "workspace:*",
     "commander": "catalog:",
+    "dotenv": "catalog:",
+    "jsonc-parser": "catalog:",
     "langchain": "catalog:",
     "picocolors": "catalog:",
-    "dotenv": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "@universe-agent/config-eslint": "workspace:*",
     "@universe-agent/config-ts": "workspace:*",
-    "@types/node": "catalog:",
     "eslint": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
