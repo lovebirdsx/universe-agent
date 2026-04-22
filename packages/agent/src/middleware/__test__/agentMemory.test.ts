@@ -10,16 +10,16 @@ import type { MiddlewareHandler } from '../types.js';
 describe('Agent Memory Middleware', () => {
   let tempDir: string;
   let mockSettings: Settings;
-  let userAgentDir: string;
+  let userMemoryDir: string;
   let projectAgentDir: string;
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'universe-agent-memory-mw-test-'));
 
-    // Create user and project agent directories
-    userAgentDir = path.join(tempDir, '.universe-agent', 'test-agent');
+    // Create directories for memory files
+    userMemoryDir = path.join(tempDir, '.universe-agent');
     projectAgentDir = path.join(tempDir, 'project', '.universe-agent');
-    fs.mkdirSync(userAgentDir, { recursive: true });
+    fs.mkdirSync(userMemoryDir, { recursive: true });
     fs.mkdirSync(projectAgentDir, { recursive: true });
 
     // Create .git in project for detection
@@ -36,8 +36,8 @@ describe('Agent Memory Middleware', () => {
         fs.mkdirSync(dir, { recursive: true });
         return dir;
       },
-      getUserAgentMdPath: (name: string) => path.join(tempDir, '.universe-agent', name, 'agent.md'),
-      getProjectAgentMdPath: () => path.join(tempDir, 'project', '.universe-agent', 'agent.md'),
+      getUserAgentMdPath: () => path.join(tempDir, '.universe-agent', 'AGENTS.md'),
+      getProjectAgentMdPath: () => path.join(tempDir, 'project', '.universe-agent', 'AGENTS.md'),
       getUserSkillsDir: (name: string) => path.join(tempDir, '.universe-agent', name, 'skills'),
       ensureUserSkillsDir: (name: string) => {
         const dir = path.join(tempDir, '.universe-agent', name, 'skills');
@@ -55,6 +55,10 @@ describe('Agent Memory Middleware', () => {
         fs.mkdirSync(dir, { recursive: true });
         return dir;
       },
+      getAllMemorySources: () => [
+        path.join(tempDir, '.universe-agent', 'AGENTS.md'),
+        path.join(tempDir, 'project', '.universe-agent', 'AGENTS.md'),
+      ],
     };
   });
 
@@ -84,9 +88,9 @@ describe('Agent Memory Middleware', () => {
   });
 
   describe('beforeAgent hook', () => {
-    it('should load user memory from agent.md', () => {
+    it('should load user memory from AGENTS.md', () => {
       const userMemoryContent = '# User Preferences\n\n- Be concise\n- Use TypeScript';
-      fs.writeFileSync(path.join(userAgentDir, 'agent.md'), userMemoryContent);
+      fs.writeFileSync(path.join(userMemoryDir, 'AGENTS.md'), userMemoryContent);
 
       const middleware = createAgentMemoryMiddleware({
         settings: mockSettings,
@@ -99,9 +103,9 @@ describe('Agent Memory Middleware', () => {
       expect(result!.userMemory).toBe(userMemoryContent);
     });
 
-    it('should load project memory from agent.md', () => {
+    it('should load project memory from AGENTS.md', () => {
       const projectMemoryContent = '# Project Instructions\n\n- Use FastAPI\n- Write tests';
-      fs.writeFileSync(path.join(projectAgentDir, 'agent.md'), projectMemoryContent);
+      fs.writeFileSync(path.join(projectAgentDir, 'AGENTS.md'), projectMemoryContent);
 
       const middleware = createAgentMemoryMiddleware({
         settings: mockSettings,
@@ -118,8 +122,8 @@ describe('Agent Memory Middleware', () => {
       const userMemoryContent = 'User memory content';
       const projectMemoryContent = 'Project memory content';
 
-      fs.writeFileSync(path.join(userAgentDir, 'agent.md'), userMemoryContent);
-      fs.writeFileSync(path.join(projectAgentDir, 'agent.md'), projectMemoryContent);
+      fs.writeFileSync(path.join(userMemoryDir, 'AGENTS.md'), userMemoryContent);
+      fs.writeFileSync(path.join(projectAgentDir, 'AGENTS.md'), projectMemoryContent);
 
       const middleware = createAgentMemoryMiddleware({
         settings: mockSettings,
@@ -145,7 +149,7 @@ describe('Agent Memory Middleware', () => {
 
     it('should handle missing project memory gracefully', () => {
       const userMemoryContent = 'User memory only';
-      fs.writeFileSync(path.join(userAgentDir, 'agent.md'), userMemoryContent);
+      fs.writeFileSync(path.join(userMemoryDir, 'AGENTS.md'), userMemoryContent);
 
       const middleware = createAgentMemoryMiddleware({
         settings: mockSettings,
@@ -160,7 +164,7 @@ describe('Agent Memory Middleware', () => {
 
     it('should not reload memory if already in state', () => {
       const userMemoryContent = 'Original user memory';
-      fs.writeFileSync(path.join(userAgentDir, 'agent.md'), userMemoryContent);
+      fs.writeFileSync(path.join(userMemoryDir, 'AGENTS.md'), userMemoryContent);
 
       const middleware = createAgentMemoryMiddleware({
         settings: mockSettings,
@@ -183,7 +187,7 @@ describe('Agent Memory Middleware', () => {
   describe('wrapModelCall hook', () => {
     it('should inject user memory content into system prompt', async () => {
       const userMemoryContent = 'User preferences here';
-      fs.writeFileSync(path.join(userAgentDir, 'agent.md'), userMemoryContent);
+      fs.writeFileSync(path.join(userMemoryDir, 'AGENTS.md'), userMemoryContent);
 
       const middleware = createAgentMemoryMiddleware({
         settings: mockSettings,
@@ -213,7 +217,7 @@ describe('Agent Memory Middleware', () => {
 
     it('should inject project memory content into system prompt', async () => {
       const projectMemoryContent = 'Project instructions here';
-      fs.writeFileSync(path.join(projectAgentDir, 'agent.md'), projectMemoryContent);
+      fs.writeFileSync(path.join(projectAgentDir, 'AGENTS.md'), projectMemoryContent);
 
       const middleware = createAgentMemoryMiddleware({
         settings: mockSettings,
@@ -309,8 +313,8 @@ describe('Agent Memory Middleware', () => {
         handler,
       );
 
-      expect(capturedRequest.systemPrompt).toContain('(No user agent.md)');
-      expect(capturedRequest.systemPrompt).toContain('(No project agent.md)');
+      expect(capturedRequest.systemPrompt).toContain('(No user AGENTS.md)');
+      expect(capturedRequest.systemPrompt).toContain('(No project AGENTS.md)');
     });
 
     it('should use custom system prompt template if provided', async () => {
@@ -318,8 +322,8 @@ describe('Agent Memory Middleware', () => {
       const userMemoryContent = 'My preferences';
       const projectMemoryContent = 'My project';
 
-      fs.writeFileSync(path.join(userAgentDir, 'agent.md'), userMemoryContent);
-      fs.writeFileSync(path.join(projectAgentDir, 'agent.md'), projectMemoryContent);
+      fs.writeFileSync(path.join(userMemoryDir, 'AGENTS.md'), userMemoryContent);
+      fs.writeFileSync(path.join(projectAgentDir, 'AGENTS.md'), projectMemoryContent);
 
       const middleware = createAgentMemoryMiddleware({
         settings: mockSettings,

@@ -25,6 +25,7 @@ export interface SettingsOptions {
  * - User-level universe-agent directory (~/.universe-agent)
  * - Agent-specific directories and files
  * - Skills directories (user and project level)
+ * - Multi-tool memory file discovery (Copilot, Claude Code, Codex)
  */
 export interface Settings {
   /** Detected project root directory, or null if not in a git project */
@@ -53,15 +54,14 @@ export interface Settings {
   ensureAgentDir(agentName: string): string;
 
   /**
-   * Get user-level agent.md path for a specific agent.
-   * @param agentName - Name of the agent
-   * @returns Path to ~/.universe-agent/{agentName}/agent.md
+   * Get user-level AGENTS.md path.
+   * @returns Path to ~/.universe-agent/AGENTS.md
    */
-  getUserAgentMdPath(agentName: string): string;
+  getUserAgentMdPath(): string;
 
   /**
-   * Get project-level agent.md path.
-   * @returns Path to {projectRoot}/.universe-agent/agent.md, or null if not in a project
+   * Get project-level AGENTS.md path.
+   * @returns Path to {projectRoot}/.universe-agent/AGENTS.md, or null if not in a project
    */
   getProjectAgentMdPath(): string | null;
 
@@ -96,6 +96,25 @@ export interface Settings {
    * @returns Path to {projectRoot}/.universe-agent/, or null if not in a project
    */
   ensureProjectUniverseAgentDir(): string | null;
+
+  /**
+   * Get all candidate memory file paths across supported AI coding tools.
+   *
+   * Returns paths for universe-agent, GitHub Copilot, Claude Code, and OpenAI Codex.
+   * User/global paths come first, project-level paths come last (later = higher precedence).
+   * Missing files are handled gracefully by the memory middleware.
+   *
+   * Order (first loaded = lowest precedence):
+   * 1. ~/.claude/CLAUDE.md (Claude Code global)
+   * 2. ~/.universe-agent/AGENTS.md (Universe Agent global)
+   * 3. {projectRoot}/.github/copilot-instructions.md (Copilot)
+   * 4. {projectRoot}/AGENTS.md (Codex)
+   * 5. {projectRoot}/CLAUDE.md (Claude Code)
+   * 6. {projectRoot}/.universe-agent/AGENTS.md (Universe Agent, highest)
+   *
+   * @returns Array of candidate file paths, ordered by precedence (last wins)
+   */
+  getAllMemorySources(): string[];
 }
 
 /**
@@ -173,15 +192,15 @@ export function createSettings(options: SettingsOptions = {}): Settings {
       return agentDir;
     },
 
-    getUserAgentMdPath(agentName: string): string {
-      return path.join(this.getAgentDir(agentName), 'agent.md');
+    getUserAgentMdPath(): string {
+      return path.join(userUniverseAgentDir, 'AGENTS.md');
     },
 
     getProjectAgentMdPath(): string | null {
       if (!projectRoot) {
         return null;
       }
-      return path.join(projectRoot, '.universe-agent', 'agent.md');
+      return path.join(projectRoot, '.universe-agent', 'AGENTS.md');
     },
 
     getUserSkillsDir(agentName: string): string {
@@ -217,6 +236,36 @@ export function createSettings(options: SettingsOptions = {}): Settings {
       const universeAgentDir = path.join(projectRoot, '.universe-agent');
       fs.mkdirSync(universeAgentDir, { recursive: true });
       return universeAgentDir;
+    },
+
+    getAllMemorySources(): string[] {
+      const sources: string[] = [];
+
+      // === User/Global level (lowest precedence, loaded first) ===
+
+      // Claude Code global: ~/.claude/CLAUDE.md
+      sources.push(path.join(os.homedir(), '.claude', 'CLAUDE.md'));
+
+      // Universe Agent user-level: ~/.universe-agent/AGENTS.md
+      sources.push(this.getUserAgentMdPath());
+
+      // === Project level (highest precedence, loaded last) ===
+
+      if (projectRoot) {
+        // GitHub Copilot: .github/copilot-instructions.md
+        sources.push(path.join(projectRoot, '.github', 'copilot-instructions.md'));
+
+        // OpenAI Codex: AGENTS.md (project root)
+        sources.push(path.join(projectRoot, 'AGENTS.md'));
+
+        // Claude Code: CLAUDE.md (project root)
+        sources.push(path.join(projectRoot, 'CLAUDE.md'));
+
+        // Universe Agent project-level: .universe-agent/AGENTS.md
+        sources.push(path.join(projectRoot, '.universe-agent', 'AGENTS.md'));
+      }
+
+      return sources;
     },
   };
 }

@@ -115,7 +115,7 @@ async function main() {
   console.log(`   Has project: ${settings.hasProject}\n`);
 
   // Get memory paths (for display - we'll use memory middleware)
-  const userMemoryPath = settings.getUserAgentMdPath(AGENT_NAME);
+  const userMemoryPath = settings.getUserAgentMdPath();
   const projectMemoryPath = settings.getProjectAgentMdPath();
 
   console.log('🧠 Memory locations:');

@@ -150,8 +150,8 @@ describe('Config Module', () => {
     describe('getUserAgentMdPath', () => {
       it('should return correct path', () => {
         const settings = createSettings({ startPath: tempDir });
-        const result = settings.getUserAgentMdPath('my-agent');
-        expect(result).toBe(path.join(os.homedir(), '.universe-agent', 'my-agent', 'agent.md'));
+        const result = settings.getUserAgentMdPath();
+        expect(result).toBe(path.join(os.homedir(), '.universe-agent', 'AGENTS.md'));
       });
     });
 
@@ -167,7 +167,7 @@ describe('Config Module', () => {
 
         const settings = createSettings({ startPath: tempDir });
         const result = settings.getProjectAgentMdPath();
-        expect(result).toBe(path.join(tempDir, '.universe-agent', 'agent.md'));
+        expect(result).toBe(path.join(tempDir, '.universe-agent', 'AGENTS.md'));
       });
     });
 
@@ -239,6 +239,48 @@ describe('Config Module', () => {
         const result = settings.ensureProjectUniverseAgentDir();
         expect(result).toBe(path.join(tempDir, '.universe-agent'));
         expect(fs.existsSync(result!)).toBe(true);
+      });
+    });
+
+    describe('getAllMemorySources', () => {
+      it('should return only user-level paths when not in a project', () => {
+        const settings = createSettings({ startPath: tempDir });
+        const sources = settings.getAllMemorySources();
+
+        expect(sources).toHaveLength(2);
+        expect(sources[0]).toBe(path.join(os.homedir(), '.claude', 'CLAUDE.md'));
+        expect(sources[1]).toBe(path.join(os.homedir(), '.universe-agent', 'AGENTS.md'));
+      });
+
+      it('should return all paths when in a project', () => {
+        const gitDir = path.join(tempDir, '.git');
+        fs.mkdirSync(gitDir);
+
+        const settings = createSettings({ startPath: tempDir });
+        const sources = settings.getAllMemorySources();
+
+        expect(sources).toHaveLength(6);
+        // User/global level
+        expect(sources[0]).toBe(path.join(os.homedir(), '.claude', 'CLAUDE.md'));
+        expect(sources[1]).toBe(path.join(os.homedir(), '.universe-agent', 'AGENTS.md'));
+        // Project level
+        expect(sources[2]).toBe(path.join(tempDir, '.github', 'copilot-instructions.md'));
+        expect(sources[3]).toBe(path.join(tempDir, 'AGENTS.md'));
+        expect(sources[4]).toBe(path.join(tempDir, 'CLAUDE.md'));
+        expect(sources[5]).toBe(path.join(tempDir, '.universe-agent', 'AGENTS.md'));
+      });
+
+      it('should have universe-agent project path last (highest precedence)', () => {
+        const gitDir = path.join(tempDir, '.git');
+        fs.mkdirSync(gitDir);
+
+        const settings = createSettings({ startPath: tempDir });
+        const sources = settings.getAllMemorySources();
+
+        const lastSource = sources[sources.length - 1]!;
+        expect(lastSource).toContain('.universe-agent');
+        expect(lastSource).toContain('AGENTS.md');
+        expect(lastSource).toBe(path.join(tempDir, '.universe-agent', 'AGENTS.md'));
       });
     });
   });

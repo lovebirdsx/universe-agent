@@ -41,12 +41,7 @@ export async function createCliAgent(config: CliConfig): Promise<CliAgent> {
     timeout: 120,
   });
 
-  const memory: string[] = [];
-  if (config.memory) {
-    const projectAgentMd = settings.getProjectAgentMdPath();
-    if (projectAgentMd) memory.push(projectAgentMd);
-    memory.push(settings.getUserAgentMdPath('cli'));
-  }
+  const memory: string[] = config.memory ? settings.getAllMemorySources() : [];
 
   const skills: string[] = [];
   if (config.skills) {

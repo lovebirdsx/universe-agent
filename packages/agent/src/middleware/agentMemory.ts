@@ -255,7 +255,7 @@ export function createAgentMemoryMiddleware(options: AgentMemoryMiddlewareOption
 
       // Load user memory if not already in state
       if (!('userMemory' in state)) {
-        const userPath = settings.getUserAgentMdPath(assistantId);
+        const userPath = settings.getUserAgentMdPath();
         if (fs.existsSync(userPath)) {
           try {
             result.userMemory = fs.readFileSync(userPath, 'utf-8');
@@ -288,8 +288,8 @@ export function createAgentMemoryMiddleware(options: AgentMemoryMiddlewareOption
 
       // Format memory section with both memories
       const memorySection = template
-        .replace('{user_memory}', userMemory || '(No user agent.md)')
-        .replace('{project_memory}', projectMemory || '(No project agent.md)');
+        .replace('{user_memory}', userMemory || '(No user AGENTS.md)')
+        .replace('{project_memory}', projectMemory || '(No project AGENTS.md)');
 
       // Format long-term memory documentation
       const memoryDocs = LONGTERM_MEMORY_SYSTEM_PROMPT.replaceAll(

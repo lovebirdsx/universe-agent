@@ -70,10 +70,20 @@ describe('loadConfigFile', () => {
   });
 
   it('handles malformed JSON gracefully', () => {
-    vi.mocked(fs.readFileSync).mockReturnValue('{ invalid json }');
+    vi.mocked(fs.readFileSync).mockReturnValue('# invalid json }');
 
     const result = loadConfigFile({ projectDir: '/project' });
     // readJsonFile 捕获解析错误并返回 undefined，因此它会继续
     expect(result).toBeUndefined();
+  });
+
+  it('handles JSONC with comments gracefully', () => {
+    vi.mocked(fs.readFileSync).mockReturnValue(`{
+      // This is a comment
+      "model": "gpt-4o"
+    }`);
+
+    const result = loadConfigFile({ projectDir: '/project' });
+    expect(result).toEqual({ model: 'gpt-4o' });
   });
 });

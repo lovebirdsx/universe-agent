@@ -174,8 +174,8 @@ description: Test skill
           fs.mkdirSync(dir, { recursive: true });
           return dir;
         },
-        getUserAgentMdPath: (name: string) => path.join(userUniverseAgentDir, name, 'agent.md'),
-        getProjectAgentMdPath: () => path.join(projectDir, '.universe-agent', 'agent.md'),
+        getUserAgentMdPath: () => path.join(userUniverseAgentDir, 'AGENTS.md'),
+        getProjectAgentMdPath: () => path.join(projectDir, '.universe-agent', 'AGENTS.md'),
         getUserSkillsDir: (name: string) => path.join(userUniverseAgentDir, name, 'skills'),
         ensureUserSkillsDir: (name: string) => {
           const dir = path.join(userUniverseAgentDir, name, 'skills');
@@ -185,6 +185,10 @@ description: Test skill
         getProjectSkillsDir: () => path.join(projectDir, '.universe-agent', 'skills'),
         ensureProjectSkillsDir: () => path.join(projectDir, '.universe-agent', 'skills'),
         ensureProjectUniverseAgentDir: () => path.join(projectDir, '.universe-agent'),
+        getAllMemorySources: () => [
+          path.join(userUniverseAgentDir, 'AGENTS.md'),
+          path.join(projectDir, '.universe-agent', 'AGENTS.md'),
+        ],
       };
 
       // Create user skills directory
