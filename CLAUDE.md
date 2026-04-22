@@ -26,6 +26,7 @@ apps/
   api/            # 后端 API 服务，使用 Hono
   web/            # 前端 React 应用，使用 Vite
   examples/       # 示例代码
+  cli/            # 命令行工具
 packages/
   agent/          # DeepAgent 框架（见下文）
   shared/         # 纯工具函数
