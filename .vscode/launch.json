@@ -13,7 +13,9 @@
         "tsx",
       ],
       "program": "${workspaceFolder}/apps/cli/src/index.ts",
-      "args": [],
+      "args": [
+        "项目介绍"
+      ],
       "sourceMaps": true,
       "outFiles": [
         "${workspaceFolder}/packages/**/dist/**/*.js"

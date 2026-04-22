@@ -222,6 +222,7 @@ export async function handleReplay(replayConfig: ReplayConfig): Promise<void> {
       {
         streamMode: 'messages' as const,
         subgraphs: true,
+        configurable: { thread_id: selected.id },
         recursionLimit: 10000,
       },
     );

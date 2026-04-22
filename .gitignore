@@ -14,3 +14,6 @@ workspace/
 
 # 测试的临时数据文件夹
 .data/
+
+# 录像文件夹
+.universe-agent/recordings/

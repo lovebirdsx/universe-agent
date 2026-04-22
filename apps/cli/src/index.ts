@@ -26,10 +26,9 @@ async function main(): Promise<void> {
 
   // 录像配置
   let recording: RecordingConfig | undefined;
-  let threadId: string | undefined;
+  const threadId = crypto.randomUUID();
 
   if (config.record) {
-    threadId = crypto.randomUUID();
     recording = {
       mode: 'record',
       path: path.join(config.projectDir, '.universe-agent', 'recordings'),
@@ -51,7 +50,7 @@ async function main(): Promise<void> {
         {
           streamMode: 'messages' as const,
           subgraphs: true,
-          ...(threadId ? { configurable: { thread_id: threadId } } : {}),
+          configurable: { thread_id: threadId },
           recursionLimit: 10000,
         },
       );

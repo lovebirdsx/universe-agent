@@ -87,15 +87,17 @@ export function createConfig(sources: ConfigSources = {}): ConfigResult {
     tavilyApiKey: env.TAVILY_API_KEY,
   });
 
-  // 6. 将 CLI 选项映射到配置形状（仅包括显式设置的值）
+  // 6. 将 CLI 选项映射到配置形状（仅包括用户显式设置的值，排除默认值）
+  const explicit = (name: string) => program.getOptionValueSource(name) !== 'default';
+
   const cliConfig = stripUndefined({
-    model: opts.model,
-    systemPrompt: opts.system,
+    model: explicit('model') ? opts.model : undefined,
+    systemPrompt: explicit('system') ? opts.system : undefined,
     projectDir,
-    memory: opts.memory,
-    skills: opts.skills,
-    verbose: opts.verbose,
-    record: opts.record,
+    memory: explicit('memory') ? opts.memory : undefined,
+    skills: explicit('skills') ? opts.skills : undefined,
+    verbose: explicit('verbose') ? opts.verbose : undefined,
+    record: explicit('record') ? opts.record : undefined,
   });
 
   // 7. 合并：defaults < file < envVars < cli
