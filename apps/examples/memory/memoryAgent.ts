@@ -1,7 +1,7 @@
 /**
  * Memory Agent Example
  *
- * This example demonstrates how to use the `memory` parameter in createDeepAgent
+ * This example demonstrates how to use the `memory` parameter in createUniverseAgent
  * to load persistent context from AGENTS.md files.
  *
  * AGENTS.md files follow the agents.md specification (https://agents.md/) and provide
@@ -18,7 +18,7 @@ import 'dotenv/config';
 import { HumanMessage } from '@langchain/core/messages';
 import * as path from 'node:path';
 
-import { createDeepAgent, FilesystemBackend } from '@universe-agent/agent';
+import { createUniverseAgent, FilesystemBackend } from '@universe-agent/agent';
 import { fileURLToPath } from 'node:url';
 
 // Path to this example directory (where AGENTS.md is located)
@@ -36,7 +36,7 @@ async function main() {
   // Create the agent with memory sources
   // The `memory` parameter accepts an array of paths to AGENTS.md files
   // These are loaded at startup and injected into the system prompt
-  const agent = createDeepAgent({
+  const agent = createUniverseAgent({
     systemPrompt: `You are a helpful coding assistant.
 When asked about project context, code style, or build commands,
 refer to the memory that was loaded from AGENTS.md files.`,

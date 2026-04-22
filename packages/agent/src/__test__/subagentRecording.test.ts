@@ -15,7 +15,7 @@ import {
   loadToolResults,
   createRecordingModel,
 } from '../recording.js';
-import { createDeepAgent, type CompiledSubAgent, type SubAgent } from '../index.js';
+import { createUniverseAgent, type CompiledSubAgent, type SubAgent } from '../index.js';
 import type { BaseLanguageModel } from '@langchain/core/language_models/base';
 
 // ─── Shared helpers ────────────────────────────────────────────────────────
@@ -134,11 +134,11 @@ describe('subagent recording', () => {
     it('should create independent recording when CompiledSubAgent has its own recording config', async () => {
       const subRecDir = path.join(tmpDir, 'sub-agent-recording');
 
-      // 创建子 DeepAgent，带独立录像配置
+      // 创建子 UniverseAgent，带独立录像配置
       // 使用 fakeModel 响应：子 agent 直接回复（不调用 tool）
       const subModel = fakeModel().respond(new AIMessage({ content: 'Research completed' }));
 
-      const researchAgent = createDeepAgent({
+      const researchAgent = createUniverseAgent({
         model: subModel,
         systemPrompt: 'You are a research specialist.',
         tools: [getNews],
@@ -584,7 +584,7 @@ describe('subagent recording', () => {
           .respond(new AIMessage({ content: 'Verification complete.' })),
       );
 
-      const parentAgent = createDeepAgent({
+      const parentAgent = createUniverseAgent({
         model: parentModel,
         systemPrompt: 'You are a coordinator.',
         tools: [],
@@ -662,7 +662,7 @@ describe('subagent recording', () => {
           .respond(new AIMessage({ content: 'Done.' })),
       );
 
-      const parentAgent = createDeepAgent({
+      const parentAgent = createUniverseAgent({
         model: parentModel,
         systemPrompt: 'You are a coordinator.',
         tools: [],
@@ -720,10 +720,10 @@ describe('subagent recording', () => {
   });
 
   // -----------------------------------------------------------------------
-  // 8. createDeepAgent 父子 agent 完整录制与回放
+  // 8. createUniverseAgent 父子 agent 完整录制与回放
   // -----------------------------------------------------------------------
-  describe('createDeepAgent hierarchical recording and replay', () => {
-    it('should record both parent and child agent when both use createDeepAgent with recording', async () => {
+  describe('createUniverseAgent hierarchical recording and replay', () => {
+    it('should record both parent and child agent when both use createUniverseAgent with recording', async () => {
       const parentRecDir = path.join(tmpDir, 'parent-rec');
       const childRecDir = path.join(tmpDir, 'child-rec');
 
@@ -734,7 +734,7 @@ describe('subagent recording', () => {
         ),
       );
 
-      const childAgent = createDeepAgent({
+      const childAgent = createUniverseAgent({
         model: childModel,
         systemPrompt: 'You are a research specialist.',
         tools: [getNews],
@@ -764,7 +764,7 @@ describe('subagent recording', () => {
           ),
       );
 
-      const parentAgent = createDeepAgent({
+      const parentAgent = createUniverseAgent({
         model: parentModel,
         systemPrompt: 'You are a coordinator.',
         tools: [],
@@ -828,7 +828,7 @@ describe('subagent recording', () => {
         ),
       );
 
-      const childAgent = createDeepAgent({
+      const childAgent = createUniverseAgent({
         model: childModel,
         systemPrompt: 'You are a research specialist.',
         tools: [getNews],
@@ -857,7 +857,7 @@ describe('subagent recording', () => {
           ),
       );
 
-      const parentAgent = createDeepAgent({
+      const parentAgent = createUniverseAgent({
         model: parentModel,
         systemPrompt: 'You are a coordinator.',
         tools: [],
@@ -888,7 +888,7 @@ describe('subagent recording', () => {
 
       // --- 回放阶段 ---
       // 子 agent 用 replay 模式
-      const replayChildAgent = createDeepAgent({
+      const replayChildAgent = createUniverseAgent({
         model: fakeModel(), // 会被 replay 模式覆盖
         systemPrompt: 'You are a research specialist.',
         tools: [getNews],
@@ -900,7 +900,7 @@ describe('subagent recording', () => {
       });
 
       // 父 agent 用 replay 模式
-      const replayParentAgent = createDeepAgent({
+      const replayParentAgent = createUniverseAgent({
         model: fakeModel(), // 会被 replay 模式覆盖
         systemPrompt: 'You are a coordinator.',
         tools: [],

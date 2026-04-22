@@ -28,7 +28,7 @@ apps/
   examples/       # 示例代码
   cli/            # 命令行工具
 packages/
-  agent/          # DeepAgent 框架（见下文）
+  agent/          # UniverseAgent 框架（见下文）
   shared/         # 纯工具函数
   ui/             # React 组件库
   configEslint/   # 共享 ESLint flat config
@@ -52,25 +52,25 @@ pnpm check                # lint + typecheck + unit test + build
 * 换行采用 LF（Unix 风格）
 * 修复代码后，使用 `pnpm check` 验证修复结果
 
-## DeepAgent（packages/agent）
+## UniverseAgent（packages/agent）
 
-基于 LangChain/LangGraph 的 AI Agent 框架，入口为 `createDeepAgent()`。
+基于 LangChain/LangGraph 的 AI Agent 框架，入口为 `createUniverseAgent()`。
 
 **核心结构：**
 
 | 目录/文件      | 说明                                                                  |
 | -------------- | --------------------------------------------------------------------- |
-| `agent.ts`     | `createDeepAgent()` 主函数，组装模型、中间件、subagent                |
-| `types.ts`     | 类型定义（`CreateDeepAgentParams`、`DeepAgent` 等）                   |
+| `agent.ts`     | `createUniverseAgent()` 主函数，组装模型、中间件、subagent                |
+| `types.ts`     | 类型定义（`CreateUniverseAgentParams`、`UniverseAgent` 等）                   |
 | `recording.ts` | 录像模式：录制 LLM 输出 / fakeModel 回放                              |
 | `middleware/`  | 内置中间件（filesystem、subagents、summarization、skills、memory 等） |
 | `backends/`    | 后端抽象（State、Store、Filesystem、Sandbox、LocalShell）             |
 | `skills/`      | Skills 加载器                                                         |
-| `testing/`     | 测试工具（`assertAllDeepAgentQualities`、mock tools）                 |
+| `testing/`     | 测试工具（`assertAllUniverseAgentQualities`、mock tools）                 |
 
 **关键概念：**
 
-* `createDeepAgent({ model, tools, middleware, subagents, recording, ... })` → 返回 `DeepAgent`（扩展自 LangChain `ReactAgent`）
+* `createUniverseAgent({ model, tools, middleware, subagents, recording, ... })` → 返回 `UniverseAgent`（扩展自 LangChain `ReactAgent`）
 * 中间件栈：todoList → skills → filesystem → subagents → summarization → patchToolCalls → async → custom → cache → memory → HITL
 * Subagent 通过 `task` tool 委派，自动继承 `defaultModel`
 * 录像模式（`recording`）：`record` 录制模型输出到 JSON，`replay` 用 `fakeModel()` 回放，`auto` 自动选择

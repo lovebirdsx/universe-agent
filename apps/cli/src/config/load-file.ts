@@ -30,8 +30,8 @@ function buildCandidates(options: LoadFileOptions): string[] {
     return candidates;
   }
 
-  candidates.push(path.join(options.projectDir, '.deepagents', 'config.json'));
-  candidates.push(path.join(os.homedir(), '.deepagents', 'config.json'));
+  candidates.push(path.join(options.projectDir, '.universe-agent', 'config.json'));
+  candidates.push(path.join(os.homedir(), '.universe-agent', 'config.json'));
 
   return candidates;
 }

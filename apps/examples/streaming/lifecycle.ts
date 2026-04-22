@@ -8,9 +8,9 @@
  * executing, and when their results return.
  */
 import 'dotenv/config';
-import { createDeepAgent } from '@universe-agent/agent';
+import { createUniverseAgent } from '@universe-agent/agent';
 
-const agent = createDeepAgent({
+const agent = createUniverseAgent({
   systemPrompt:
     'You are a project coordinator. Always delegate research tasks ' +
     'to your researcher subagent using the task tool. ' +

@@ -62,7 +62,7 @@
  *   url: "https://my-deployment.langsmith.dev",
  * });
  *
- * const agent = createDeepAgent({
+ * const agent = createUniverseAgent({
  *   model,
  *   middleware: [notifier],
  * });
@@ -248,7 +248,7 @@ export function extractLastMessage(state: Record<string, unknown>, taskId?: stri
  *   callbackGraphId: "supervisor",
  * });
  *
- * const agent = createDeepAgent({
+ * const agent = createUniverseAgent({
  *   model: "claude-sonnet-4-5-20250929",
  *   middleware: [notifier],
  * });

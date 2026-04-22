@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { HumanMessage } from '@langchain/core/messages';
 
-import { createDeepAgent, LocalShellBackend } from '@universe-agent/agent';
+import { createUniverseAgent, LocalShellBackend } from '@universe-agent/agent';
 
 const systemPrompt = `You are an expert coding assistant with access to the local filesystem and shell.
 
@@ -27,7 +27,7 @@ and running build tools, tests, or other CLI commands.
 
 const workspaceDir = path.join(process.cwd(), 'workspace');
 
-export const agent = createDeepAgent({
+export const agent = createUniverseAgent({
   systemPrompt,
   backend: new LocalShellBackend({
     rootDir: workspaceDir,

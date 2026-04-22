@@ -1,13 +1,13 @@
 /**
- * LangSmith Sandbox backend for deepagents.
+ * LangSmith Sandbox backend for universe-agent.
  *
  * @example
  * ```typescript
- * import { LangSmithSandbox, createDeepAgent } from "@universe-agent/agent";
+ * import { LangSmithSandbox, createUniverseAgent } from "@universe-agent/agent";
  *
- * const sandbox = await LangSmithSandbox.create({ templateName: "deepagents-cli" });
+ * const sandbox = await LangSmithSandbox.create({ templateName: "universe-agent-cli" });
  *
- * const agent = createDeepAgent({ model, backend: sandbox });
+ * const agent = createUniverseAgent({ model, backend: sandbox });
  *
  * try {
  *   await agent.invoke({ messages: [...] });
@@ -52,7 +52,7 @@ export interface LangSmithSandboxCreateOptions extends Omit<
 > {
   /**
    * Name of the LangSmith sandbox template to use.
-   * @default "deepagents"
+   * @default "universe-agent"
    */
   templateName?: string;
   /**
@@ -67,7 +67,7 @@ export interface LangSmithSandboxCreateOptions extends Omit<
 }
 
 /**
- * LangSmith Sandbox backend for deepagents.
+ * LangSmith Sandbox backend for universe-agent.
  *
  * Extends `BaseSandbox` to provide command execution and file operations
  * via the LangSmith Sandbox API.
@@ -193,9 +193,9 @@ export class LangSmithSandbox extends BaseSandbox {
    *
    * @example
    * ```typescript
-   * const sandbox = await LangSmithSandbox.create({ templateName: "deepagents" });
+   * const sandbox = await LangSmithSandbox.create({ templateName: "universe-agent" });
    * try {
-   *   const agent = createDeepAgent({ model, backend: sandbox });
+   *   const agent = createUniverseAgent({ model, backend: sandbox });
    *   await agent.invoke({ messages: [...] });
    * } finally {
    *   await sandbox.close();
@@ -204,7 +204,7 @@ export class LangSmithSandbox extends BaseSandbox {
    */
   static async create(options: LangSmithSandboxCreateOptions = {}): Promise<LangSmithSandbox> {
     const {
-      templateName = 'deepagents',
+      templateName = 'universe-agent',
       apiKey = process.env.LANGSMITH_API_KEY,
       defaultTimeout,
       ...createSandboxOptions

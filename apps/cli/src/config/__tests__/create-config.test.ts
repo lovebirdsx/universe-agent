@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { createConfig } from '../create-config.js';
 
 describe('createConfig', () => {
-  const baseArgv = ['node', 'deepagent'];
+  const baseArgv = ['node', 'universe-agent'];
 
   it('applies defaults when no args or env provided', () => {
     const config = createConfig({ argv: baseArgv, env: {} });
@@ -111,7 +111,7 @@ describe('createConfig', () => {
 });
 
 describe('createConfig merge priority', () => {
-  const baseArgv = ['node', 'deepagent'];
+  const baseArgv = ['node', 'universe-agent'];
 
   it('env vars override file defaults (via schema defaults)', () => {
     // Schema default for model is 'anthropic:claude-sonnet-4-6'

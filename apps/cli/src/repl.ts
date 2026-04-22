@@ -27,7 +27,7 @@ export async function startRepl({ agent }: CliAgent, config: CliConfig): Promise
     prompt: fmt.prompt(),
   });
 
-  console.log(fmt.bold('DeepAgent CLI'));
+  console.log(fmt.bold('UniverseAgent CLI'));
   console.log(fmt.dim(`模型: ${config.model} | 项目: ${config.projectDir}`));
   console.log(fmt.dim('输入 /help 查看命令，Ctrl+D 退出'));
   console.log();

@@ -219,9 +219,9 @@ export const TASK_SYSTEM_PROMPT = context`
  * Type definitions for pre-compiled agents.
  *
  * @typeParam TRunnable - The type of the runnable (ReactAgent or Runnable).
- *   When using `createAgent` or `createDeepAgent`, this preserves the middleware
+ *   When using `createAgent` or `createUniverseAgent`, this preserves the middleware
  *   types for type inference. Uses `ReactAgent<any>` to accept agents with any
- *   type configuration (including DeepAgent instances).
+ *   type configuration (including UniverseAgent instances).
  */
 
 export interface CompiledSubAgent<
@@ -239,7 +239,7 @@ export interface CompiledSubAgent<
 /**
  * Specification for a subagent that can be dynamically created.
  *
- * When using `createDeepAgent`, subagents automatically receive a default middleware
+ * When using `createUniverseAgent`, subagents automatically receive a default middleware
  * stack (todoListMiddleware, filesystemMiddleware, summarizationMiddleware, etc.) before
  * any custom `middleware` specified in this spec.
  *
@@ -355,10 +355,10 @@ export interface SubAgent {
  *
  * @example
  * ```typescript
- * import { GENERAL_PURPOSE_SUBAGENT, createDeepAgent } from "@anthropic/deepagents";
+ * import { GENERAL_PURPOSE_SUBAGENT, createUniverseAgent } from "@universe-agent/agent";
  *
  * // Use as-is (automatically included with generalPurposeAgent: true)
- * const agent = createDeepAgent({ model: "claude-sonnet-4-5-20250929" });
+ * const agent = createUniverseAgent({ model: "claude-sonnet-4-5-20250929" });
  *
  * // Or create a custom variant with different tools
  * const customGP: SubAgent = {
@@ -367,7 +367,7 @@ export interface SubAgent {
  *   tools: [webSearchTool, readFileTool],
  * };
  *
- * const agent = createDeepAgent({
+ * const agent = createUniverseAgent({
  *   model: "claude-sonnet-4-5-20250929",
  *   subagents: [customGP],
  *   // Disable the default general-purpose agent since we're providing our own

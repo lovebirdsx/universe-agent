@@ -29,7 +29,7 @@ The skill provides a TypeScript script that searches arXiv and returns formatted
 npx tsx [YOUR_SKILLS_DIR]/arxivSearch/arxiv_search.ts "your search query" [--max-papers N]
 ```
 
-Replace `[YOUR_SKILLS_DIR]` with the absolute skills directory path from your system prompt (e.g., `~/.deepagents/agent/skills` or the full absolute path).
+Replace `[YOUR_SKILLS_DIR]` with the absolute skills directory path from your system prompt (e.g., `~/.universe-agent/agent/skills` or the full absolute path).
 
 **Arguments:**
 
@@ -41,19 +41,19 @@ Replace `[YOUR_SKILLS_DIR]` with the absolute skills directory path from your sy
 Search for machine learning papers:
 
 ```bash
-npx tsx ~/.deepagents/agent/skills/arxivSearch/arxiv_search.ts "deep learning drug discovery" --max-papers 5
+npx tsx ~/.universe-agent/agent/skills/arxivSearch/arxiv_search.ts "deep learning drug discovery" --max-papers 5
 ```
 
 Search for computational biology papers:
 
 ```bash
-npx tsx ~/.deepagents/agent/skills/arxivSearch/arxiv_search.ts "protein folding prediction"
+npx tsx ~/.universe-agent/agent/skills/arxivSearch/arxiv_search.ts "protein folding prediction"
 ```
 
 Search for bioinformatics methods:
 
 ```bash
-npx tsx ~/.deepagents/agent/skills/arxivSearch/arxiv_search.ts "genome assembly algorithms"
+npx tsx ~/.universe-agent/agent/skills/arxivSearch/arxiv_search.ts "genome assembly algorithms"
 ```
 
 ## Output Format

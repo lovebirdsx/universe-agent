@@ -23,7 +23,7 @@ import { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
 
 import { createAgent, tool } from 'langchain';
 
-import { createDeepAgent } from '../../index.js';
+import { createUniverseAgent } from '../../index.js';
 import { CompiledSubAgent } from '../subagents.js';
 import { SAMPLE_MODEL } from '../../testing/utils.js';
 
@@ -141,7 +141,7 @@ describe('Subagent HITL Integration Tests - interrupt() primitive', () => {
       });
 
       // Create parent agent with the CompiledSubAgent
-      const parentAgent = createDeepAgent({
+      const parentAgent = createUniverseAgent({
         checkpointer,
         subagents: [
           {
@@ -260,7 +260,7 @@ describe('Subagent HITL Integration Tests - interrupt() primitive', () => {
 
       const checkpointer = new MemorySaver();
 
-      const parentAgent = createDeepAgent({
+      const parentAgent = createUniverseAgent({
         checkpointer,
         subagents: [
           {
@@ -324,7 +324,7 @@ describe('Subagent HITL Integration Tests - interrupt() primitive', () => {
       const checkpointer = new MemorySaver();
 
       // Create parent agent with dict-based sub-agent that has interrupt() tools
-      const parentAgent = createDeepAgent({
+      const parentAgent = createUniverseAgent({
         checkpointer,
         subagents: [
           {
@@ -399,7 +399,7 @@ describe('Subagent HITL Integration Tests - interrupt() primitive', () => {
         systemPrompt: 'You are a workflow agent. Use multi_step_operation to execute workflows.',
       });
 
-      const parentAgent = createDeepAgent({
+      const parentAgent = createUniverseAgent({
         checkpointer,
         subagents: [
           {
@@ -477,7 +477,7 @@ describe('Subagent HITL Integration Tests - interrupt() primitive', () => {
         'You are an approval agent. Use request_approval to get human approval for actions.',
     });
 
-    const parentAgent = createDeepAgent({
+    const parentAgent = createUniverseAgent({
       checkpointer,
       subagents: [
         {
@@ -562,7 +562,7 @@ describe('Subagent HITL Integration Tests - interrupt() primitive', () => {
       // Create parent agent with a subagent that has both:
       // 1. A tool using interrupt() directly (askUser)
       // 2. A tool that uses HITL middleware (sensitiveOperation via interruptOn)
-      const parentAgent = createDeepAgent({
+      const parentAgent = createUniverseAgent({
         checkpointer,
         subagents: [
           {

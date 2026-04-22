@@ -1,34 +1,34 @@
-# createDeepAgent 主函数
+# createUniverseAgent 主函数
 
 **文件**：`src/agent.ts`
 
-`createDeepAgent` 是整个框架的核心工厂函数，负责组装所有中间件、配置 Agent 运行时并返回一个 `DeepAgent` 实例。
+`createUniverseAgent` 是整个框架的核心工厂函数，负责组装所有中间件、配置 Agent 运行时并返回一个 `UniverseAgent` 实例。
 
 ---
 
 ## 函数签名
 
 ```typescript
-function createDeepAgent<
+function createUniverseAgent<
   TResponse extends SupportedResponseFormat = SupportedResponseFormat,
   ContextSchema extends InteropZodObject = InteropZodObject,
   const TMiddleware extends readonly AgentMiddleware[] = readonly [],
   const TSubagents extends readonly AnySubAgent[] = readonly [],
   const TTools extends readonly (ClientTool | ServerTool)[] = readonly [],
 >(
-  params: CreateDeepAgentParams<TResponse, ContextSchema, TMiddleware, TSubagents, TTools> = {}
-): DeepAgent<DeepAgentTypeConfig<...>>
+  params: CreateUniverseAgentParams<TResponse, ContextSchema, TMiddleware, TSubagents, TTools> = {}
+): UniverseAgent<UniverseAgentTypeConfig<...>>
 ```
 
 函数使用了 5 个泛型参数，全部有默认值，因此最简用法是：
 
 ```typescript
-const agent = createDeepAgent();
+const agent = createUniverseAgent();
 ```
 
 ---
 
-## 参数详解（CreateDeepAgentParams）
+## 参数详解（CreateUniverseAgentParams）
 
 | 参数             | 类型                                   | 默认值                          | 说明                              |
 | ---------------- | -------------------------------------- | ------------------------------- | --------------------------------- |
@@ -51,7 +51,7 @@ const agent = createDeepAgent();
 
 ## 内置系统提示（BASE_AGENT_PROMPT）
 
-每个 DeepAgent 都自动包含以下系统提示：
+每个 UniverseAgent 都自动包含以下系统提示：
 
 ```
 ## Core Behavior
@@ -214,8 +214,8 @@ export function isAnthropicModel(model: BaseLanguageModel | string): boolean {
 ## 返回值类型
 
 ```typescript
-return agent as unknown as DeepAgent<
-  DeepAgentTypeConfig<
+return agent as unknown as UniverseAgent<
+  UniverseAgentTypeConfig<
     InferStructuredResponse<TResponse>,  // 结构化响应类型
     undefined,                            // 状态（来自中间件）
     ContextSchema,                        // 上下文 Schema
@@ -226,7 +226,7 @@ return agent as unknown as DeepAgent<
 >;
 ```
 
-`DeepAgent` 扩展了 LangChain 的 `ReactAgent`，额外携带类型品牌 `"~deepAgentTypes"` 用于类型推断。
+`UniverseAgent` 扩展了 LangChain 的 `ReactAgent`，额外携带类型品牌 `"~universeAgentTypes"` 用于类型推断。
 
 ---
 
@@ -246,7 +246,7 @@ const agent = createAgent({
 }).withConfig({
   recursionLimit: 10_000,   // 最大执行步数（默认 10000）
   metadata: {
-    ls_integration: "deepagents",
+    ls_integration: "universe-agent",
     lc_agent_name: name,
   },
 });

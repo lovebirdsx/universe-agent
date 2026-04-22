@@ -5,7 +5,7 @@
  * inside subagent tools using config.writer and the "custom" stream mode.
  */
 import 'dotenv/config';
-import { createDeepAgent } from '@universe-agent/agent';
+import { createUniverseAgent } from '@universe-agent/agent';
 import { tool, type ToolRuntime } from 'langchain';
 import { z } from 'zod';
 
@@ -40,7 +40,7 @@ const analyzeData = tool(
 
 // 注意：claude-haiku-4.5并不会去调用子agent
 process.env.OPENAI_MODEL = 'claude-sonnet-4.6';
-const agent = createDeepAgent({
+const agent = createUniverseAgent({
   systemPrompt:
     'You are a coordinator. For any analysis request, you MUST delegate ' +
     'to the analyst subagent using the task tool. Never try to answer directly. ' +

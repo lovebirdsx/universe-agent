@@ -14,12 +14,12 @@ specialized knowledge, workflows, and tools. Think of them as "onboarding guides
 domains or tasks—they transform a general-purpose agent into a specialized agent
 equipped with procedural knowledge and domain expertise.
 
-### Skill Location for Deepagents
+### Skill Location for Universe Agent
 
-In deepagents CLI, skills are stored in `~/.deepagents/<agent>/skills/` where `<agent>` is your agent configuration name (default is `agent`). For example, with the default configuration, skills live at:
+In universe-agent CLI, skills are stored in `~/.universe-agent/<agent>/skills/` where `<agent>` is your agent configuration name (default is `agent`). For example, with the default configuration, skills live at:
 
 ```txt
-~/.deepagents/agent/skills/
+~/.universe-agent/agent/skills/
 ├── skill-name-1/
 │   └── SKILL.md
 ├── skill-name-2/
@@ -78,10 +78,10 @@ When creating a new skill from scratch, run the `init_skill.ts` script:
 npx tsx scripts/init_skill.ts <skill-name> --path <output-directory>
 ```
 
-For deepagents, use the agent's skills directory:
+For universe-agent, use the agent's skills directory:
 
 ```bash
-npx tsx scripts/init_skill.ts <skill-name> --path ~/.deepagents/agent/skills
+npx tsx scripts/init_skill.ts <skill-name> --path ~/.universe-agent/agent/skills
 ```
 
 ### Step 5: Validate the Skill

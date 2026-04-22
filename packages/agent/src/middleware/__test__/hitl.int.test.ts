@@ -10,9 +10,9 @@ import {
   type InterruptOnConfig,
 } from 'langchain';
 
-import { createDeepAgent } from '../../index.js';
+import { createUniverseAgent } from '../../index.js';
 import {
-  assertAllDeepAgentQualities,
+  assertAllUniverseAgentQualities,
   sampleTool,
   getWeather,
   getSoccerScores,
@@ -30,14 +30,14 @@ describe('Human-in-the-Loop (HITL) Integration Tests', () => {
     { timeout: 120000 },
     async () => {
       const checkpointer = new MemorySaver();
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         tools: [sampleTool, getWeather, getSoccerScores],
         interruptOn: SAMPLE_TOOL_CONFIG,
         checkpointer,
       });
 
       const config = { configurable: { thread_id: crypto.randomUUID() } };
-      assertAllDeepAgentQualities(agent);
+      assertAllUniverseAgentQualities(agent);
 
       // First invocation - should interrupt
       const result = await agent.invoke(
@@ -115,14 +115,14 @@ describe('Human-in-the-Loop (HITL) Integration Tests', () => {
 
   it.concurrent('should handle HITL with subagents', { timeout: 120000 }, async () => {
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       tools: [sampleTool, getWeather, getSoccerScores],
       interruptOn: SAMPLE_TOOL_CONFIG,
       checkpointer,
     });
 
     const config = { configurable: { thread_id: crypto.randomUUID() } };
-    assertAllDeepAgentQualities(agent);
+    assertAllUniverseAgentQualities(agent);
 
     // First invocation - use subagent which should also interrupt
     const result = await agent.invoke(
@@ -176,7 +176,7 @@ describe('Human-in-the-Loop (HITL) Integration Tests', () => {
     { timeout: 120000 },
     async () => {
       const checkpointer = new MemorySaver();
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         tools: [sampleTool, getWeather, getSoccerScores],
         interruptOn: SAMPLE_TOOL_CONFIG,
         checkpointer,
@@ -232,7 +232,7 @@ describe('Human-in-the-Loop (HITL) Integration Tests', () => {
       // causing "Cannot read properties of undefined (reading 'length')" error
 
       const checkpointer = new MemorySaver();
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         tools: [sampleTool],
         interruptOn: { sample_tool: true },
         checkpointer,
@@ -304,7 +304,7 @@ describe('Human-in-the-Loop (HITL) Integration Tests', () => {
       // a dangling tool_call_id.
 
       const checkpointer = new MemorySaver();
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         tools: [sampleTool, getWeather, getSoccerScores],
         interruptOn: {
           // sample_tool requires approval (will be interrupted)

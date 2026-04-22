@@ -10,7 +10,7 @@ describe('Config Module', () => {
 
   beforeEach(() => {
     // Create a temporary directory for testing
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deepagents-test-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'universe-agent-test-'));
     originalCwd = process.cwd;
   });
 
@@ -66,7 +66,7 @@ describe('Config Module', () => {
     it('should return correct paths', () => {
       const settings = createSettings({ startPath: tempDir });
 
-      expect(settings.userDeepagentsDir).toBe(path.join(os.homedir(), '.deepagents'));
+      expect(settings.userUniverseAgentDir).toBe(path.join(os.homedir(), '.universe-agent'));
       expect(settings.projectRoot).toBeNull();
       expect(settings.hasProject).toBe(false);
     });
@@ -90,22 +90,22 @@ describe('Config Module', () => {
 
       it('should return correct path for valid agent name', () => {
         const result = settings.getAgentDir('my-agent');
-        expect(result).toBe(path.join(os.homedir(), '.deepagents', 'my-agent'));
+        expect(result).toBe(path.join(os.homedir(), '.universe-agent', 'my-agent'));
       });
 
       it('should accept alphanumeric names', () => {
         const result = settings.getAgentDir('Agent123');
-        expect(result).toBe(path.join(os.homedir(), '.deepagents', 'Agent123'));
+        expect(result).toBe(path.join(os.homedir(), '.universe-agent', 'Agent123'));
       });
 
       it('should accept names with hyphens and underscores', () => {
         const result = settings.getAgentDir('my_agent-name');
-        expect(result).toBe(path.join(os.homedir(), '.deepagents', 'my_agent-name'));
+        expect(result).toBe(path.join(os.homedir(), '.universe-agent', 'my_agent-name'));
       });
 
       it('should accept names with spaces', () => {
         const result = settings.getAgentDir('My Agent');
-        expect(result).toBe(path.join(os.homedir(), '.deepagents', 'My Agent'));
+        expect(result).toBe(path.join(os.homedir(), '.universe-agent', 'My Agent'));
       });
 
       it('should throw for invalid names with special characters', () => {
@@ -128,7 +128,7 @@ describe('Config Module', () => {
         const result = settings.ensureAgentDir(agentName);
 
         // Should end with the agent path
-        expect(result).toContain('.deepagents');
+        expect(result).toContain('.universe-agent');
         expect(result).toContain(agentName);
         expect(fs.existsSync(result)).toBe(true);
       });
@@ -151,7 +151,7 @@ describe('Config Module', () => {
       it('should return correct path', () => {
         const settings = createSettings({ startPath: tempDir });
         const result = settings.getUserAgentMdPath('my-agent');
-        expect(result).toBe(path.join(os.homedir(), '.deepagents', 'my-agent', 'agent.md'));
+        expect(result).toBe(path.join(os.homedir(), '.universe-agent', 'my-agent', 'agent.md'));
       });
     });
 
@@ -167,7 +167,7 @@ describe('Config Module', () => {
 
         const settings = createSettings({ startPath: tempDir });
         const result = settings.getProjectAgentMdPath();
-        expect(result).toBe(path.join(tempDir, '.deepagents', 'agent.md'));
+        expect(result).toBe(path.join(tempDir, '.universe-agent', 'agent.md'));
       });
     });
 
@@ -175,7 +175,7 @@ describe('Config Module', () => {
       it('should return correct path', () => {
         const settings = createSettings({ startPath: tempDir });
         const result = settings.getUserSkillsDir('my-agent');
-        expect(result).toBe(path.join(os.homedir(), '.deepagents', 'my-agent', 'skills'));
+        expect(result).toBe(path.join(os.homedir(), '.universe-agent', 'my-agent', 'skills'));
       });
     });
 
@@ -185,7 +185,7 @@ describe('Config Module', () => {
         const result = settings.ensureUserSkillsDir('my-agent');
 
         // Should end with skills path
-        expect(result).toContain('.deepagents');
+        expect(result).toContain('.universe-agent');
         expect(result).toContain('my-agent');
         expect(result).toContain('skills');
         expect(fs.existsSync(result)).toBe(true);
@@ -204,7 +204,7 @@ describe('Config Module', () => {
 
         const settings = createSettings({ startPath: tempDir });
         const result = settings.getProjectSkillsDir();
-        expect(result).toBe(path.join(tempDir, '.deepagents', 'skills'));
+        expect(result).toBe(path.join(tempDir, '.universe-agent', 'skills'));
       });
     });
 
@@ -220,15 +220,15 @@ describe('Config Module', () => {
 
         const settings = createSettings({ startPath: tempDir });
         const result = settings.ensureProjectSkillsDir();
-        expect(result).toBe(path.join(tempDir, '.deepagents', 'skills'));
+        expect(result).toBe(path.join(tempDir, '.universe-agent', 'skills'));
         expect(fs.existsSync(result!)).toBe(true);
       });
     });
 
-    describe('ensureProjectDeepagentsDir', () => {
+    describe('ensureProjectUniverseAgentDir', () => {
       it('should return null when not in project', () => {
         const settings = createSettings({ startPath: tempDir });
-        expect(settings.ensureProjectDeepagentsDir()).toBeNull();
+        expect(settings.ensureProjectUniverseAgentDir()).toBeNull();
       });
 
       it('should create directory when in project', () => {
@@ -236,8 +236,8 @@ describe('Config Module', () => {
         fs.mkdirSync(gitDir);
 
         const settings = createSettings({ startPath: tempDir });
-        const result = settings.ensureProjectDeepagentsDir();
-        expect(result).toBe(path.join(tempDir, '.deepagents'));
+        const result = settings.ensureProjectUniverseAgentDir();
+        expect(result).toBe(path.join(tempDir, '.universe-agent'));
         expect(fs.existsSync(result!)).toBe(true);
       });
     });

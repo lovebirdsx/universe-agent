@@ -68,7 +68,7 @@ import type * as _langchain from 'langchain';
  */
 /**
  * All tool names registered by FilesystemMiddleware.
- * This is the single source of truth — used by createDeepAgent to detect
+ * This is the single source of truth — used by createUniverseAgent to detect
  * collisions with user-supplied tools at construction time.
  */
 export const FILESYSTEM_TOOL_NAMES = [

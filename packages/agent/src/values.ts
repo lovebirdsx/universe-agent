@@ -22,7 +22,7 @@ import { FileDataSchema, fileDataReducer } from './middleware/fs.js';
  *
  * @example
  * ```typescript
- * import { filesValue } from "@anthropic/deepagents";
+ * import { filesValue } from "@universe-agent/agent";
  * import { StateSchema } from "@langchain/langgraph";
  *
  * const MyStateSchema = new StateSchema({

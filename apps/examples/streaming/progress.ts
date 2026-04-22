@@ -7,9 +7,9 @@
  * is reported as a streaming event.
  */
 import 'dotenv/config';
-import { createDeepAgent } from '@universe-agent/agent';
+import { createUniverseAgent } from '@universe-agent/agent';
 
-const agent = createDeepAgent({
+const agent = createUniverseAgent({
   systemPrompt:
     'You are a project coordinator. Always delegate research tasks ' +
     'to your researcher subagent using the task tool. Keep your final response to one sentence.',

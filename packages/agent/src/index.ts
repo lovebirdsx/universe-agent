@@ -1,23 +1,23 @@
 /**
- * Deep Agents TypeScript Implementation
+ * Universe Agents TypeScript Implementation
  *
- * A TypeScript port of the Python Deep Agents library for building controllable AI agents with LangGraph.
+ * A TypeScript port of the Python Universe Agents library for building controllable AI agents with LangGraph.
  * This implementation maintains 1:1 compatibility with the Python version.
  */
 
-export { createDeepAgent } from './agent.js';
+export { createUniverseAgent } from './agent.js';
 export { ConfigurationError, type ConfigurationErrorCode } from './errors.js';
 export type {
   AnySubAgent,
-  CreateDeepAgentParams,
-  MergedDeepAgentState,
-  // DeepAgent type bag and helper types
-  DeepAgent,
-  DeepAgentTypeConfig,
-  DefaultDeepAgentTypeConfig,
-  ResolveDeepAgentTypeConfig,
-  InferDeepAgentType,
-  InferDeepAgentSubagents,
+  CreateUniverseAgentParams,
+  MergedUniverseAgentState,
+  // UniverseAgent type bag and helper types
+  UniverseAgent,
+  UniverseAgentTypeConfig,
+  DefaultUniverseAgentTypeConfig,
+  ResolveUniverseAgentTypeConfig,
+  InferUniverseAgentType,
+  InferUniverseAgentSubagents,
   InferSubagentByName,
   InferSubagentReactAgentType,
   // Subagent middleware extraction types

@@ -14,11 +14,11 @@ describe('Agent Memory Middleware', () => {
   let projectAgentDir: string;
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deepagents-memory-mw-test-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'universe-agent-memory-mw-test-'));
 
     // Create user and project agent directories
-    userAgentDir = path.join(tempDir, '.deepagents', 'test-agent');
-    projectAgentDir = path.join(tempDir, 'project', '.deepagents');
+    userAgentDir = path.join(tempDir, '.universe-agent', 'test-agent');
+    projectAgentDir = path.join(tempDir, 'project', '.universe-agent');
     fs.mkdirSync(userAgentDir, { recursive: true });
     fs.mkdirSync(projectAgentDir, { recursive: true });
 
@@ -28,30 +28,30 @@ describe('Agent Memory Middleware', () => {
     // Mock settings that point to our test directories
     mockSettings = {
       projectRoot: path.join(tempDir, 'project'),
-      userDeepagentsDir: path.join(tempDir, '.deepagents'),
+      userUniverseAgentDir: path.join(tempDir, '.universe-agent'),
       hasProject: true,
-      getAgentDir: (name: string) => path.join(tempDir, '.deepagents', name),
+      getAgentDir: (name: string) => path.join(tempDir, '.universe-agent', name),
       ensureAgentDir: (name: string) => {
-        const dir = path.join(tempDir, '.deepagents', name);
+        const dir = path.join(tempDir, '.universe-agent', name);
         fs.mkdirSync(dir, { recursive: true });
         return dir;
       },
-      getUserAgentMdPath: (name: string) => path.join(tempDir, '.deepagents', name, 'agent.md'),
-      getProjectAgentMdPath: () => path.join(tempDir, 'project', '.deepagents', 'agent.md'),
-      getUserSkillsDir: (name: string) => path.join(tempDir, '.deepagents', name, 'skills'),
+      getUserAgentMdPath: (name: string) => path.join(tempDir, '.universe-agent', name, 'agent.md'),
+      getProjectAgentMdPath: () => path.join(tempDir, 'project', '.universe-agent', 'agent.md'),
+      getUserSkillsDir: (name: string) => path.join(tempDir, '.universe-agent', name, 'skills'),
       ensureUserSkillsDir: (name: string) => {
-        const dir = path.join(tempDir, '.deepagents', name, 'skills');
+        const dir = path.join(tempDir, '.universe-agent', name, 'skills');
         fs.mkdirSync(dir, { recursive: true });
         return dir;
       },
-      getProjectSkillsDir: () => path.join(tempDir, 'project', '.deepagents', 'skills'),
+      getProjectSkillsDir: () => path.join(tempDir, 'project', '.universe-agent', 'skills'),
       ensureProjectSkillsDir: () => {
-        const dir = path.join(tempDir, 'project', '.deepagents', 'skills');
+        const dir = path.join(tempDir, 'project', '.universe-agent', 'skills');
         fs.mkdirSync(dir, { recursive: true });
         return dir;
       },
-      ensureProjectDeepagentsDir: () => {
-        const dir = path.join(tempDir, 'project', '.deepagents');
+      ensureProjectUniverseAgentDir: () => {
+        const dir = path.join(tempDir, 'project', '.universe-agent');
         fs.mkdirSync(dir, { recursive: true });
         return dir;
       },

@@ -20,7 +20,7 @@ import path from 'node:path';
 import os from 'node:os';
 
 import {
-  createDeepAgent,
+  createUniverseAgent,
   createSettings,
   createAgentMemoryMiddleware,
   FilesystemBackend,
@@ -110,7 +110,7 @@ async function main() {
   const settings = createSettings();
 
   console.log('📁 Environment:');
-  console.log(`   User deepagents dir: ${settings.userDeepagentsDir}`);
+  console.log(`   User universe-agent dir: ${settings.userUniverseAgentDir}`);
   console.log(`   Project root: ${settings.projectRoot || '(not in a project)'}`);
   console.log(`   Has project: ${settings.hasProject}\n`);
 
@@ -125,7 +125,7 @@ async function main() {
   // Create a temporary directory with sample skills
   // In production, you would use real skill directories like:
   //   settings.getUserSkillsDir(AGENT_NAME) and settings.getProjectSkillsDir()
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deepagents-skills-'));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'universe-agent-skills-'));
   const skillsDir = path.join(tempDir, 'skills');
   createSampleSkills(skillsDir);
 
@@ -142,7 +142,7 @@ async function main() {
     // - `skills` parameter loads skills from the specified paths
     // - `middleware` adds the memory middleware
     // - `backend` provides filesystem access for skills loading
-    const agent = await createDeepAgent({
+    const agent = await createUniverseAgent({
       backend: new FilesystemBackend({ rootDir: tempDir, virtualMode: true }),
       skills: ['/skills/'],
       middleware: [memoryMiddleware],
@@ -178,7 +178,7 @@ async function main() {
     console.log('\n💡 Usage Tips:');
 
     console.log('\n   Skills Parameter:');
-    console.log('   - Pass `skills: [path1, path2]` to createDeepAgent to load skills');
+    console.log('   - Pass `skills: [path1, path2]` to createUniverseAgent to load skills');
     console.log('   - Each skill is a directory containing a SKILL.md with YAML frontmatter');
     console.log('   - Later sources override earlier ones for same-named skills');
 

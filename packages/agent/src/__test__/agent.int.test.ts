@@ -3,7 +3,7 @@ import { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages';
 import { toolStrategy, providerStrategy } from 'langchain';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { z } from 'zod/v4';
-import { createDeepAgent } from '../index.js';
+import { createUniverseAgent } from '../index.js';
 import type { CompiledSubAgent } from '../index.js';
 import {
   SAMPLE_MODEL,
@@ -14,40 +14,40 @@ import {
   SampleMiddlewareWithTools,
   SampleMiddlewareWithToolsAndState,
   WeatherToolMiddleware,
-  assertAllDeepAgentQualities,
+  assertAllUniverseAgentQualities,
   getSoccerScores,
   getWeather,
   sampleTool,
   extractToolsFromAgent,
 } from '../testing/utils.js';
 
-describe('DeepAgents Integration Tests', () => {
-  it.concurrent('should create a base deep agent', () => {
-    const agent = createDeepAgent();
-    assertAllDeepAgentQualities(agent);
+describe('UniverseAgents Integration Tests', () => {
+  it.concurrent('should create a base universe agent', () => {
+    const agent = createUniverseAgent();
+    assertAllUniverseAgentQualities(agent);
   });
 
-  it.concurrent('should create deep agent with tool', () => {
-    const agent = createDeepAgent({ tools: [sampleTool] });
-    assertAllDeepAgentQualities(agent);
+  it.concurrent('should create universe agent with tool', () => {
+    const agent = createUniverseAgent({ tools: [sampleTool] });
+    assertAllUniverseAgentQualities(agent);
 
     const toolNames = Object.keys(extractToolsFromAgent(agent));
     expect(toolNames).toContain('sample_tool');
   });
 
-  it.concurrent('should create deep agent with middleware with tool', () => {
-    const agent = createDeepAgent({ middleware: [SampleMiddlewareWithTools] });
-    assertAllDeepAgentQualities(agent);
+  it.concurrent('should create universe agent with middleware with tool', () => {
+    const agent = createUniverseAgent({ middleware: [SampleMiddlewareWithTools] });
+    assertAllUniverseAgentQualities(agent);
 
     const toolNames = Object.keys(extractToolsFromAgent(agent));
     expect(toolNames).toContain('sample_tool');
   });
 
-  it.concurrent('should create deep agent with middleware with tool and state', () => {
-    const agent = createDeepAgent({
+  it.concurrent('should create universe agent with middleware with tool and state', () => {
+    const agent = createUniverseAgent({
       middleware: [SampleMiddlewareWithToolsAndState],
     });
-    assertAllDeepAgentQualities(agent);
+    assertAllUniverseAgentQualities(agent);
 
     const toolNames = Object.keys(extractToolsFromAgent(agent));
     expect(toolNames).toContain('sample_tool');
@@ -56,7 +56,7 @@ describe('DeepAgents Integration Tests', () => {
   });
 
   it.concurrent(
-    'should create deep agent with subagents',
+    'should create universe agent with subagents',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const subagents = [
@@ -68,8 +68,8 @@ describe('DeepAgents Integration Tests', () => {
           model: SAMPLE_MODEL,
         },
       ];
-      const agent = createDeepAgent({ tools: [sampleTool], subagents });
-      assertAllDeepAgentQualities(agent);
+      const agent = createUniverseAgent({ tools: [sampleTool], subagents });
+      assertAllUniverseAgentQualities(agent);
 
       const result = await agent.invoke({
         messages: [new HumanMessage('What is the weather in Tokyo?')],
@@ -85,7 +85,7 @@ describe('DeepAgents Integration Tests', () => {
   );
 
   it.concurrent(
-    'should create deep agent with subagents and general purpose',
+    'should create universe agent with subagents and general purpose',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const subagents = [
@@ -97,8 +97,8 @@ describe('DeepAgents Integration Tests', () => {
           model: SAMPLE_MODEL,
         },
       ];
-      const agent = createDeepAgent({ tools: [sampleTool], subagents });
-      assertAllDeepAgentQualities(agent);
+      const agent = createUniverseAgent({ tools: [sampleTool], subagents });
+      assertAllUniverseAgentQualities(agent);
 
       const result = await agent.invoke({
         messages: [new HumanMessage('Use the general purpose subagent to call the sample tool')],
@@ -114,7 +114,7 @@ describe('DeepAgents Integration Tests', () => {
   );
 
   it.concurrent(
-    'should create deep agent with subagents with middleware',
+    'should create universe agent with subagents with middleware',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const subagents = [
@@ -127,8 +127,8 @@ describe('DeepAgents Integration Tests', () => {
           middleware: [WeatherToolMiddleware],
         },
       ];
-      const agent = createDeepAgent({ tools: [sampleTool], subagents });
-      assertAllDeepAgentQualities(agent);
+      const agent = createUniverseAgent({ tools: [sampleTool], subagents });
+      assertAllUniverseAgentQualities(agent);
 
       const result = await agent.invoke({
         messages: [new HumanMessage('What is the weather in Tokyo?')],
@@ -144,10 +144,10 @@ describe('DeepAgents Integration Tests', () => {
   );
 
   it.concurrent(
-    'should create deep agent with custom subagents',
+    'should create universe agent with custom subagents',
     { timeout: 90 * 1000 }, // 90s
     async () => {
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         tools: [sampleTool],
         subagents: [
           {
@@ -166,7 +166,7 @@ describe('DeepAgents Integration Tests', () => {
           },
         ],
       });
-      assertAllDeepAgentQualities(agent);
+      assertAllUniverseAgentQualities(agent);
 
       const result = await agent.invoke({
         messages: [
@@ -189,7 +189,7 @@ describe('DeepAgents Integration Tests', () => {
   );
 
   it.concurrent(
-    'should create deep agent with extended state and subagents',
+    'should create universe agent with extended state and subagents',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const subagents = [
@@ -200,12 +200,12 @@ describe('DeepAgents Integration Tests', () => {
           middleware: [ResearchMiddlewareWithTools],
         },
       ];
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         tools: [sampleTool],
         subagents,
         middleware: [ResearchMiddleware],
       });
-      assertAllDeepAgentQualities(agent);
+      assertAllUniverseAgentQualities(agent);
       expect(agent.graph.streamChannels).toContain('research');
 
       const result = await agent.invoke(
@@ -228,7 +228,7 @@ describe('DeepAgents Integration Tests', () => {
   );
 
   it.concurrent(
-    'should create deep agent with subagents no tools',
+    'should create universe agent with subagents no tools',
     { timeout: 90 * 1000 }, // 90s
     async () => {
       const subagents = [
@@ -238,8 +238,8 @@ describe('DeepAgents Integration Tests', () => {
           systemPrompt: 'You are a basketball info agent.',
         },
       ];
-      const agent = createDeepAgent({ tools: [sampleTool], subagents });
-      assertAllDeepAgentQualities(agent);
+      const agent = createUniverseAgent({ tools: [sampleTool], subagents });
+      assertAllUniverseAgentQualities(agent);
 
       const result = await agent.invoke(
         {
@@ -260,19 +260,19 @@ describe('DeepAgents Integration Tests', () => {
   );
 
   it.concurrent(
-    'should use a deep agent as a compiled subagent (agent-as-subagent hierarchy)',
+    'should use a universe agent as a compiled subagent (agent-as-subagent hierarchy)',
     { timeout: 120 * 1000 }, // 120s
     async () => {
-      // Create a deep agent that will serve as a subagent
-      const weatherDeepAgent = createDeepAgent({
+      // Create a universe agent that will serve as a subagent
+      const weatherUniverseAgent = createUniverseAgent({
         model: SAMPLE_MODEL,
         systemPrompt:
           'You are a weather specialist. Use the get_weather tool to get weather information for any location requested.',
         tools: [getWeather],
       });
 
-      // Use the deep agent as a CompiledSubAgent in the parent
-      const parentAgent = createDeepAgent({
+      // Use the universe agent as a CompiledSubAgent in the parent
+      const parentAgent = createUniverseAgent({
         model: SAMPLE_MODEL,
         systemPrompt:
           'You are an orchestrator. Delegate weather queries to the weather-specialist subagent via the task tool.',
@@ -281,11 +281,11 @@ describe('DeepAgents Integration Tests', () => {
             name: 'weather-specialist',
             description:
               'A specialized weather agent that can provide detailed weather information for any city.',
-            runnable: weatherDeepAgent,
+            runnable: weatherUniverseAgent,
           } satisfies CompiledSubAgent,
         ],
       });
-      assertAllDeepAgentQualities(parentAgent);
+      assertAllUniverseAgentQualities(parentAgent);
 
       // Verify the task tool lists the weather-specialist subagent
       const tools = extractToolsFromAgent(parentAgent);
@@ -312,11 +312,11 @@ describe('DeepAgents Integration Tests', () => {
   );
 
   it.concurrent(
-    'should support multi-level deep agent hierarchy (nested deep agents)',
+    'should support multi-level universe agent hierarchy (nested universe agents)',
     { timeout: 120 * 1000 }, // 120s
     async () => {
-      // Level 2: A deep agent with its own subagents
-      const innerDeepAgent = createDeepAgent({
+      // Level 2: A universe agent with its own subagents
+      const innerUniverseAgent = createUniverseAgent({
         model: SAMPLE_MODEL,
         systemPrompt:
           'You are a sports information agent. Use the get_soccer_scores tool to get soccer scores.',
@@ -332,8 +332,8 @@ describe('DeepAgents Integration Tests', () => {
         ],
       });
 
-      // Level 1: Parent deep agent using the inner deep agent as a subagent
-      const parentAgent = createDeepAgent({
+      // Level 1: Parent universe agent using the inner universe agent as a subagent
+      const parentAgent = createUniverseAgent({
         model: SAMPLE_MODEL,
         systemPrompt:
           'You are an orchestrator. Use the sports-info subagent for any sports related questions.',
@@ -343,11 +343,11 @@ describe('DeepAgents Integration Tests', () => {
             name: 'sports-info',
             description:
               'A specialized sports agent that can get soccer scores and check match day weather.',
-            runnable: innerDeepAgent,
+            runnable: innerUniverseAgent,
           } satisfies CompiledSubAgent,
         ],
       });
-      assertAllDeepAgentQualities(parentAgent);
+      assertAllUniverseAgentQualities(parentAgent);
 
       const result = await parentAgent.invoke(
         {
@@ -391,7 +391,7 @@ describe('DeepAgents Integration Tests', () => {
           strategyName === 'providerStrategy'
             ? SAMPLE_MODEL_WITH_STRUCTURED_RESPONSE
             : SAMPLE_MODEL;
-        const agent = createDeepAgent({
+        const agent = createUniverseAgent({
           model,
           tools: [getWeather],
           systemPrompt:
@@ -427,7 +427,7 @@ describe('DeepAgents Integration Tests', () => {
           strategyName === 'providerStrategy'
             ? SAMPLE_MODEL_WITH_STRUCTURED_RESPONSE
             : SAMPLE_MODEL;
-        const agent = createDeepAgent({
+        const agent = createUniverseAgent({
           model,
           tools: [getWeather],
           systemPrompt:
@@ -469,7 +469,7 @@ describe('DeepAgents Integration Tests', () => {
           strategyName === 'providerStrategy'
             ? SAMPLE_MODEL_WITH_STRUCTURED_RESPONSE
             : SAMPLE_MODEL;
-        const agent = createDeepAgent({
+        const agent = createUniverseAgent({
           model,
           systemPrompt:
             'You are an analyst. Provide structured analysis of any topic the user asks about.',
@@ -506,7 +506,7 @@ describe('DeepAgents Integration Tests', () => {
           strategyName === 'providerStrategy'
             ? SAMPLE_MODEL_WITH_STRUCTURED_RESPONSE
             : SAMPLE_MODEL;
-        const agent = createDeepAgent({
+        const agent = createUniverseAgent({
           model,
           systemPrompt:
             'You are an orchestrator. Delegate weather queries to the weather_agent subagent, then return a structured response summarizing the result.',
@@ -551,7 +551,7 @@ describe('DeepAgents Integration Tests', () => {
     'should serialize subagent responseFormat as ToolMessage JSON',
     { timeout: 120 * 1000 },
     async () => {
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         model: new ChatAnthropic({ model: 'claude-haiku-4-5' }),
         systemPrompt:
           'You are an orchestrator. Always delegate tasks to the appropriate subagent via the task tool.',

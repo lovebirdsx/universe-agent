@@ -11,10 +11,10 @@
 ### 1. Agent 工厂函数
 
 ```typescript
-export { createDeepAgent } from "./agent.js";
+export { createUniverseAgent } from "./agent.js";
 ```
 
-这是库的核心 API，用于创建一个配置好的 Deep Agent 实例。
+这是库的核心 API，用于创建一个配置好的 Universe Agent 实例。
 
 ---
 
@@ -26,18 +26,18 @@ export type {
   AnySubAgent,                    // SubAgent | CompiledSubAgent | AsyncSubAgent
 
   // Agent 创建参数
-  CreateDeepAgentParams,
+  CreateUniverseAgentParams,
 
   // 状态类型
-  MergedDeepAgentState,
+  MergedUniverseAgentState,
 
-  // DeepAgent 主类型及工具类型
-  DeepAgent,
-  DeepAgentTypeConfig,
-  DefaultDeepAgentTypeConfig,
-  ResolveDeepAgentTypeConfig,
-  InferDeepAgentType,
-  InferDeepAgentSubagents,
+  // UniverseAgent 主类型及工具类型
+  UniverseAgent,
+  UniverseAgentTypeConfig,
+  DefaultUniverseAgentTypeConfig,
+  ResolveUniverseAgentTypeConfig,
+  InferUniverseAgentType,
+  InferUniverseAgentSubagents,
   InferSubagentByName,
   InferSubagentReactAgentType,
 
@@ -225,11 +225,11 @@ export {
 
 ## 设计原则
 
-1. **单一入口**：所有公共 API 从 `index.ts` 统一导出，用户只需 `import { ... } from "deepagents"`
+1. **单一入口**：所有公共 API 从 `index.ts` 统一导出，用户只需 `import { ... } from "universe-agent"`
 2. **类型完整导出**：既导出运行时值（类、函数），也导出 TypeScript 类型，方便类型推断
 3. **已弃用标注**：通过 `@deprecated` JSDoc 标注过时 API，保持向后兼容的同时引导用户升级
 4. **模块隔离**：`index.ts` 只做 re-export，不含任何业务逻辑
 
 ---
 
-*[← 依赖与构建](./03-依赖与构建.md) | [createDeepAgent 主函数 →](./05-createDeepAgent.md)*
+*[← 依赖与构建](./03-依赖与构建.md) | [createUniverseAgent 主函数 →](./05-createUniverseAgent.md)*

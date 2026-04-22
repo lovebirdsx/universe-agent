@@ -8,7 +8,7 @@ import { HumanMessage } from '@langchain/core/messages';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { createDeepAgent, FilesystemBackend } from '@universe-agent/agent';
+import { createUniverseAgent, FilesystemBackend } from '@universe-agent/agent';
 
 const systemPrompt = `You are an expert coding assistant with access to the real filesystem.
 
@@ -33,7 +33,7 @@ if (!fs.existsSync(workspaceDir)) {
   fs.mkdirSync(workspaceDir, { recursive: true });
 }
 
-export const agent = createDeepAgent({
+export const agent = createUniverseAgent({
   systemPrompt,
   backend: new FilesystemBackend({
     rootDir: workspaceDir,

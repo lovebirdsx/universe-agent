@@ -36,7 +36,7 @@ describe('loadConfigFile', () => {
     const calls: string[] = [];
     vi.mocked(fs.readFileSync).mockImplementation((filePath) => {
       calls.push(filePath as string);
-      if ((filePath as string).includes('.deepagents')) {
+      if ((filePath as string).includes('.universe-agent')) {
         if ((filePath as string).includes('/project/')) {
           throw new Error('ENOENT');
         }
@@ -47,7 +47,7 @@ describe('loadConfigFile', () => {
 
     const result = loadConfigFile({ projectDir: '/project' });
 
-    expect(calls[0]).toBe(path.join('/project', '.deepagents', 'config.json'));
+    expect(calls[0]).toBe(path.join('/project', '.universe-agent', 'config.json'));
     expect(result).toEqual({ verbose: true });
   });
 

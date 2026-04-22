@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { createDeepAgent, isAnthropicModel } from '../agent.js';
+import { createUniverseAgent, isAnthropicModel } from '../agent.js';
 import { FakeListChatModel } from '@langchain/core/utils/testing';
 import {
   AIMessage,
@@ -85,7 +85,7 @@ describe('System prompt cache control breakpoints', () => {
     vi.spyOn(model, 'getName').mockReturnValue('ChatAnthropic');
     const checkpointer = new MemorySaver();
 
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model,
       systemPrompt: 'You are a helpful assistant.',
       memory: ['/AGENTS.md'],
@@ -146,12 +146,12 @@ describe('Built-in tool name collision detection', () => {
   }
 
   it('should throw ConfigurationError when a user-provided tool collides with a filesystem tool', () => {
-    expect(() => createDeepAgent({ model, tools: [makeTool('write_file')] })).toThrow(
+    expect(() => createUniverseAgent({ model, tools: [makeTool('write_file')] })).toThrow(
       ConfigurationError,
     );
 
     try {
-      createDeepAgent({ model, tools: [makeTool('write_file')] });
+      createUniverseAgent({ model, tools: [makeTool('write_file')] });
     } catch (e) {
       expect(ConfigurationError.isInstance(e)).toBe(true);
       expect((e as ConfigurationError).code).toBe('TOOL_NAME_COLLISION');
@@ -160,14 +160,14 @@ describe('Built-in tool name collision detection', () => {
   });
 
   it('should list all colliding names in the error', () => {
-    expect(() => createDeepAgent({ model, tools: [makeTool('ls'), makeTool('grep')] })).toThrow(
+    expect(() => createUniverseAgent({ model, tools: [makeTool('ls'), makeTool('grep')] })).toThrow(
       ConfigurationError,
     );
   });
 
   it('should throw when colliding with subagent or todo tool names', () => {
     expect(() =>
-      createDeepAgent({
+      createUniverseAgent({
         model,
         tools: [makeTool('task'), makeTool('write_todos')],
       }),
@@ -175,11 +175,11 @@ describe('Built-in tool name collision detection', () => {
   });
 
   it('should not throw when tool names do not collide', () => {
-    expect(() => createDeepAgent({ model, tools: [makeTool('my_custom_tool')] })).not.toThrow();
+    expect(() => createUniverseAgent({ model, tools: [makeTool('my_custom_tool')] })).not.toThrow();
   });
 });
 
-describe('createDeepAgent recording integration', () => {
+describe('createUniverseAgent recording integration', () => {
   let tmpDir: string;
 
   beforeEach(() => {
@@ -194,7 +194,7 @@ describe('createDeepAgent recording integration', () => {
     const model = new FakeListChatModel({ responses: ['Done'] });
     const checkpointer = new MemorySaver();
 
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model,
       recording: { mode: 'record', path: tmpDir, id: 'test-rec' },
       checkpointer,
@@ -216,7 +216,7 @@ describe('createDeepAgent recording integration', () => {
     const model = new FakeListChatModel({ responses: [] });
     const checkpointer = new MemorySaver();
 
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model,
       recording: { mode: 'record', path: tmpDir, id: 'error-rec' },
       checkpointer,
@@ -250,7 +250,7 @@ describe('createDeepAgent recording integration', () => {
     const invokeSpy = vi.spyOn(spyModel, 'invoke');
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: spyModel,
       recording: { mode: 'replay', path: tmpDir, id: recId },
       checkpointer,
@@ -275,7 +275,7 @@ describe('createDeepAgent recording integration', () => {
     const model = new FakeListChatModel({ responses: ['Auto recorded'] });
     const checkpointer = new MemorySaver();
 
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model,
       recording: { mode: 'auto', path: tmpDir, id: 'auto-test' },
       checkpointer,
@@ -305,7 +305,7 @@ describe('createDeepAgent recording integration', () => {
     const invokeSpy = vi.spyOn(spyModel, 'invoke');
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: spyModel,
       recording: { mode: 'auto', path: tmpDir, id: recId },
       checkpointer,
@@ -326,7 +326,7 @@ describe('createDeepAgent recording integration', () => {
 
   it('should not crash when using string model name with record mode', () => {
     expect(() =>
-      createDeepAgent({
+      createUniverseAgent({
         recording: { mode: 'record', path: tmpDir, id: 'str-model' },
       }),
     ).not.toThrow();
@@ -390,7 +390,7 @@ describe('createDeepAgent recording integration', () => {
     const spyModel = new FakeListChatModel({ responses: ['Should not appear'] });
     const invokeSpy = vi.spyOn(spyModel, 'invoke');
 
-    const replayAgent = createDeepAgent({
+    const replayAgent = createUniverseAgent({
       model: spyModel,
       tools: [myTool],
       recording: { mode: 'replay', path: tmpDir, id: recId },
@@ -452,7 +452,7 @@ describe('createDeepAgent recording integration', () => {
     // --- Replay phase ---
     const spyModel = new FakeListChatModel({ responses: ['Should not appear'] });
 
-    const replayAgent = createDeepAgent({
+    const replayAgent = createUniverseAgent({
       model: spyModel,
       recording: { mode: 'replay', path: tmpDir, id: recId },
       checkpointer,
@@ -476,7 +476,7 @@ describe('createDeepAgent recording integration', () => {
     const model = new FakeListChatModel({ responses: ['Streamed'] });
     const checkpointer = new MemorySaver();
 
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model,
       recording: { mode: 'record', path: tmpDir, id: 'stream-rec' },
       checkpointer,
@@ -507,7 +507,7 @@ describe('createDeepAgent recording integration', () => {
     const model = new FakeListChatModel({ responses: ['Stream replayed'] });
     const checkpointer = new MemorySaver();
 
-    const recordAgent = createDeepAgent({
+    const recordAgent = createUniverseAgent({
       model,
       recording: { mode: 'record', path: tmpDir, id: recId },
       checkpointer,
@@ -528,7 +528,7 @@ describe('createDeepAgent recording integration', () => {
     const spyModel = new FakeListChatModel({ responses: ['Should not appear'] });
     const invokeSpy = vi.spyOn(spyModel, 'invoke');
 
-    const replayAgent = createDeepAgent({
+    const replayAgent = createUniverseAgent({
       model: spyModel,
       recording: { mode: 'replay', path: tmpDir, id: recId },
       checkpointer,
@@ -560,7 +560,7 @@ describe('createDeepAgent recording integration', () => {
     const model = new FakeListChatModel({ responses: ['Cross replay'] });
     const checkpointer = new MemorySaver();
 
-    const recordAgent = createDeepAgent({
+    const recordAgent = createUniverseAgent({
       model,
       recording: { mode: 'record', path: tmpDir, id: recId },
       checkpointer,
@@ -581,7 +581,7 @@ describe('createDeepAgent recording integration', () => {
     const spyModel = new FakeListChatModel({ responses: ['Should not appear'] });
     const invokeSpy = vi.spyOn(spyModel, 'invoke');
 
-    const replayAgent = createDeepAgent({
+    const replayAgent = createUniverseAgent({
       model: spyModel,
       recording: { mode: 'replay', path: tmpDir, id: recId },
       checkpointer,

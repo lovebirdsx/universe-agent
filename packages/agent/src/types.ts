@@ -69,13 +69,13 @@ export type InferSubAgentMiddlewareStates<T extends readonly AnySubAgent[]> = In
 /**
  * Combined state type including custom middleware and subagent middleware states
  */
-export type MergedDeepAgentState<
+export type MergedUniverseAgentState<
   TMiddleware extends readonly AgentMiddleware[],
   TSubagents extends readonly AnySubAgent[],
 > = InferMiddlewareStates<TMiddleware> & InferSubAgentMiddlewareStates<TSubagents>;
 
 /**
- * Union of all response format types accepted by `createDeepAgent`.
+ * Union of all response format types accepted by `createUniverseAgent`.
  *
  * Matches the formats supported by LangChain's `createAgent`:
  * - `ToolStrategy<T>` — from `ToolStrategy.fromSchema(schema)`
@@ -118,7 +118,7 @@ export type InferStructuredResponse<T extends SupportedResponseFormat> =
 /**
  * Type bag that extends AgentTypeConfig with subagent type information.
  *
- * This interface bundles all the generic type parameters used throughout the deep agent system
+ * This interface bundles all the generic type parameters used throughout the universe agent system
  * including subagent types for type-safe streaming and delegation.
  *
  * @typeParam TResponse - The structured response type when using `responseFormat`.
@@ -130,7 +130,7 @@ export type InferStructuredResponse<T extends SupportedResponseFormat> =
  *
  * @example
  * ```typescript
- * const agent = createDeepAgent({
+ * const agent = createUniverseAgent({
  *   middleware: [ResearchMiddleware],
  *   subagents: [
  *     { name: "researcher", description: "...", middleware: [CounterMiddleware] }
@@ -138,10 +138,10 @@ export type InferStructuredResponse<T extends SupportedResponseFormat> =
  * });
  *
  * // Type inference for streaming
- * type Types = InferDeepAgentType<typeof agent, "Subagents">;
+ * type Types = InferUniverseAgentType<typeof agent, "Subagents">;
  * ```
  */
-export interface DeepAgentTypeConfig<
+export interface UniverseAgentTypeConfig<
   TResponse extends Record<string, unknown> | ResponseFormatUndefined =
     | Record<string, unknown>
     | ResponseFormatUndefined,
@@ -159,10 +159,10 @@ export interface DeepAgentTypeConfig<
 }
 
 /**
- * Default type configuration for deep agents.
+ * Default type configuration for universe agents.
  * Used when no explicit type parameters are provided.
  */
-export interface DefaultDeepAgentTypeConfig extends DeepAgentTypeConfig {
+export interface DefaultUniverseAgentTypeConfig extends UniverseAgentTypeConfig {
   Response: Record<string, unknown>;
   State: undefined;
   Context: AnyAnnotationRoot;
@@ -172,117 +172,117 @@ export interface DefaultDeepAgentTypeConfig extends DeepAgentTypeConfig {
 }
 
 /**
- * DeepAgent extends ReactAgent with additional subagent type information.
+ * UniverseAgent extends ReactAgent with additional subagent type information.
  *
- * This type wraps ReactAgent but includes the DeepAgentTypeConfig which
+ * This type wraps ReactAgent but includes the UniverseAgentTypeConfig which
  * contains subagent types for type-safe streaming and delegation.
  *
- * @typeParam TTypes - The DeepAgentTypeConfig containing all type parameters
+ * @typeParam TTypes - The UniverseAgentTypeConfig containing all type parameters
  *
  * @example
  * ```typescript
- * const agent: DeepAgent<DeepAgentTypeConfig<...>> = createDeepAgent({ ... });
+ * const agent: UniverseAgent<UniverseAgentTypeConfig<...>> = createUniverseAgent({ ... });
  *
  * // Access subagent types for streaming
- * type Subagents = InferDeepAgentSubagents<typeof agent>;
+ * type Subagents = InferUniverseAgentSubagents<typeof agent>;
  * ```
  */
-export type DeepAgent<TTypes extends DeepAgentTypeConfig = DeepAgentTypeConfig> =
+export type UniverseAgent<TTypes extends UniverseAgentTypeConfig = UniverseAgentTypeConfig> =
   ReactAgent<TTypes> & {
-    /** Type brand for DeepAgent type inference */
-    readonly '~deepAgentTypes': TTypes;
+    /** Type brand for UniverseAgent type inference */
+    readonly '~universeAgentTypes': TTypes;
   };
 
 /**
- * Helper type to resolve a DeepAgentTypeConfig from either:
- * - A DeepAgentTypeConfig directly
- * - A DeepAgent instance (using `typeof agent`)
+ * Helper type to resolve a UniverseAgentTypeConfig from either:
+ * - A UniverseAgentTypeConfig directly
+ * - A UniverseAgent instance (using `typeof agent`)
  *
  * @example
  * ```typescript
- * const agent = createDeepAgent({ ... });
- * type Types = ResolveDeepAgentTypeConfig<typeof agent>;
+ * const agent = createUniverseAgent({ ... });
+ * type Types = ResolveUniverseAgentTypeConfig<typeof agent>;
  * ```
  */
-export type ResolveDeepAgentTypeConfig<T> = T extends {
-  '~deepAgentTypes': infer Types;
+export type ResolveUniverseAgentTypeConfig<T> = T extends {
+  '~universeAgentTypes': infer Types;
 }
-  ? Types extends DeepAgentTypeConfig
+  ? Types extends UniverseAgentTypeConfig
     ? Types
     : never
-  : T extends DeepAgentTypeConfig
+  : T extends UniverseAgentTypeConfig
     ? T
     : never;
 
 /**
- * Helper type to extract any property from a DeepAgentTypeConfig or DeepAgent.
+ * Helper type to extract any property from a UniverseAgentTypeConfig or UniverseAgent.
  *
- * @typeParam T - The DeepAgentTypeConfig or DeepAgent to extract from
+ * @typeParam T - The UniverseAgentTypeConfig or UniverseAgent to extract from
  * @typeParam K - The property key to extract
  *
  * @example
  * ```typescript
- * const agent = createDeepAgent({ subagents: [...] });
- * type Subagents = InferDeepAgentType<typeof agent, "Subagents">;
+ * const agent = createUniverseAgent({ subagents: [...] });
+ * type Subagents = InferUniverseAgentType<typeof agent, "Subagents">;
  * ```
  */
-export type InferDeepAgentType<
+export type InferUniverseAgentType<
   T,
-  K extends keyof DeepAgentTypeConfig,
-> = ResolveDeepAgentTypeConfig<T>[K];
+  K extends keyof UniverseAgentTypeConfig,
+> = ResolveUniverseAgentTypeConfig<T>[K];
 
 /**
- * Shorthand helper to extract the Subagents type from a DeepAgentTypeConfig or DeepAgent.
+ * Shorthand helper to extract the Subagents type from a UniverseAgentTypeConfig or UniverseAgent.
  *
  * @example
  * ```typescript
- * const agent = createDeepAgent({ subagents: [subagent1, subagent2] });
- * type Subagents = InferDeepAgentSubagents<typeof agent>;
+ * const agent = createUniverseAgent({ subagents: [subagent1, subagent2] });
+ * type Subagents = InferUniverseAgentSubagents<typeof agent>;
  * ```
  */
-export type InferDeepAgentSubagents<T> = InferDeepAgentType<T, 'Subagents'>;
+export type InferUniverseAgentSubagents<T> = InferUniverseAgentType<T, 'Subagents'>;
 
 /**
- * Helper type to extract CompiledSubAgent (subagents with `runnable`) from a DeepAgent.
+ * Helper type to extract CompiledSubAgent (subagents with `runnable`) from a UniverseAgent.
  * Uses Extract to filter for subagents that have a `runnable` property.
  *
  * @example
  * ```typescript
- * const agent = createDeepAgent({ subagents: [subagent1, compiledSubagent] });
+ * const agent = createUniverseAgent({ subagents: [subagent1, compiledSubagent] });
  * type CompiledSubagents = InferCompiledSubagents<typeof agent>;
  * // Result: the subagent type that has `runnable` property
  * ```
  */
 export type InferCompiledSubagents<T> = Extract<
-  InferDeepAgentSubagents<T>[number],
+  InferUniverseAgentSubagents<T>[number],
   { runnable: unknown }
 >;
 
 /**
- * Helper type to extract SubAgent (subagents with `middleware`) from a DeepAgent.
+ * Helper type to extract SubAgent (subagents with `middleware`) from a UniverseAgent.
  * Uses Extract to filter for subagents that have a `middleware` property but no `runnable`.
  *
  * @example
  * ```typescript
- * const agent = createDeepAgent({ subagents: [subagent1, compiledSubagent] });
+ * const agent = createUniverseAgent({ subagents: [subagent1, compiledSubagent] });
  * type RegularSubagents = InferRegularSubagents<typeof agent>;
  * // Result: the subagent type that has `middleware` property
  * ```
  */
 export type InferRegularSubagents<T> = Exclude<
-  InferDeepAgentSubagents<T>[number],
+  InferUniverseAgentSubagents<T>[number],
   { runnable: unknown }
 >;
 
 /**
- * Helper type to extract a subagent by name from a DeepAgent.
+ * Helper type to extract a subagent by name from a UniverseAgent.
  *
- * @typeParam T - The DeepAgent to extract from
+ * @typeParam T - The UniverseAgent to extract from
  * @typeParam TName - The name of the subagent to extract
  *
  * @example
  * ```typescript
- * const agent = createDeepAgent({
+ * const agent = createUniverseAgent({
  *   subagents: [
  *     { name: "researcher", description: "...", middleware: [ResearchMiddleware] }
  *   ] as const,
@@ -292,7 +292,7 @@ export type InferRegularSubagents<T> = Exclude<
  * ```
  */
 export type InferSubagentByName<T, TName extends string> =
-  InferDeepAgentSubagents<T> extends readonly (infer SA)[]
+  InferUniverseAgentSubagents<T> extends readonly (infer SA)[]
     ? SA extends { name: TName }
       ? SA
       : never
@@ -334,8 +334,8 @@ export interface ObservabilityConfig {
 }
 
 /**
- * Configuration parameters for creating a Deep Agent
- * Matches Python's create_deep_agent parameters
+ * Configuration parameters for creating a Universe Agent
+ * Matches Python's create_universe_agent parameters
  *
  * @typeParam TResponse - The structured response type when using responseFormat
  * @typeParam ContextSchema - The context schema type
@@ -343,7 +343,7 @@ export interface ObservabilityConfig {
  * @typeParam TSubagents - The subagents array type for extracting subagent middleware states
  * @typeParam TTools - The tools array type
  */
-export interface CreateDeepAgentParams<
+export interface CreateUniverseAgentParams<
   TResponse extends SupportedResponseFormat = SupportedResponseFormat,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ContextSchema extends AnnotationRoot<any> | InteropZodObject = AnnotationRoot<any>,
@@ -389,7 +389,7 @@ export interface CreateDeepAgentParams<
   name?: string;
   /**
    * Optional list of memory file paths (AGENTS.md files) to load
-   * (e.g., ["~/.deepagents/AGENTS.md", "./.deepagents/AGENTS.md"]).
+   * (e.g., ["~/.universe-agent/AGENTS.md", "./.universe-agent/AGENTS.md"]).
    * Display names are automatically derived from paths.
    * Memory is loaded at agent startup and added into the system prompt.
    */
@@ -403,13 +403,13 @@ export interface CreateDeepAgentParams<
    * @example
    * ```typescript
    * // With FilesystemBackend - skills loaded from disk
-   * const agent = await createDeepAgent({
-   *   backend: new FilesystemBackend({ rootDir: "/home/user/.deepagents" }),
+   * const agent = await createUniverseAgent({
+   *   backend: new FilesystemBackend({ rootDir: "/home/user/.universe-agent" }),
    *   skills: ["/skills/"],
    * });
    *
    * // With StateBackend - skills provided in state
-   * const agent = await createDeepAgent({
+   * const agent = await createUniverseAgent({
    *   skills: ["/skills/"],
    * });
    * const result = await agent.invoke({
@@ -433,7 +433,7 @@ export interface CreateDeepAgentParams<
    * ```typescript
    * import { createLangfuseHandler } from '@universe-agent/agent';
    *
-   * const agent = createDeepAgent({
+   * const agent = createUniverseAgent({
    *   callbacks: [await createLangfuseHandler()],
    * });
    * ```

@@ -6,7 +6,7 @@ import * as os from 'os';
 import { LocalShellBackend } from '../localShell.js';
 
 function createTempDir(): string {
-  return fsSync.mkdtempSync(path.join(os.tmpdir(), 'deepagents-shell-test-'));
+  return fsSync.mkdtempSync(path.join(os.tmpdir(), 'universe-agent-shell-test-'));
 }
 
 async function removeDir(dirPath: string) {

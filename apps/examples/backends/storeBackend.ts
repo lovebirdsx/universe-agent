@@ -6,7 +6,7 @@ import { HumanMessage } from '@langchain/core/messages';
 import { MemorySaver } from '@langchain/langgraph-checkpoint';
 import * as fs from 'fs';
 
-import { createDeepAgent, StoreBackend, JsonFileStore } from '@universe-agent/agent';
+import { createUniverseAgent, StoreBackend, JsonFileStore } from '@universe-agent/agent';
 import { v4 as uuidv4 } from 'uuid';
 
 const internetSearch = tool(
@@ -57,7 +57,7 @@ store.start();
 // 该示例中，claude-sonnet-4.6能够正确地优先使用之前存储的内容，故而此处显示地将模型设置为claude-sonnet-4.6
 process.env.OPENAI_MODEL = 'claude-sonnet-4.6';
 
-export const agent = createDeepAgent({
+export const agent = createUniverseAgent({
   tools: [internetSearch],
   systemPrompt,
   checkpointer: new MemorySaver(),

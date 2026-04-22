@@ -13,8 +13,8 @@
  * ## Usage
  *
  * ```typescript
- * import { createMemoryMiddleware } from "@anthropic/deepagents";
- * import { FilesystemBackend } from "@anthropic/deepagents";
+ * import { createMemoryMiddleware } from "@universe-agent/agent";
+ * import { FilesystemBackend } from "@universe-agent/agent";
  *
  * // Security: FilesystemBackend allows reading/writing from the entire filesystem.
  * // Either ensure the agent is running within a sandbox OR add human-in-the-loop (HIL)
@@ -24,12 +24,12 @@
  * const middleware = createMemoryMiddleware({
  *   backend,
  *   sources: [
- *     "~/.deepagents/AGENTS.md",
- *     "./.deepagents/AGENTS.md",
+ *     "~/.universe-agent/AGENTS.md",
+ *     "./.universe-agent/AGENTS.md",
  *   ],
  * });
  *
- * const agent = createDeepAgent({ middleware: [middleware] });
+ * const agent = createUniverseAgent({ middleware: [middleware] });
  * ```
  *
  * ## Memory Sources
@@ -86,7 +86,7 @@ export interface MemoryMiddlewareOptions {
     | ((config: { state: unknown; store?: BaseStore }) => StateBackend);
 
   /**
-   * List of memory file paths to load (e.g., ["~/.deepagents/AGENTS.md", "./.deepagents/AGENTS.md"]).
+   * List of memory file paths to load (e.g., ["~/.universe-agent/AGENTS.md", "./.universe-agent/AGENTS.md"]).
    * Display names are automatically derived from the paths.
    * Sources are loaded in order.
    */
@@ -165,8 +165,8 @@ const MEMORY_SYSTEM_PROMPT = context`
       Tool Call: edit_file(...) -> remembers that the user's google account email is john@example.com
 
       Example 2 (remembering implicit user preferences):
-      User: Can you write me an example for creating a deep agent in LangChain?
-      Agent: Sure, I'll write you an example for creating a deep agent in LangChain <example code in Python>
+      User: Can you write me an example for creating a universe agent in LangChain?
+      Agent: Sure, I'll write you an example for creating a universe agent in LangChain <example code in Python>
       User: Can you do this in JavaScript
       Agent: Let me save this to my memory.
       Tool Call: edit_file(...) -> remembers that the user prefers to get LangChain code examples in JavaScript
@@ -270,8 +270,8 @@ async function loadMemoryFromBackend(
  * const middleware = createMemoryMiddleware({
  *   backend: new FilesystemBackend({ rootDir: "/" }),
  *   sources: [
- *     "~/.deepagents/AGENTS.md",
- *     "./.deepagents/AGENTS.md",
+ *     "~/.universe-agent/AGENTS.md",
+ *     "./.universe-agent/AGENTS.md",
  *   ],
  * });
  * ```

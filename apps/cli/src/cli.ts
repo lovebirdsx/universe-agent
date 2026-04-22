@@ -15,8 +15,8 @@ export function createProgram(): Command {
   const program = new Command();
 
   program
-    .name('deepagent')
-    .description('DeepAgent CLI - AI编程助手')
+    .name('universe-agent')
+    .description('UniverseAgent CLI - AI编程助手')
     .version(readVersion())
     .argument('[prompt...]', '一次性提示（不提供则进入交互式 REPL）')
     .option('-s, --system <prompt>', '自定义系统提示')

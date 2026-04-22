@@ -8,7 +8,7 @@
  *   [namespace, mode, data]
  */
 import 'dotenv/config';
-import { createDeepAgent } from '@universe-agent/agent';
+import { createUniverseAgent } from '@universe-agent/agent';
 import { tool, type ToolRuntime } from 'langchain';
 import { z } from 'zod';
 
@@ -35,7 +35,7 @@ const analyzeData = tool(
   },
 );
 
-const agent = createDeepAgent({
+const agent = createUniverseAgent({
   systemPrompt:
     'You are a coordinator. For any analysis request, you MUST delegate ' +
     'to the analyst subagent using the task tool. Never answer directly. ' +

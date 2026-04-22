@@ -1,5 +1,5 @@
 /**
- * Type tests for createDeepAgent
+ * Type tests for createUniverseAgent
  *
  * These tests verify that the type inference works correctly for:
  * - Custom middleware state schemas
@@ -19,11 +19,11 @@ import {
   providerStrategy,
 } from 'langchain';
 import { z } from 'zod/v4';
-import { createDeepAgent } from '../agent.js';
+import { createUniverseAgent } from '../agent.js';
 import type {
-  MergedDeepAgentState,
+  MergedUniverseAgentState,
   InferSubagentByName,
-  InferDeepAgentSubagents,
+  InferUniverseAgentSubagents,
   InferCompiledSubagents,
   InferRegularSubagents,
 } from '../types.js';
@@ -74,12 +74,12 @@ const MemoryMiddleware = createMiddleware({
   stateSchema: MemoryStateSchema,
 });
 
-describe('createDeepAgent types', () => {
+describe('createUniverseAgent types', () => {
   it('should allow systemPrompt to be a string or SystemMessage', () => {
-    createDeepAgent({
+    createUniverseAgent({
       systemPrompt: 'Hello, world!',
     });
-    createDeepAgent({
+    createUniverseAgent({
       systemPrompt: new SystemMessage({
         content: [
           {
@@ -91,12 +91,12 @@ describe('createDeepAgent types', () => {
     });
   });
 
-  describe('MergedDeepAgentState helper type', () => {
+  describe('MergedUniverseAgentState helper type', () => {
     it('should correctly merge middleware states', () => {
       type TestMiddleware = readonly [typeof ResearchMiddleware, typeof CounterMiddleware];
       type TestSubagents = readonly [];
 
-      type MergedState = MergedDeepAgentState<TestMiddleware, TestSubagents>;
+      type MergedState = MergedUniverseAgentState<TestMiddleware, TestSubagents>;
 
       // Should include research from ResearchMiddleware
       expectTypeOf<MergedState>().toHaveProperty('research');
@@ -108,9 +108,9 @@ describe('createDeepAgent types', () => {
     });
   });
 
-  describe('createDeepAgent return type using actual invoke', () => {
+  describe('createUniverseAgent return type using actual invoke', () => {
     it('should infer state from custom middleware and subagents middleware', async () => {
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         middleware: [ResearchMiddleware],
         subagents: [
           {
@@ -146,7 +146,7 @@ describe('createDeepAgent types', () => {
     });
 
     it('should infer state from multiple middleware', async () => {
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         middleware: [ResearchMiddleware, CounterMiddleware],
       });
 
@@ -161,7 +161,7 @@ describe('createDeepAgent types', () => {
     });
 
     it('should work with no custom middleware', async () => {
-      const agent = createDeepAgent({});
+      const agent = createUniverseAgent({});
 
       const result = await agent.invoke({ messages: [] });
 
@@ -170,7 +170,7 @@ describe('createDeepAgent types', () => {
     });
 
     it('should infer research as string not any', async () => {
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         middleware: [ResearchMiddleware],
       });
 
@@ -182,16 +182,16 @@ describe('createDeepAgent types', () => {
     });
   });
 
-  describe('DeepAgent type', () => {
+  describe('UniverseAgent type', () => {
     it('should correctly infer the type of the agent', () => {
-      const agent = createDeepAgent({});
-      expectTypeOf(agent).toHaveProperty('~deepAgentTypes');
-      expectTypeOf(agent['~deepAgentTypes']).toHaveProperty('Subagents');
-      expectTypeOf(agent['~deepAgentTypes'].Subagents).toEqualTypeOf<readonly []>();
+      const agent = createUniverseAgent({});
+      expectTypeOf(agent).toHaveProperty('~universeAgentTypes');
+      expectTypeOf(agent['~universeAgentTypes']).toHaveProperty('Subagents');
+      expectTypeOf(agent['~universeAgentTypes'].Subagents).toEqualTypeOf<readonly []>();
     });
 
     it('can infer the type of the subagent', () => {
-      const _agent = createDeepAgent({
+      const _agent = createUniverseAgent({
         subagents: [
           {
             name: 'Subagent1',
@@ -210,7 +210,7 @@ describe('createDeepAgent types', () => {
     });
 
     it('can infer the type of a createAgent sub agent', () => {
-      const _agent = createDeepAgent({
+      const _agent = createUniverseAgent({
         subagents: [
           {
             name: 'Subagent2',
@@ -237,8 +237,8 @@ describe('createDeepAgent types', () => {
       expectTypeOf(subagent1).toHaveProperty('description');
       expectTypeOf(subagent1.description).toEqualTypeOf<'Subagent1 description'>();
 
-      // InferDeepAgentSubagents returns the full subagents tuple
-      type AllSubagents = InferDeepAgentSubagents<typeof _agent>;
+      // InferUniverseAgentSubagents returns the full subagents tuple
+      type AllSubagents = InferUniverseAgentSubagents<typeof _agent>;
       expectTypeOf<AllSubagents[0]>().toHaveProperty('systemPrompt');
       expectTypeOf<AllSubagents[1]>().toHaveProperty('runnable');
 
@@ -265,7 +265,7 @@ describe('createDeepAgent types', () => {
       const schema = z.object({
         name: z.string(),
       });
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         responseFormat: providerStrategy(schema),
       });
       const result = await agent.invoke({ messages: [] });
@@ -277,7 +277,7 @@ describe('createDeepAgent types', () => {
       const schema = z.object({
         name: z.string(),
       });
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         responseFormat: toolStrategy(schema),
       });
       const result = await agent.invoke({ messages: [] });
@@ -292,7 +292,7 @@ describe('createDeepAgent types', () => {
       const schema2 = z.object({
         bar: z.string(),
       });
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         responseFormat: toolStrategy([schema1, schema2]),
       });
       const result = await agent.invoke({ messages: [] });

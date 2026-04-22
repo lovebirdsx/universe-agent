@@ -1,5 +1,5 @@
 /**
- * Configuration and settings for deepagents.
+ * Configuration and settings for universe-agent.
  *
  * Provides project detection, path management, and environment configuration
  * for skills and agent memory middleware.
@@ -22,7 +22,7 @@ export interface SettingsOptions {
  *
  * Provides access to:
  * - Project root detection (via .git directory)
- * - User-level deepagents directory (~/.deepagents)
+ * - User-level universe-agent directory (~/.universe-agent)
  * - Agent-specific directories and files
  * - Skills directories (user and project level)
  */
@@ -30,8 +30,8 @@ export interface Settings {
   /** Detected project root directory, or null if not in a git project */
   readonly projectRoot: string | null;
 
-  /** Base user-level .deepagents directory (~/.deepagents) */
-  readonly userDeepagentsDir: string;
+  /** Base user-level .universe-agent directory (~/.universe-agent) */
+  readonly userUniverseAgentDir: string;
 
   /** Check if currently in a git project */
   readonly hasProject: boolean;
@@ -39,7 +39,7 @@ export interface Settings {
   /**
    * Get the agent directory path.
    * @param agentName - Name of the agent
-   * @returns Path to ~/.deepagents/{agentName}
+   * @returns Path to ~/.universe-agent/{agentName}
    * @throws Error if agent name is invalid
    */
   getAgentDir(agentName: string): string;
@@ -47,7 +47,7 @@ export interface Settings {
   /**
    * Ensure agent directory exists and return path.
    * @param agentName - Name of the agent
-   * @returns Path to ~/.deepagents/{agentName}
+   * @returns Path to ~/.universe-agent/{agentName}
    * @throws Error if agent name is invalid
    */
   ensureAgentDir(agentName: string): string;
@@ -55,47 +55,47 @@ export interface Settings {
   /**
    * Get user-level agent.md path for a specific agent.
    * @param agentName - Name of the agent
-   * @returns Path to ~/.deepagents/{agentName}/agent.md
+   * @returns Path to ~/.universe-agent/{agentName}/agent.md
    */
   getUserAgentMdPath(agentName: string): string;
 
   /**
    * Get project-level agent.md path.
-   * @returns Path to {projectRoot}/.deepagents/agent.md, or null if not in a project
+   * @returns Path to {projectRoot}/.universe-agent/agent.md, or null if not in a project
    */
   getProjectAgentMdPath(): string | null;
 
   /**
    * Get user-level skills directory path for a specific agent.
    * @param agentName - Name of the agent
-   * @returns Path to ~/.deepagents/{agentName}/skills/
+   * @returns Path to ~/.universe-agent/{agentName}/skills/
    */
   getUserSkillsDir(agentName: string): string;
 
   /**
    * Ensure user-level skills directory exists and return path.
    * @param agentName - Name of the agent
-   * @returns Path to ~/.deepagents/{agentName}/skills/
+   * @returns Path to ~/.universe-agent/{agentName}/skills/
    */
   ensureUserSkillsDir(agentName: string): string;
 
   /**
    * Get project-level skills directory path.
-   * @returns Path to {projectRoot}/.deepagents/skills/, or null if not in a project
+   * @returns Path to {projectRoot}/.universe-agent/skills/, or null if not in a project
    */
   getProjectSkillsDir(): string | null;
 
   /**
    * Ensure project-level skills directory exists and return path.
-   * @returns Path to {projectRoot}/.deepagents/skills/, or null if not in a project
+   * @returns Path to {projectRoot}/.universe-agent/skills/, or null if not in a project
    */
   ensureProjectSkillsDir(): string | null;
 
   /**
-   * Ensure project .deepagents directory exists.
-   * @returns Path to {projectRoot}/.deepagents/, or null if not in a project
+   * Ensure project .universe-agent directory exists.
+   * @returns Path to {projectRoot}/.universe-agent/, or null if not in a project
    */
-  ensureProjectDeepagentsDir(): string | null;
+  ensureProjectUniverseAgentDir(): string | null;
 }
 
 /**
@@ -150,11 +150,11 @@ function isValidAgentName(agentName: string): boolean {
  */
 export function createSettings(options: SettingsOptions = {}): Settings {
   const projectRoot = findProjectRoot(options.startPath);
-  const userDeepagentsDir = path.join(os.homedir(), '.deepagents');
+  const userUniverseAgentDir = path.join(os.homedir(), '.universe-agent');
 
   return {
     projectRoot,
-    userDeepagentsDir,
+    userUniverseAgentDir,
     hasProject: projectRoot !== null,
 
     getAgentDir(agentName: string): string {
@@ -164,7 +164,7 @@ export function createSettings(options: SettingsOptions = {}): Settings {
             'Agent names can only contain letters, numbers, hyphens, underscores, and spaces.',
         );
       }
-      return path.join(userDeepagentsDir, agentName);
+      return path.join(userUniverseAgentDir, agentName);
     },
 
     ensureAgentDir(agentName: string): string {
@@ -181,7 +181,7 @@ export function createSettings(options: SettingsOptions = {}): Settings {
       if (!projectRoot) {
         return null;
       }
-      return path.join(projectRoot, '.deepagents', 'agent.md');
+      return path.join(projectRoot, '.universe-agent', 'agent.md');
     },
 
     getUserSkillsDir(agentName: string): string {
@@ -198,7 +198,7 @@ export function createSettings(options: SettingsOptions = {}): Settings {
       if (!projectRoot) {
         return null;
       }
-      return path.join(projectRoot, '.deepagents', 'skills');
+      return path.join(projectRoot, '.universe-agent', 'skills');
     },
 
     ensureProjectSkillsDir(): string | null {
@@ -210,13 +210,13 @@ export function createSettings(options: SettingsOptions = {}): Settings {
       return skillsDir;
     },
 
-    ensureProjectDeepagentsDir(): string | null {
+    ensureProjectUniverseAgentDir(): string | null {
       if (!projectRoot) {
         return null;
       }
-      const deepagentsDir = path.join(projectRoot, '.deepagents');
-      fs.mkdirSync(deepagentsDir, { recursive: true });
-      return deepagentsDir;
+      const universeAgentDir = path.join(projectRoot, '.universe-agent');
+      fs.mkdirSync(universeAgentDir, { recursive: true });
+      return universeAgentDir;
     },
   };
 }

@@ -15,12 +15,12 @@ describe('Skills Integration Tests', () => {
   let projectDir: string;
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deepagents-skills-int-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'universe-agent-skills-int-'));
     projectDir = path.join(tempDir, 'project');
 
     // Create project structure
     fs.mkdirSync(path.join(projectDir, '.git'), { recursive: true });
-    fs.mkdirSync(path.join(projectDir, '.deepagents', 'skills'), {
+    fs.mkdirSync(path.join(projectDir, '.universe-agent', 'skills'), {
       recursive: true,
     });
   });
@@ -32,7 +32,7 @@ describe('Skills Integration Tests', () => {
   describe('Full Skills Workflow', () => {
     it('should create skill, load via middleware, and inject into prompt', async () => {
       // Step 1: Create a skill directory
-      const skillDir = path.join(projectDir, '.deepagents', 'skills', 'my-skill');
+      const skillDir = path.join(projectDir, '.universe-agent', 'skills', 'my-skill');
       fs.mkdirSync(skillDir, { recursive: true });
 
       // Step 2: Add SKILL.md with valid frontmatter
@@ -107,7 +107,7 @@ description: User version of shared skill
       fs.writeFileSync(path.join(userSkillsDir, 'shared-skill', 'SKILL.md'), userSkillContent);
 
       // Create project skill with same name
-      const projectSkillDir = path.join(projectDir, '.deepagents', 'skills', 'shared-skill');
+      const projectSkillDir = path.join(projectDir, '.universe-agent', 'skills', 'shared-skill');
       fs.mkdirSync(projectSkillDir, { recursive: true });
 
       const projectSkillContent = `---
@@ -122,7 +122,7 @@ description: Project version of shared skill
       // Load skills
       const skills = listSkills({
         userSkillsDir,
-        projectSkillsDir: path.join(projectDir, '.deepagents', 'skills'),
+        projectSkillsDir: path.join(projectDir, '.universe-agent', 'skills'),
       });
 
       expect(skills).toHaveLength(1);
@@ -135,7 +135,7 @@ description: Project version of shared skill
   describe('Skills and Memory Middleware Together', () => {
     it('should work together without conflicts', async () => {
       // Create skill
-      const skillDir = path.join(projectDir, '.deepagents', 'skills', 'test-skill');
+      const skillDir = path.join(projectDir, '.universe-agent', 'skills', 'test-skill');
       fs.mkdirSync(skillDir, { recursive: true });
       fs.writeFileSync(
         path.join(skillDir, 'SKILL.md'),
@@ -150,13 +150,13 @@ description: Test skill
 
       // Create project memory
       fs.writeFileSync(
-        path.join(projectDir, '.deepagents', 'agent.md'),
+        path.join(projectDir, '.universe-agent', 'agent.md'),
         '# Project Memory\n\nTest project memory content.',
       );
 
       // Create settings pointing to temp dir for user files
-      const userDeepagentsDir = path.join(tempDir, '.deepagents');
-      const userAgentDir = path.join(userDeepagentsDir, 'test-agent');
+      const userUniverseAgentDir = path.join(tempDir, '.universe-agent');
+      const userAgentDir = path.join(userUniverseAgentDir, 'test-agent');
       fs.mkdirSync(userAgentDir, { recursive: true });
       fs.writeFileSync(
         path.join(userAgentDir, 'agent.md'),
@@ -166,29 +166,29 @@ description: Test skill
       // Create mock settings
       const mockSettings = {
         projectRoot: projectDir,
-        userDeepagentsDir,
+        userUniverseAgentDir,
         hasProject: true,
-        getAgentDir: (name: string) => path.join(userDeepagentsDir, name),
+        getAgentDir: (name: string) => path.join(userUniverseAgentDir, name),
         ensureAgentDir: (name: string) => {
-          const dir = path.join(userDeepagentsDir, name);
+          const dir = path.join(userUniverseAgentDir, name);
           fs.mkdirSync(dir, { recursive: true });
           return dir;
         },
-        getUserAgentMdPath: (name: string) => path.join(userDeepagentsDir, name, 'agent.md'),
-        getProjectAgentMdPath: () => path.join(projectDir, '.deepagents', 'agent.md'),
-        getUserSkillsDir: (name: string) => path.join(userDeepagentsDir, name, 'skills'),
+        getUserAgentMdPath: (name: string) => path.join(userUniverseAgentDir, name, 'agent.md'),
+        getProjectAgentMdPath: () => path.join(projectDir, '.universe-agent', 'agent.md'),
+        getUserSkillsDir: (name: string) => path.join(userUniverseAgentDir, name, 'skills'),
         ensureUserSkillsDir: (name: string) => {
-          const dir = path.join(userDeepagentsDir, name, 'skills');
+          const dir = path.join(userUniverseAgentDir, name, 'skills');
           fs.mkdirSync(dir, { recursive: true });
           return dir;
         },
-        getProjectSkillsDir: () => path.join(projectDir, '.deepagents', 'skills'),
-        ensureProjectSkillsDir: () => path.join(projectDir, '.deepagents', 'skills'),
-        ensureProjectDeepagentsDir: () => path.join(projectDir, '.deepagents'),
+        getProjectSkillsDir: () => path.join(projectDir, '.universe-agent', 'skills'),
+        ensureProjectSkillsDir: () => path.join(projectDir, '.universe-agent', 'skills'),
+        ensureProjectUniverseAgentDir: () => path.join(projectDir, '.universe-agent'),
       };
 
       // Create user skills directory
-      const userSkillsDir = path.join(userDeepagentsDir, 'test-agent', 'skills');
+      const userSkillsDir = path.join(userUniverseAgentDir, 'test-agent', 'skills');
       fs.mkdirSync(userSkillsDir, { recursive: true });
 
       // Create both middleware using new backend-agnostic API

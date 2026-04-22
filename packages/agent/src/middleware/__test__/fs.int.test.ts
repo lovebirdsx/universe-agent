@@ -4,7 +4,7 @@ import { createAgent } from 'langchain';
 import { HumanMessage, ToolMessage } from '@langchain/core/messages';
 import { InMemoryStore } from '@langchain/langgraph-checkpoint';
 import { MemorySaver } from '@langchain/langgraph';
-import { createDeepAgent } from '../../index.js';
+import { createUniverseAgent } from '../../index.js';
 import { createFilesystemMiddleware, WRITE_FILE_TOOL_DESCRIPTION } from '../fs.js';
 import {
   StateBackend,
@@ -601,7 +601,7 @@ describe('Filesystem Middleware Integration Tests', () => {
     'should handle Command return with tool call',
     { timeout: 90 * 1000 }, // 90s
     async () => {
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         tools: [getPremierLeagueStandings],
         model: SAMPLE_MODEL,
       });
@@ -620,7 +620,7 @@ describe('Filesystem Middleware Integration Tests', () => {
     'should handle Command with existing state',
     { timeout: 90 * 1000 }, // 90s
     async () => {
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         tools: [getLaLigaStandings],
         model: SAMPLE_MODEL,
       });
@@ -1098,7 +1098,7 @@ describe('Filesystem Middleware Integration Tests', () => {
         modified_at: new Date().toISOString(),
       });
 
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         backend: (runtime: BackendRuntime) =>
           new CompositeBackend(new StateBackend(runtime), {
             '/memories/': new StoreBackend(runtime),
@@ -1170,7 +1170,7 @@ describe('Filesystem Middleware Integration Tests', () => {
       const checkpointer = new MemorySaver();
       const store = new InMemoryStore();
 
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         backend: (runtime: BackendRuntime) => new StateBackend(runtime),
         checkpointer,
         store,
@@ -1256,7 +1256,7 @@ describe('Filesystem Middleware Integration Tests', () => {
   );
 
   it.concurrent(
-    'should propagate store via invoke config with createDeepAgent (cloud deployment simulation)',
+    'should propagate store via invoke config with createUniverseAgent (cloud deployment simulation)',
     { timeout: 90 * 1000 },
     async () => {
       const checkpointer = new MemorySaver();
@@ -1268,7 +1268,7 @@ describe('Filesystem Middleware Integration Tests', () => {
         modified_at: '2021-01-01',
       });
 
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         backend: (runtime: BackendRuntime) =>
           new CompositeBackend(new StateBackend(runtime), {
             '/memories/': new StoreBackend(runtime),

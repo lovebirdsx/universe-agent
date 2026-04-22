@@ -32,10 +32,10 @@ type AgentGraphView = {
 };
 
 /**
- * Assert that an agent has all the expected deep agent qualities
- * Accepts any object with a graph property (compatible with ReactAgent and DeepAgent types)
+ * Assert that an agent has all the expected universe agent qualities
+ * Accepts any object with a graph property (compatible with ReactAgent and UniverseAgent types)
  */
-export function assertAllDeepAgentQualities(agent: AgentGraphView) {
+export function assertAllUniverseAgentQualities(agent: AgentGraphView) {
   // Check state channels
   const channels = Object.keys(agent.graph?.channels || {});
   if (!channels.includes('todos')) {

@@ -7,8 +7,8 @@
  * ## Usage
  *
  * ```typescript
- * import { createSummarizationMiddleware } from "@anthropic/deepagents";
- * import { FilesystemBackend } from "@anthropic/deepagents";
+ * import { createSummarizationMiddleware } from "@universe-agent/agent";
+ * import { FilesystemBackend } from "@universe-agent/agent";
  *
  * const backend = new FilesystemBackend({ rootDir: "/data" });
  *
@@ -19,7 +19,7 @@
  *   keep: { type: "fraction", value: 0.10 },
  * });
  *
- * const agent = createDeepAgent({ middleware: [middleware] });
+ * const agent = createUniverseAgent({ middleware: [middleware] });
  * ```
  *
  * ## Storage

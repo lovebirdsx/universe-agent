@@ -1,10 +1,10 @@
 /**
- * Hierarchical Deep Agent Example
+ * Hierarchical Universe Agent Example
  *
- * Demonstrates multi-level agent hierarchies where a deep agent acts as a
- * subagent of another deep agent. This pattern enables:
+ * Demonstrates multi-level agent hierarchies where a universe agent acts as a
+ * subagent of another universe agent. This pattern enables:
  *
- * - **Agent-as-subagent**: A full `createDeepAgent` can be used as a
+ * - **Agent-as-subagent**: A full `createUniverseAgent` can be used as a
  *   `CompiledSubAgent` in a parent agent
  * - **Multi-level nesting**: Sub-agents can themselves have sub-agents,
  *   creating arbitrarily deep hierarchies
@@ -15,14 +15,12 @@
  * ```
  * Main Agent (orchestrator)
  *   ├── Tool: get_weather
- *   └── Sub Agent: research-specialist (DeepAgent)
+ *   └── Sub Agent: research-specialist (UniverseAgent)
  *       ├── Tool: get_news
  *       ├── Tool: analyze_data
  *       └── Sub Agent: fact-checker (simple SubAgent)
  *           └── Tool: verify_claim
  * ```
- *
- * @see https://github.com/anthropics/deepagentsjs/issues/206
  */
 import 'dotenv/config';
 
@@ -30,7 +28,7 @@ import { tool } from 'langchain';
 import { z } from 'zod';
 import { HumanMessage } from '@langchain/core/messages';
 
-import { createDeepAgent, type CompiledSubAgent, type SubAgent } from '@universe-agent/agent';
+import { createUniverseAgent, type CompiledSubAgent, type SubAgent } from '@universe-agent/agent';
 
 // ─── Tools ──────────────────────────────────────────────────────────────────
 const getWeather = tool((input) => `The weather in ${input.location} is sunny and 72°F.`, {
@@ -100,13 +98,13 @@ const factCheckerSubAgent: SubAgent = {
   tools: [verifyClaim],
 };
 
-// ─── Level 1 Sub-Agent: Research Specialist (itself a DeepAgent) ─────────────
+// ─── Level 1 Sub-Agent: Research Specialist (itself a UniverseAgent) ─────────────
 /**
- * This deep agent acts as a sub-agent of the main agent.
+ * This universe agent acts as a sub-agent of the main agent.
  * It has its own tools, sub-agents, and full agent capabilities including
  * filesystem, todo management, and summarization.
  */
-const researchDeepAgent = createDeepAgent({
+const researchUniverseAgent = createUniverseAgent({
   systemPrompt:
     'You are a research specialist. Your role is to gather news, analyze data, ' +
     'and produce well-researched findings.\n\n' +
@@ -130,9 +128,9 @@ const researchDeepAgent = createDeepAgent({
  * The main agent orchestrates between its own tools and sub-agents.
  * The LLM decides whether to:
  * - Use get_weather directly for weather queries
- * - Delegate to the research-specialist deep agent for research tasks
+ * - Delegate to the research-specialist universe agent for research tasks
  */
-export const mainAgent = createDeepAgent({
+export const mainAgent = createUniverseAgent({
   systemPrompt:
     'You are a helpful assistant that coordinates different capabilities.\n\n' +
     '- For weather queries, use the get_weather tool directly\n' +
@@ -147,7 +145,7 @@ export const mainAgent = createDeepAgent({
         'A specialized research agent with its own tools and sub-agents. ' +
         'It can search for news, analyze data, and verify facts. ' +
         'Use this for any research, analysis, or investigation tasks.',
-      runnable: researchDeepAgent,
+      runnable: researchUniverseAgent,
     } satisfies CompiledSubAgent,
   ],
   recording: {
@@ -156,7 +154,7 @@ export const mainAgent = createDeepAgent({
 });
 
 // ─── Run ─────────────────────────────────────────────────────────────────────
-console.log('=== Hierarchical Deep Agent Example ===\n');
+console.log('=== Hierarchical Universe Agent Example ===\n');
 
 // Test 1: Direct tool use (weather) — main agent handles this itself
 console.log('--- Query 1: Direct tool use (weather) ---');
@@ -169,7 +167,7 @@ console.log(
   typeof lastMsg1.content === 'string' ? `${lastMsg1.content.slice(0, 200)}...` : lastMsg1.content,
 );
 
-// Test 2: Delegate to research sub-agent (DeepAgent)
+// Test 2: Delegate to research sub-agent (UniverseAgent)
 console.log('\n--- Query 2: Delegate to research sub-agent ---');
 const result2 = await mainAgent.invoke({
   messages: [

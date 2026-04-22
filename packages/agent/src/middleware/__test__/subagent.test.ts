@@ -10,7 +10,7 @@ import {
 } from '@langchain/core/messages';
 import { RunnableLambda } from '@langchain/core/runnables';
 
-import { createDeepAgent } from '../../agent.js';
+import { createUniverseAgent } from '../../agent.js';
 import { createSkillsMiddleware } from '../skills.js';
 import { createFileData } from '../../backends/utils.js';
 import { createMockBackend } from '../test.js';
@@ -45,7 +45,7 @@ Instructions for the test skill.
  * Subagent skills isolation tests.
  *
  * These tests verify that:
- * 1. Custom subagents do NOT inherit skills middleware from createDeepAgent
+ * 1. Custom subagents do NOT inherit skills middleware from createUniverseAgent
  * 2. skillsMetadata from subagent middleware doesn't bubble up to parent
  * 3. General-purpose subagent DOES inherit skills from main agent
  */
@@ -84,7 +84,7 @@ describe('Subagent skills isolation', () => {
     });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model,
       skills: ['/skills/'],
       checkpointer,
@@ -164,7 +164,7 @@ describe('Subagent skills isolation', () => {
     });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model,
       skills: ['/skills/'],
       checkpointer,
@@ -242,7 +242,7 @@ description: A skill for the subagent
     });
 
     const checkpointer = new MemorySaver();
-    const parentAgent = createDeepAgent({
+    const parentAgent = createUniverseAgent({
       model,
       checkpointer,
       subagents: [
@@ -320,7 +320,7 @@ describe('Subagent content block filtering', () => {
     });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model,
       checkpointer,
       subagents: [
@@ -397,7 +397,7 @@ describe('Subagent content block filtering', () => {
     });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model,
       checkpointer,
       subagents: [
@@ -475,7 +475,7 @@ describe('Subagent content block filtering', () => {
     });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model,
       checkpointer,
       subagents: [
@@ -535,7 +535,7 @@ describe('Subagent content block filtering', () => {
     });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model,
       checkpointer,
       subagents: [
@@ -611,7 +611,7 @@ describe('Subagent structured response', () => {
     });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model,
       checkpointer,
       subagents: [
@@ -674,7 +674,7 @@ describe('Subagent structured response', () => {
     });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model,
       checkpointer,
       subagents: [

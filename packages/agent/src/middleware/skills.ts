@@ -17,7 +17,7 @@
  * ## Usage
  *
  * ```typescript
- * import { createSkillsMiddleware, FilesystemBackend } from "@anthropic/deepagents";
+ * import { createSkillsMiddleware, FilesystemBackend } from "@universe-agent/agent";
  *
  * const middleware = createSkillsMiddleware({
  *   backend: new FilesystemBackend({ rootDir: "/" }),
@@ -27,13 +27,13 @@
  *   ],
  * });
  *
- * const agent = createDeepAgent({ middleware: [middleware] });
+ * const agent = createUniverseAgent({ middleware: [middleware] });
  * ```
  *
- * Or use the `skills` parameter on createDeepAgent:
+ * Or use the `skills` parameter on createUniverseAgent:
  *
  * ```typescript
- * const agent = createDeepAgent({
+ * const agent = createUniverseAgent({
  *   skills: ["/skills/user/", "/skills/project/"],
  * });
  * ```

@@ -9,7 +9,7 @@ import {
   createFilesystemMiddleware,
   type CompiledSubAgent,
 } from '../../index.js';
-import { createDeepAgent } from '../../agent.js';
+import { createUniverseAgent } from '../../agent.js';
 import { createFileData } from '../../backends/utils.js';
 import {
   SAMPLE_MODEL,
@@ -522,18 +522,18 @@ Each subagent should write ONE file. Do NOT write files sequentially - spawn all
 });
 
 /**
- * Integration tests for hierarchical deep agent patterns (agent-as-subagent).
+ * Integration tests for hierarchical universe agent patterns (agent-as-subagent).
  *
- * These tests verify that a `createDeepAgent` instance can be used as a
+ * These tests verify that a `createUniverseAgent` instance can be used as a
  * `CompiledSubAgent` within another agent, enabling multi-level agent hierarchies.
  */
-describe('Hierarchical Deep Agent Integration Tests', () => {
+describe('Hierarchical Universe Agent Integration Tests', () => {
   it.concurrent(
-    'should use a deep agent as a compiled subagent and invoke its tools',
+    'should use a universe agent as a compiled subagent and invoke its tools',
     { timeout: 120 * 1000 }, // 120s
     async () => {
-      // Create a deep agent that will be used as a subagent
-      const weatherDeepAgent = createDeepAgent({
+      // Create a universe agent that will be used as a subagent
+      const weatherUniverseAgent = createUniverseAgent({
         model: SAMPLE_MODEL,
         systemPrompt:
           'You are a weather specialist. Use the get_weather tool to get weather information.',
@@ -550,24 +550,24 @@ describe('Hierarchical Deep Agent Integration Tests', () => {
             defaultTools: [],
             subagents: [
               {
-                name: 'weather-deep-agent',
-                description: 'A deep agent specialized in weather information.',
-                runnable: weatherDeepAgent,
+                name: 'weather-universe-agent',
+                description: 'A universe agent specialized in weather information.',
+                runnable: weatherUniverseAgent,
               } satisfies CompiledSubAgent,
             ],
           }),
         ],
       });
 
-      // Verify the task tool was created with the weather-deep-agent
+      // Verify the task tool was created with the weather-universe-agent
       const tools = extractToolsFromAgent(parentAgent);
       expect(tools.task).toBeDefined();
-      expect(tools.task.description).toContain('weather-deep-agent');
+      expect(tools.task.description).toContain('weather-universe-agent');
 
       // Verify tool calls flow through the hierarchy:
-      // parent -> task(weather-deep-agent) -> get_weather
+      // parent -> task(weather-universe-agent) -> get_weather
       const expectedToolCalls = [
-        { name: 'task', args: { subagent_type: 'weather-deep-agent' } },
+        { name: 'task', args: { subagent_type: 'weather-universe-agent' } },
         { name: 'get_weather' },
       ];
 
@@ -578,11 +578,11 @@ describe('Hierarchical Deep Agent Integration Tests', () => {
   );
 
   it.concurrent(
-    'should support a deep agent with its own subagents as a compiled subagent',
+    'should support a universe agent with its own subagents as a compiled subagent',
     { timeout: 120 * 1000 }, // 120s
     async () => {
-      // Level 2: Create a deep agent that has its own subagents
-      const sportsDeepAgent = createDeepAgent({
+      // Level 2: Create a universe agent that has its own subagents
+      const sportsUniverseAgent = createUniverseAgent({
         model: SAMPLE_MODEL,
         systemPrompt:
           'You are a sports information agent. ' +
@@ -600,7 +600,7 @@ describe('Hierarchical Deep Agent Integration Tests', () => {
         ],
       });
 
-      // Level 1: Use the deep agent as a CompiledSubAgent in a parent
+      // Level 1: Use the universe agent as a CompiledSubAgent in a parent
       const parentAgent = createAgent({
         model: SAMPLE_MODEL,
         systemPrompt: 'Use the task tool with the sports-info subagent for any sports question.',
@@ -611,15 +611,16 @@ describe('Hierarchical Deep Agent Integration Tests', () => {
             subagents: [
               {
                 name: 'sports-info',
-                description: 'A deep agent that knows about sports scores and match conditions.',
-                runnable: sportsDeepAgent,
+                description:
+                  'A universe agent that knows about sports scores and match conditions.',
+                runnable: sportsUniverseAgent,
               } satisfies CompiledSubAgent,
             ],
           }),
         ],
       });
 
-      // Verify the parent delegates to the sports-info deep agent
+      // Verify the parent delegates to the sports-info universe agent
       // which in turn calls get_soccer_scores
       const expectedToolCalls = [
         { name: 'task', args: { subagent_type: 'sports-info' } },
@@ -633,26 +634,26 @@ describe('Hierarchical Deep Agent Integration Tests', () => {
   );
 
   it.concurrent(
-    'should support a createDeepAgent as a compiled subagent in another createDeepAgent',
+    'should support a createUniverseAgent as a compiled subagent in another createUniverseAgent',
     { timeout: 120 * 1000 }, // 120s
     async () => {
-      // Create the inner deep agent
-      const innerAgent = createDeepAgent({
+      // Create the inner universe agent
+      const innerAgent = createUniverseAgent({
         model: SAMPLE_MODEL,
         systemPrompt:
           'You are a weather agent. Use the get_weather tool to answer weather questions.',
         tools: [getWeather],
       });
 
-      // Create the outer deep agent using the inner as a compiled subagent
-      const outerAgent = createDeepAgent({
+      // Create the outer universe agent using the inner as a compiled subagent
+      const outerAgent = createUniverseAgent({
         model: SAMPLE_MODEL,
         systemPrompt:
           'You are an orchestrator. Use the weather-agent subagent for weather queries.',
         subagents: [
           {
             name: 'weather-agent',
-            description: 'A specialized deep agent for weather information.',
+            description: 'A specialized universe agent for weather information.',
             runnable: innerAgent,
           } satisfies CompiledSubAgent,
         ],
@@ -688,7 +689,7 @@ describe('Hierarchical Deep Agent Integration Tests', () => {
 });
 
 /**
- * Integration tests for subagent skills via createDeepAgent.
+ * Integration tests for subagent skills via createUniverseAgent.
  *
  * These tests verify that subagents with their own `skills` property
  * can load and use skills from their configured sources.
@@ -740,7 +741,7 @@ IMPORTANT: If you use console.log, the code will be REJECTED.
        * the infrastructure works and optionally check if the skill was followed.
        */
       const checkpointer = new MemorySaver();
-      const agent = createDeepAgent({
+      const agent = createUniverseAgent({
         model: SAMPLE_MODEL,
         systemPrompt:
           'You are an orchestrator. When asked to write code, delegate to the coder subagent via the task tool.',

@@ -17,7 +17,7 @@ async function writeFile(filePath: string, content: string) {
  * Helper to create a unique temporary directory for each test
  */
 function createTempDir(): string {
-  return fsSync.mkdtempSync(path.join(os.tmpdir(), 'deepagents-test-'));
+  return fsSync.mkdtempSync(path.join(os.tmpdir(), 'universe-agent-test-'));
 }
 
 /**

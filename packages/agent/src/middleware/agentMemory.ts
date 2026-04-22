@@ -3,8 +3,8 @@
  *
  * This middleware loads the agent's long-term memory from agent.md files
  * and injects it into the system prompt. Memory is loaded from:
- * - User memory: ~/.deepagents/{agent_name}/agent.md
- * - Project memory: {project_root}/.deepagents/agent.md
+ * - User memory: ~/.universe-agent/{agent_name}/agent.md
+ * - Project memory: {project_root}/.universe-agent/agent.md
  *
  * @deprecated Use `createMemoryMiddleware` from `./memory.js` instead.
  * This middleware uses direct filesystem access (Node.js fs module) which is not
@@ -24,8 +24,8 @@
  * const middleware = createMemoryMiddleware({
  *   backend: new FilesystemBackend({ rootDir: "/" }),
  *   sources: [
- *     `~/.deepagents/${assistantId}/AGENTS.md`,
- *     `${projectRoot}/.deepagents/AGENTS.md`,
+ *     `~/.universe-agent/${assistantId}/AGENTS.md`,
+ *     `${projectRoot}/.universe-agent/AGENTS.md`,
  *   ],
  * });
  * ```
@@ -61,7 +61,7 @@ export interface AgentMemoryMiddlewareOptions {
  * State schema for agent memory middleware.
  */
 const AgentMemoryStateSchema = z.object({
-  /** Personal preferences from ~/.deepagents/{agent}/ (applies everywhere) */
+  /** Personal preferences from ~/.universe-agent/{agent}/ (applies everywhere) */
   userMemory: z.string().optional(),
 
   /** Project-specific context (loaded from project root) */
@@ -98,20 +98,20 @@ Your system prompt is loaded from TWO sources at startup:
 2. **Project agent.md**: Loaded from project root if available - Project-specific instructions
 
 Project-specific agent.md is loaded from these locations (both combined if both exist):
-- \`[project-root]/.deepagents/agent.md\` (preferred)
+- \`[project-root]/.universe-agent/agent.md\` (preferred)
 - \`[project-root]/agent.md\` (fallback, but also included if both exist)
 
 **When to CHECK/READ memories (CRITICAL - do this FIRST):**
 - **At the start of ANY new session**: Check both user and project memories
   - User: \`ls {agent_dir_absolute}\`
-  - Project: \`ls {project_deepagents_dir}\` (if in a project)
+  - Project: \`ls {project_universe_agent_dir}\` (if in a project)
 - **BEFORE answering questions**: If asked "what do you know about X?" or "how do I do Y?", check project memories FIRST, then user
 - **When user asks you to do something**: Check if you have project-specific guides or examples
 - **When user references past work**: Search project memory files for related context
 
 **Memory-first response pattern:**
-1. User asks a question → Check project directory first: \`ls {project_deepagents_dir}\`
-2. If relevant files exist → Read them with \`read_file '{project_deepagents_dir}/[filename]'\`
+1. User asks a question → Check project directory first: \`ls {project_universe_agent_dir}\`
+2. If relevant files exist → Read them with \`read_file '{project_universe_agent_dir}/[filename]'\`
 3. Check user memory if needed → \`ls {agent_dir_absolute}\`
 4. Base your answer on saved knowledge supplemented by general knowledge
 
@@ -147,7 +147,7 @@ When writing or updating agent memory, decide whether each fact, configuration, 
 - "Always use type hints in Python"
 - "Prefer functional programming patterns"
 
-### Project Agent File: \`{project_deepagents_dir}/agent.md\`
+### Project Agent File: \`{project_universe_agent_dir}/agent.md\`
 → Describes **how this specific project works** and **how the agent should behave here only.**
 
 **Store here:**
@@ -163,7 +163,7 @@ When writing or updating agent memory, decide whether each fact, configuration, 
 - "Tests go in tests/ directory mirroring src/ structure"
 - "All API changes require updating OpenAPI spec"
 
-### Project Memory Files: \`{project_deepagents_dir}/*.md\`
+### Project Memory Files: \`{project_universe_agent_dir}/*.md\`
 → Use for **project-specific reference information** and structured notes.
 
 **Store here:**
@@ -174,9 +174,9 @@ When writing or updating agent memory, decide whether each fact, configuration, 
 - Onboarding information
 
 **Examples:**
-- \`{project_deepagents_dir}/api-design.md\` - REST API patterns used
-- \`{project_deepagents_dir}/architecture.md\` - System architecture overview
-- \`{project_deepagents_dir}/deployment.md\` - How to deploy this project
+- \`{project_universe_agent_dir}/api-design.md\` - REST API patterns used
+- \`{project_universe_agent_dir}/architecture.md\` - System architecture overview
+- \`{project_universe_agent_dir}/deployment.md\` - How to deploy this project
 
 ### File Operations:
 
@@ -189,14 +189,14 @@ edit_file '{agent_dir_absolute}/agent.md' ...        # Update user preferences
 
 **Project memory (preferred for project-specific information):**
 \`\`\`
-ls {project_deepagents_dir}                          # List project memory files
-read_file '{project_deepagents_dir}/agent.md'        # Read project instructions
-edit_file '{project_deepagents_dir}/agent.md' ...    # Update project instructions
-write_file '{project_deepagents_dir}/agent.md' ...  # Create project memory file
+ls {project_universe_agent_dir}                          # List project memory files
+read_file '{project_universe_agent_dir}/agent.md'        # Read project instructions
+edit_file '{project_universe_agent_dir}/agent.md' ...    # Update project instructions
+write_file '{project_universe_agent_dir}/agent.md' ...  # Create project memory file
 \`\`\`
 
 **Important**:
-- Project memory files are stored in \`.deepagents/\` inside the project root
+- Project memory files are stored in \`.universe-agent/\` inside the project root
 - Always use absolute paths for file operations
 - Check project memories BEFORE user when answering project-specific questions`;
 
@@ -230,7 +230,7 @@ export function createAgentMemoryMiddleware(options: AgentMemoryMiddlewareOption
 
   // Compute paths
   const agentDir = settings.getAgentDir(assistantId);
-  const agentDirDisplay = `~/.deepagents/${assistantId}`;
+  const agentDirDisplay = `~/.universe-agent/${assistantId}`;
   const agentDirAbsolute = agentDir;
   const projectRoot = settings.projectRoot;
 
@@ -239,10 +239,10 @@ export function createAgentMemoryMiddleware(options: AgentMemoryMiddlewareOption
     ? `\`${projectRoot}\` (detected)`
     : 'None (not in a git project)';
 
-  // Build project deepagents directory path
-  const projectDeepagentsDir = projectRoot
-    ? `${projectRoot}/.deepagents`
-    : '[project-root]/.deepagents (not in a project)';
+  // Build project universe-agent directory path
+  const projectUniverseAgentDir = projectRoot
+    ? `${projectRoot}/.universe-agent`
+    : '[project-root]/.universe-agent (not in a project)';
 
   const template = systemPromptTemplate || DEFAULT_MEMORY_TEMPLATE;
 
@@ -298,7 +298,7 @@ export function createAgentMemoryMiddleware(options: AgentMemoryMiddlewareOption
       )
         .replaceAll('{agent_dir_display}', agentDirDisplay)
         .replaceAll('{project_memory_info}', projectMemoryInfo)
-        .replaceAll('{project_deepagents_dir}', projectDeepagentsDir);
+        .replaceAll('{project_universe_agent_dir}', projectUniverseAgentDir);
 
       // Memory content at start, base prompt in middle, documentation at end
       let systemPrompt = memorySection;

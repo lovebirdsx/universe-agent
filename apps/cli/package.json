@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "bin": {
-    "deepagent": "./dist/index.js"
+    "universe-agent": "./dist/index.js"
   },
   "scripts": {
     "start:dev": "cd ../../ && tsx apps/cli/src/index.ts",

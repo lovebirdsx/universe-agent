@@ -1,5 +1,5 @@
 /**
- * Skills module for deepagents.
+ * Skills module for universe-agent.
  *
  * Public API:
  * - listSkills: List skills from user and/or project directories

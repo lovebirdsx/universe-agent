@@ -107,7 +107,7 @@ export interface LocalShellBackendOptions {
  *
  * @example
  * ```typescript
- * import { LocalShellBackend } from "@langchain/deepagents";
+ * import { LocalShellBackend } from "@langchain/universe-agent";
  *
  * // Create backend with explicit environment
  * const backend = new LocalShellBackend({

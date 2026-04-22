@@ -17,7 +17,7 @@ import {
   type SkillMetadataEntry,
 } from '../skills.js';
 import { createFileData } from '../../backends/utils.js';
-import { createDeepAgent } from '../../agent.js';
+import { createUniverseAgent } from '../../agent.js';
 import { createMockBackend } from '../test.js';
 import type { BackendProtocol } from '../../backends/protocol.js';
 
@@ -1532,9 +1532,9 @@ describe('formatSkillsList with annotations', () => {
  * StateBackend integration tests.
  *
  * These tests verify that skills are properly loaded from state.files and
- * injected into the system prompt when using createDeepAgent with StateBackend.
+ * injected into the system prompt when using createUniverseAgent with StateBackend.
  */
-describe('StateBackend integration with createDeepAgent', () => {
+describe('StateBackend integration with createUniverseAgent', () => {
   const VALID_SKILL_MD = `---
 name: test-skill
 description: A test skill for StateBackend integration
@@ -1572,7 +1572,7 @@ description: Another test skill
     const model = new FakeListChatModel({ responses: ['Done'] });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model as any,
       skills: ['/skills/'],
       checkpointer,
@@ -1603,7 +1603,7 @@ description: Another test skill
     const model = new FakeListChatModel({ responses: ['Done'] });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model as any,
       skills: ['/skills/'],
       checkpointer,
@@ -1639,7 +1639,7 @@ description: Another test skill
     const model = new FakeListChatModel({ responses: ['Done'] });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model as any,
       skills: ['/skills/'],
       checkpointer,
@@ -1682,7 +1682,7 @@ description: Project-level skill for team collaboration
     const model = new FakeListChatModel({ responses: ['Done'] });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model as any,
       skills: ['/skills/user/', '/skills/project/'],
       checkpointer,
@@ -1718,7 +1718,7 @@ description: Project-level skill for team collaboration
     const model = new FakeListChatModel({ responses: ['Done'] });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model as any,
       skills: ['/skills/'],
       checkpointer,
@@ -1752,7 +1752,7 @@ description: Project-level skill for team collaboration
     const model = new FakeListChatModel({ responses: ['Done'] });
 
     const checkpointer = new MemorySaver();
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model as any,
       skills: ['/skills/empty/'],
       checkpointer,

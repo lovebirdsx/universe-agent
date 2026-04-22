@@ -8,7 +8,7 @@
  * ```
  * Main Agent (orchestrator)
  *   ├── Tool: get_weather
- *   └── Sub Agent: research-specialist (DeepAgent)
+ *   └── Sub Agent: research-specialist (UniverseAgent)
  *       ├── Tool: get_news
  *       ├── Tool: analyze_data
  *       └── Sub Agent: fact-checker (simple SubAgent)
@@ -25,7 +25,7 @@ import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import { fakeModel } from '@langchain/core/testing';
 import type { BaseLanguageModel } from '@langchain/core/language_models/base';
 
-import { createDeepAgent, type CompiledSubAgent, type SubAgent } from '@universe-agent/agent';
+import { createUniverseAgent, type CompiledSubAgent, type SubAgent } from '@universe-agent/agent';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -214,9 +214,9 @@ const factCheckerSubAgent: SubAgent = {
   model: factCheckerModel,
 };
 
-// ─── Level 1: Research Specialist (CompiledSubAgent = createDeepAgent) ──────
+// ─── Level 1: Research Specialist (CompiledSubAgent = createUniverseAgent) ──────
 
-const researchDeepAgent = createDeepAgent({
+const researchUniverseAgent = createUniverseAgent({
   model: researchModel,
   systemPrompt:
     'You are a research specialist. Your role is to gather news, analyze data, ' +
@@ -232,7 +232,7 @@ const researchDeepAgent = createDeepAgent({
 
 // ─── Level 0: Main Agent ────────────────────────────────────────────────────
 
-const mainAgent = createDeepAgent({
+const mainAgent = createUniverseAgent({
   model: mainModel,
   systemPrompt:
     'You are a helpful assistant that coordinates different capabilities.\n\n' +
@@ -244,7 +244,7 @@ const mainAgent = createDeepAgent({
       name: 'research-specialist',
       description:
         'A specialized research agent that can search for news, analyze data, and verify facts.',
-      runnable: researchDeepAgent,
+      runnable: researchUniverseAgent,
     } satisfies CompiledSubAgent,
   ],
   recording: {

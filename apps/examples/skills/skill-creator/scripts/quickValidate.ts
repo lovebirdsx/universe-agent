@@ -6,7 +6,7 @@
  *   npx tsx quick_validate.ts <path/to/skill-folder>
  *
  * Example:
- *   npx tsx quick_validate.ts ~/.deepagents/agent/skills/web-research
+ *   npx tsx quick_validate.ts ~/.universe-agent/agent/skills/web-research
  */
 
 import fs from 'node:fs';
@@ -147,7 +147,7 @@ function main() {
 Usage: npx tsx quick_validate.ts <path/to/skill-folder>
 
 Example:
-  npx tsx quick_validate.ts ~/.deepagents/agent/skills/web-research
+  npx tsx quick_validate.ts ~/.universe-agent/agent/skills/web-research
 `);
     process.exit(0);
   }

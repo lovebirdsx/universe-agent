@@ -3,12 +3,12 @@
  *
  * Demonstrates how to enable subgraph streaming to receive events from
  * both the main agent and subagent execution. This is the simplest
- * streaming setup for deep agents.
+ * streaming setup for universe agents.
  */
 import 'dotenv/config';
-import { createDeepAgent } from '@universe-agent/agent';
+import { createUniverseAgent } from '@universe-agent/agent';
 
-const agent = createDeepAgent({
+const agent = createUniverseAgent({
   systemPrompt: 'You are a helpful research assistant',
   subagents: [
     {

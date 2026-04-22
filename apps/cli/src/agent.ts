@@ -1,11 +1,11 @@
-import { createDeepAgent, LocalShellBackend, createSettings } from '@universe-agent/agent';
+import { createUniverseAgent, LocalShellBackend, createSettings } from '@universe-agent/agent';
 import { ChatOpenAI } from '@langchain/openai';
 import { MemorySaver } from '@langchain/langgraph';
 import type { BaseLanguageModel } from '@langchain/core/language_models/base';
 
 import type { CliConfig } from './config/index.js';
 
-const CLI_SYSTEM_PROMPT = `You are DeepAgent, a helpful AI coding assistant running in a terminal CLI.
+const CLI_SYSTEM_PROMPT = `You are UniverseAgent, a helpful AI coding assistant running in a terminal CLI.
 You have access to the user's project filesystem and can execute shell commands.
 
 Guidelines:
@@ -17,7 +17,7 @@ Guidelines:
 - If a task is ambiguous, ask for clarification`;
 
 export interface CliAgent {
-  agent: ReturnType<typeof createDeepAgent>;
+  agent: ReturnType<typeof createUniverseAgent>;
   backend: LocalShellBackend;
 }
 
@@ -55,7 +55,7 @@ export async function createCliAgent(config: CliConfig): Promise<CliAgent> {
     skills.push(settings.getUserSkillsDir('cli'));
   }
 
-  const agent = createDeepAgent({
+  const agent = createUniverseAgent({
     model: resolveModel(config),
     systemPrompt: config.systemPrompt ?? CLI_SYSTEM_PROMPT,
     backend,

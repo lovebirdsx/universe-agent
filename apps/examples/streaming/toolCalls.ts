@@ -6,7 +6,7 @@
  * and results as they happen in real time.
  */
 import 'dotenv/config';
-import { createDeepAgent } from '@universe-agent/agent';
+import { createUniverseAgent } from '@universe-agent/agent';
 import { tool, AIMessageChunk, ToolMessage } from 'langchain';
 import { z } from 'zod';
 
@@ -30,7 +30,7 @@ const searchWeb = tool(
   },
 );
 
-const agent = createDeepAgent({
+const agent = createUniverseAgent({
   systemPrompt:
     'You are a research coordinator. Always delegate research tasks ' +
     'to your researcher subagent using the task tool. ' +

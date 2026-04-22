@@ -92,7 +92,7 @@ vi.mock('@langchain/langgraph', async (importOriginal) => {
  * Helper to create a unique temporary directory for each test
  */
 function createTempDir(): string {
-  return fsSync.mkdtempSync(path.join(os.tmpdir(), 'deepagents-composite-'));
+  return fsSync.mkdtempSync(path.join(os.tmpdir(), 'universe-agent-composite-'));
 }
 
 /**

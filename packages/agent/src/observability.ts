@@ -106,7 +106,7 @@ function getSessionId(): string {
  *   userId: 'user-id',
  * });
  *
- * const agent = createDeepAgent({ callbacks: [handler] });
+ * const agent = createUniverseAgent({ callbacks: [handler] });
  * ```
  */
 export async function createLangfuseHandler(
@@ -123,7 +123,7 @@ export async function createLangfuseHandler(
  * Automatically creates a Langfuse handler if LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY
  * environment variables are set. Returns undefined if not configured.
  *
- * This is a synchronous function suitable for use in createDeepAgent().
+ * This is a synchronous function suitable for use in createUniverseAgent().
  */
 export function autoCreateLangfuseHandler(
   observabilityConfig?: ObservabilityConfig,
@@ -155,7 +155,7 @@ export function autoCreateLangfuseHandler(
  * @example
  * ```typescript
  * const handler = await createLangfuseHandler();
- * const agent = createDeepAgent({ callbacks: [handler] });
+ * const agent = createUniverseAgent({ callbacks: [handler] });
  * const result = await agent.invoke({ messages: [...] });
  * await flushLangfuseHandler(handler);
  * ```

@@ -43,9 +43,9 @@ import { GENERAL_PURPOSE_SUBAGENT, type CompiledSubAgent } from './middleware/su
 import type { AsyncSubAgent } from './middleware/async_subagents.js';
 import type {
   AnySubAgent,
-  CreateDeepAgentParams,
-  DeepAgent,
-  DeepAgentTypeConfig,
+  CreateUniverseAgentParams,
+  UniverseAgent,
+  UniverseAgentTypeConfig,
   FlattenSubAgentMiddleware,
   InferStructuredResponse,
   SupportedResponseFormat,
@@ -57,7 +57,7 @@ import type {
 import type { BaseLanguageModel } from '@langchain/core/language_models/base';
 
 const BASE_AGENT_PROMPT = context`
-  You are a Deep Agent, an AI assistant that helps users accomplish tasks using tools. You respond with text and tool calls. The user can see your responses and tool outputs in real time.
+  You are a Universe Agent, an AI assistant that helps users accomplish tasks using tools. You respond with text and tool calls. The user can see your responses and tool outputs in real time.
 
   ## Core Behavior
 
@@ -109,7 +109,7 @@ function createAnthropicCacheMiddleware(): LooseAgentMiddleware {
 }
 
 function createHitlMiddleware(
-  interruptOn: NonNullable<CreateDeepAgentParams['interruptOn']>,
+  interruptOn: NonNullable<CreateUniverseAgentParams['interruptOn']>,
 ): LooseAgentMiddleware {
   return humanInTheLoopMiddleware({ interruptOn } as never) as LooseAgentMiddleware;
 }
@@ -165,10 +165,10 @@ function wrapAsyncIterableWithFlush<T>(
 }
 
 /**
- * Create a Deep Agent.
+ * Create a Universe Agent.
  *
  * This is the main entry point for building a production-style agent with
- * deepagents. It gives you a strong default runtime (filesystem, tasks,
+ * universe-agent. It gives you a strong default runtime (filesystem, tasks,
  * subagents, summarization) and lets you opt into skills, memory,
  * human-in-the-loop interrupts, async subagents, and custom middleware.
  *
@@ -176,7 +176,7 @@ function wrapAsyncIterableWithFlush<T>(
  * when you customize behavior, the middleware ordering stays deterministic.
  *
  * @param params Configuration parameters for the agent
- * @returns Deep Agent instance with inferred state/response types
+ * @returns Universe Agent instance with inferred state/response types
  *
  * @example
  * ```typescript
@@ -186,7 +186,7 @@ function wrapAsyncIterableWithFlush<T>(
  *   stateSchema: z.object({ research: z.string().default("") }),
  * });
  *
- * const agent = createDeepAgent({
+ * const agent = createUniverseAgent({
  *   middleware: [ResearchMiddleware],
  * });
  *
@@ -194,20 +194,20 @@ function wrapAsyncIterableWithFlush<T>(
  * // result.research is properly typed as string
  * ```
  */
-export function createDeepAgent<
+export function createUniverseAgent<
   TResponse extends SupportedResponseFormat = SupportedResponseFormat,
   ContextSchema extends InteropZodObject = InteropZodObject,
   const TMiddleware extends readonly AgentMiddleware[] = readonly [],
   const TSubagents extends readonly AnySubAgent[] = readonly [],
   const TTools extends readonly (ClientTool | ServerTool)[] = readonly [],
 >(
-  params: CreateDeepAgentParams<
+  params: CreateUniverseAgentParams<
     TResponse,
     ContextSchema,
     TMiddleware,
     TSubagents,
     TTools
-  > = {} as CreateDeepAgentParams<TResponse, ContextSchema, TMiddleware, TSubagents, TTools>,
+  > = {} as CreateUniverseAgentParams<TResponse, ContextSchema, TMiddleware, TSubagents, TTools>,
 ) {
   const {
     model,
@@ -302,7 +302,7 @@ export function createDeepAgent<
    */
   const normalizeSubagentSpec = (input: SubAgent): SubAgent => {
     // Middleware for custom subagents (does NOT include skills from main agent).
-    // Uses createSummarizationMiddleware (deepagents version) with backend support
+    // Uses createSummarizationMiddleware (universe-agent version) with backend support
     // and auto-computed defaults from model profile.
 
     // When recording, create per-subagent tool recording middleware so tool results
@@ -339,7 +339,7 @@ export function createDeepAgent<
       // Enables filesystem operations and optional long-term memory storage.
       createFilesystemMiddleware({ backend }) as LooseAgentMiddleware,
       // Automatically summarizes conversation history when token limits are approached.
-      // Uses createSummarizationMiddleware (deepagents version) with backend support
+      // Uses createSummarizationMiddleware (universe-agent version) with backend support
       // and auto-computed defaults from model profile.
       createSummarizationMiddleware({ backend }) as LooseAgentMiddleware,
       // Patches tool calls to ensure compatibility across different model providers.
@@ -371,7 +371,7 @@ export function createDeepAgent<
 
   // Process sync subagents:
   // - CompiledSubAgent: use as-is (already has its own middleware baked in)
-  // - SubAgent: apply the default deep-agent subagent middleware stack
+  // - SubAgent: apply the default universe-agent subagent middleware stack
   const inlineSubagents = allSubagents
     .filter((item): item is SubAgent | CompiledSubAgent => !isAsyncSubAgent(item))
     .map((item) => ('runnable' in item ? item : normalizeSubagentSpec(item)));
@@ -414,7 +414,7 @@ export function createDeepAgent<
       ...(interruptOn ? { defaultInterruptOn: interruptOn } : {}),
     }) as LooseAgentMiddleware,
     // Automatically summarizes conversation history when token limits are approached.
-    // Uses createSummarizationMiddleware (deepagents version) with backend support
+    // Uses createSummarizationMiddleware (universe-agent version) with backend support
     // for conversation history offloading and auto-computed defaults from model profile.
     createSummarizationMiddleware({ backend }) as LooseAgentMiddleware,
     // Patches tool calls to ensure compatibility across different model providers.
@@ -520,7 +520,7 @@ export function createDeepAgent<
   }).withConfig({
     recursionLimit: 10_000,
     metadata: {
-      ls_integration: 'deepagents',
+      ls_integration: 'universe-agent',
       lc_agent_name: name,
     },
     ...(allCallbacks.length > 0 ? { callbacks: allCallbacks } : {}),
@@ -569,7 +569,7 @@ export function createDeepAgent<
   }
 
   /**
-   * Return as DeepAgent with proper DeepAgentTypeConfig
+   * Return as UniverseAgent with proper UniverseAgentTypeConfig
    * - Response: InferStructuredResponse<TResponse> (unwraps ToolStrategy<T>/ProviderStrategy<T> → T)
    * - State: undefined (state comes from middleware)
    * - Context: ContextSchema
@@ -577,8 +577,8 @@ export function createDeepAgent<
    * - Tools: TTools
    * - Subagents: TSubagents (for type-safe streaming)
    */
-  return agent as unknown as DeepAgent<
-    DeepAgentTypeConfig<
+  return agent as unknown as UniverseAgent<
+    UniverseAgentTypeConfig<
       InferStructuredResponse<TResponse>,
       undefined,
       ContextSchema,

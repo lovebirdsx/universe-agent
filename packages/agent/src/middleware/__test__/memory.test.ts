@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from 'vitest';
 import { createMemoryMiddleware } from '../memory.js';
-import { createDeepAgent } from '../../agent.js';
+import { createUniverseAgent } from '../../agent.js';
 import { FakeListChatModel } from '@langchain/core/utils/testing';
 import { HumanMessage, SystemMessage, type BaseMessage } from '@langchain/core/messages';
 import { MemorySaver } from '@langchain/langgraph';
@@ -13,18 +13,18 @@ describe('createMemoryMiddleware', () => {
     it('should load memory content from configured sources', async () => {
       const mockBackend = createMockBackend({
         files: {
-          '~/.deepagents/AGENTS.md': '# User Memory\n\nThis is user memory.',
-          './.deepagents/AGENTS.md': '# Project Memory\n\nThis is project memory.',
+          '~/.universe-agent/AGENTS.md': '# User Memory\n\nThis is user memory.',
+          './.universe-agent/AGENTS.md': '# Project Memory\n\nThis is project memory.',
         },
         directories: {
-          '~/.deepagents/': [{ name: 'AGENTS.md', type: 'file' }],
-          './.deepagents/': [{ name: 'AGENTS.md', type: 'file' }],
+          '~/.universe-agent/': [{ name: 'AGENTS.md', type: 'file' }],
+          './.universe-agent/': [{ name: 'AGENTS.md', type: 'file' }],
         },
       });
 
       const middleware = createMemoryMiddleware({
         backend: mockBackend,
-        sources: ['~/.deepagents/AGENTS.md', './.deepagents/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md', './.universe-agent/AGENTS.md'],
       });
 
       // @ts-expect-error - typing issue in LangChain
@@ -32,25 +32,25 @@ describe('createMemoryMiddleware', () => {
 
       expect(result).toBeDefined();
       expect(result?.memoryContents).toEqual({
-        '~/.deepagents/AGENTS.md': '# User Memory\n\nThis is user memory.',
-        './.deepagents/AGENTS.md': '# Project Memory\n\nThis is project memory.',
+        '~/.universe-agent/AGENTS.md': '# User Memory\n\nThis is user memory.',
+        './.universe-agent/AGENTS.md': '# Project Memory\n\nThis is project memory.',
       });
     });
 
     it('should skip missing files gracefully', async () => {
       const mockBackend = createMockBackend({
         files: {
-          '~/.deepagents/AGENTS.md': '# User Memory',
+          '~/.universe-agent/AGENTS.md': '# User Memory',
         },
         directories: {
-          '~/.deepagents/': [{ name: 'AGENTS.md', type: 'file' }],
+          '~/.universe-agent/': [{ name: 'AGENTS.md', type: 'file' }],
         },
         // Project file doesn't exist
       });
 
       const middleware = createMemoryMiddleware({
         backend: mockBackend,
-        sources: ['~/.deepagents/AGENTS.md', './.deepagents/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md', './.universe-agent/AGENTS.md'],
       });
 
       // @ts-expect-error - typing issue in LangChain
@@ -58,7 +58,7 @@ describe('createMemoryMiddleware', () => {
 
       expect(result).toBeDefined();
       expect(result?.memoryContents).toEqual({
-        '~/.deepagents/AGENTS.md': '# User Memory',
+        '~/.universe-agent/AGENTS.md': '# User Memory',
       });
     });
 
@@ -67,7 +67,7 @@ describe('createMemoryMiddleware', () => {
 
       const middleware = createMemoryMiddleware({
         backend: mockBackend,
-        sources: ['~/.deepagents/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md'],
       });
 
       // @ts-expect-error - typing issue in LangChain
@@ -80,16 +80,16 @@ describe('createMemoryMiddleware', () => {
     it('should skip loading if memoryContents already in state', async () => {
       const mockBackend = createMockBackend({
         files: {
-          '~/.deepagents/AGENTS.md': 'Should not load this',
+          '~/.universe-agent/AGENTS.md': 'Should not load this',
         },
         directories: {
-          '~/.deepagents/': [{ name: 'AGENTS.md', type: 'file' }],
+          '~/.universe-agent/': [{ name: 'AGENTS.md', type: 'file' }],
         },
       });
 
       const middleware = createMemoryMiddleware({
         backend: mockBackend,
-        sources: ['~/.deepagents/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md'],
       });
 
       const existingContents = { cached: 'content' };
@@ -133,7 +133,7 @@ describe('createMemoryMiddleware', () => {
     it('should inject memory content into system prompt', () => {
       const middleware = createMemoryMiddleware({
         backend: createMockBackend({}),
-        sources: ['~/.deepagents/AGENTS.md', './.deepagents/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md', './.universe-agent/AGENTS.md'],
       });
 
       const mockHandler = vi.fn().mockReturnValue({ response: 'ok' });
@@ -141,8 +141,8 @@ describe('createMemoryMiddleware', () => {
         systemMessage: new SystemMessage('Base prompt'),
         state: {
           memoryContents: {
-            '~/.deepagents/AGENTS.md': 'User memory content',
-            './.deepagents/AGENTS.md': 'Project memory content',
+            '~/.universe-agent/AGENTS.md': 'User memory content',
+            './.universe-agent/AGENTS.md': 'Project memory content',
           },
         },
       };
@@ -156,14 +156,14 @@ describe('createMemoryMiddleware', () => {
       expect(modifiedRequest.systemMessage.text).toContain('<memory_guidelines>');
       expect(modifiedRequest.systemMessage.text).toContain('User memory content');
       expect(modifiedRequest.systemMessage.text).toContain('Project memory content');
-      expect(modifiedRequest.systemMessage.text).toContain('~/.deepagents/AGENTS.md');
-      expect(modifiedRequest.systemMessage.text).toContain('./.deepagents/AGENTS.md');
+      expect(modifiedRequest.systemMessage.text).toContain('~/.universe-agent/AGENTS.md');
+      expect(modifiedRequest.systemMessage.text).toContain('./.universe-agent/AGENTS.md');
     });
 
     it('should show (No memory loaded) when no content', () => {
       const middleware = createMemoryMiddleware({
         backend: createMockBackend({}),
-        sources: ['~/.deepagents/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md'],
       });
 
       const mockHandler = vi.fn().mockReturnValue({ response: 'ok' });
@@ -205,7 +205,7 @@ describe('createMemoryMiddleware', () => {
     it('should work when state has no memoryContents', () => {
       const middleware = createMemoryMiddleware({
         backend: createMockBackend({}),
-        sources: ['~/.deepagents/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md'],
       });
 
       const mockHandler = vi.fn().mockReturnValue({ response: 'ok' });
@@ -225,7 +225,7 @@ describe('createMemoryMiddleware', () => {
     it('should add cache_control to the memory content block when addCacheControl is true', () => {
       const middleware = createMemoryMiddleware({
         backend: createMockBackend({}),
-        sources: ['~/.deepagents/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md'],
         addCacheControl: true,
       });
 
@@ -234,7 +234,7 @@ describe('createMemoryMiddleware', () => {
         systemMessage: new SystemMessage('Base prompt'),
         state: {
           memoryContents: {
-            '~/.deepagents/AGENTS.md': 'User memory content',
+            '~/.universe-agent/AGENTS.md': 'User memory content',
           },
         },
       };
@@ -252,7 +252,7 @@ describe('createMemoryMiddleware', () => {
     it('should preserve existing cache_control on system prompt blocks', () => {
       const middleware = createMemoryMiddleware({
         backend: createMockBackend({}),
-        sources: ['~/.deepagents/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md'],
         addCacheControl: true,
       });
 
@@ -269,7 +269,7 @@ describe('createMemoryMiddleware', () => {
         }),
         state: {
           memoryContents: {
-            '~/.deepagents/AGENTS.md': 'User memory content',
+            '~/.universe-agent/AGENTS.md': 'User memory content',
           },
         },
       };
@@ -285,7 +285,7 @@ describe('createMemoryMiddleware', () => {
     it('should keep stable blocks unchanged when memory content changes', () => {
       const middleware = createMemoryMiddleware({
         backend: createMockBackend({}),
-        sources: ['~/.deepagents/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md'],
       });
 
       const mockHandler = vi.fn().mockReturnValue({ response: 'ok' });
@@ -294,7 +294,7 @@ describe('createMemoryMiddleware', () => {
       const request1 = {
         systemMessage: new SystemMessage('Stable prompt'),
         state: {
-          memoryContents: { '~/.deepagents/AGENTS.md': 'Memory v1' },
+          memoryContents: { '~/.universe-agent/AGENTS.md': 'Memory v1' },
         },
       };
       middleware.wrapModelCall!(request1 as any, mockHandler);
@@ -304,7 +304,7 @@ describe('createMemoryMiddleware', () => {
       const request2 = {
         systemMessage: new SystemMessage('Stable prompt'),
         state: {
-          memoryContents: { '~/.deepagents/AGENTS.md': 'Memory v2' },
+          memoryContents: { '~/.universe-agent/AGENTS.md': 'Memory v2' },
         },
       };
       middleware.wrapModelCall!(request2 as any, mockHandler);
@@ -321,7 +321,7 @@ describe('createMemoryMiddleware', () => {
     it('should not add cache_control when addCacheControl is false', () => {
       const middleware = createMemoryMiddleware({
         backend: createMockBackend({}),
-        sources: ['~/.deepagents/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md'],
       });
 
       const mockHandler = vi.fn().mockReturnValue({ response: 'ok' });
@@ -329,7 +329,7 @@ describe('createMemoryMiddleware', () => {
         systemMessage: new SystemMessage('Base prompt'),
         state: {
           memoryContents: {
-            '~/.deepagents/AGENTS.md': 'User memory content',
+            '~/.universe-agent/AGENTS.md': 'User memory content',
           },
         },
       };
@@ -346,7 +346,7 @@ describe('createMemoryMiddleware', () => {
     it('should handle array content blocks from system message', () => {
       const middleware = createMemoryMiddleware({
         backend: createMockBackend({}),
-        sources: ['~/.deepagents/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md'],
         addCacheControl: true,
       });
 
@@ -360,7 +360,7 @@ describe('createMemoryMiddleware', () => {
         }),
         state: {
           memoryContents: {
-            '~/.deepagents/AGENTS.md': 'Memory content',
+            '~/.universe-agent/AGENTS.md': 'Memory content',
           },
         },
       };
@@ -381,14 +381,14 @@ describe('createMemoryMiddleware', () => {
     it('should work end-to-end: load memory and inject into prompt', async () => {
       const mockBackend = createMockBackend({
         files: {
-          '~/.deepagents/AGENTS.md': '# User Agent Memory\n\nI prefer TypeScript.',
+          '~/.universe-agent/AGENTS.md': '# User Agent Memory\n\nI prefer TypeScript.',
           './project/AGENTS.md': '# Project Memory\n\nThis is a React project.',
         },
       });
 
       const middleware = createMemoryMiddleware({
         backend: mockBackend,
-        sources: ['~/.deepagents/AGENTS.md', './project/AGENTS.md'],
+        sources: ['~/.universe-agent/AGENTS.md', './project/AGENTS.md'],
       });
 
       // Step 1: Load memory
@@ -417,9 +417,9 @@ describe('createMemoryMiddleware', () => {
  * StateBackend integration tests.
  *
  * These tests verify that memory is properly loaded from state.files and
- * injected into the system prompt when using createDeepAgent with StateBackend.
+ * injected into the system prompt when using createUniverseAgent with StateBackend.
  */
-describe('StateBackend integration with createDeepAgent', () => {
+describe('StateBackend integration with createUniverseAgent', () => {
   const USER_MEMORY = `# User Memory
 
 Remember: The secret code is ALPHA123.`;
@@ -446,7 +446,7 @@ This project uses React.`;
     const model = new FakeListChatModel({ responses: ['Done'] });
     const checkpointer = new MemorySaver();
 
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model as any,
       memory: ['/AGENTS.md'],
       checkpointer,
@@ -478,7 +478,7 @@ This project uses React.`;
     const model = new FakeListChatModel({ responses: ['Done'] });
     const checkpointer = new MemorySaver();
 
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model as any,
       memory: ['/user/AGENTS.md', '/project/AGENTS.md'],
       checkpointer,
@@ -511,7 +511,7 @@ This project uses React.`;
     const model = new FakeListChatModel({ responses: ['Done'] });
     const checkpointer = new MemorySaver();
 
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model as any,
       memory: ['/AGENTS.md'],
       checkpointer,
@@ -540,7 +540,7 @@ This project uses React.`;
     const model = new FakeListChatModel({ responses: ['Done'] });
     const checkpointer = new MemorySaver();
 
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model as any,
       memory: ['/memory/user/AGENTS.md', '/memory/project/AGENTS.md'],
       checkpointer,
@@ -573,7 +573,7 @@ This project uses React.`;
     const model = new FakeListChatModel({ responses: ['Done'] });
     const checkpointer = new MemorySaver();
 
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model as any,
       memory: ['/AGENTS.md'],
       checkpointer,
@@ -605,7 +605,7 @@ This project uses React.`;
     const model = new FakeListChatModel({ responses: ['Done'] });
     const checkpointer = new MemorySaver();
 
-    const agent = createDeepAgent({
+    const agent = createUniverseAgent({
       model: model as any,
       memory: ['/memory/empty/AGENTS.md'],
       checkpointer,

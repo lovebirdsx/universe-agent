@@ -11,7 +11,7 @@ describe('Skill Loader Module', () => {
 
   beforeEach(() => {
     // Create temporary directories for testing
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deepagents-skills-test-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'universe-agent-skills-test-'));
     userSkillsDir = path.join(tempDir, 'user-skills');
     projectSkillsDir = path.join(tempDir, 'project-skills');
     fs.mkdirSync(userSkillsDir, { recursive: true });

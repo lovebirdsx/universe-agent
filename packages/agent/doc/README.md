@@ -1,12 +1,11 @@
-# DeepAgents 源码解读文档
+# UniverseAgents 源码解读文档
 
-> 本文档基于 `deepagents` v1.9.0 源码生成，目标是为构建类似 AI Agent 框架提供完整的参考。
+> 本文档基于 `universe-agent` v1.9.0 源码生成，目标是为构建类似 AI Agent 框架提供完整的参考。
 
 ## 项目简介
 
-**deepagents** 是一个基于 [LangGraph](https://github.com/langchain-ai/langgraph) 的 TypeScript AI Agent 框架，与 Python 版本保持 1:1 兼容。它提供了一套生产就绪的 Agent 运行时，包括：文件系统工具、子代理委派、技能加载、对话历史压缩等核心能力。
+**universe-agent** 是一个基于 [LangGraph](https://github.com/langchain-ai/langgraph) 的 TypeScript AI Agent 框架，与 Python 版本保持 1:1 兼容。它提供了一套生产就绪的 Agent 运行时，包括：文件系统工具、子代理委派、技能加载、对话历史压缩等核心能力。
 
-- **GitHub**: https://github.com/langchain-ai/deepagentsjs
 - **版本**: 1.9.0
 - **语言**: TypeScript（编译为 ESM + CJS 双格式）
 - **核心依赖**: LangChain + LangGraph + Zod
@@ -28,7 +27,7 @@
 | 文档                                              | 内容                                    |
 | ------------------------------------------------- | --------------------------------------- |
 | [入口与公共API](./04-入口与公共API.md)            | `index.ts` 导出的全部公共接口           |
-| [createDeepAgent 主函数](./05-createDeepAgent.md) | Agent 创建流程、参数、中间件组装逻辑    |
+| [createUniverseAgent 主函数](./05-createUniverseAgent.md) | Agent 创建流程、参数、中间件组装逻辑    |
 | [类型系统](./06-类型系统.md)                      | TypeScript 类型定义、泛型推断、类型工具 |
 | [配置与设置](./07-配置与设置.md)                  | `config.ts`：项目根检测、目录管理       |
 | [错误处理](./08-错误处理.md)                      | `errors.ts`：错误类型和错误码           |

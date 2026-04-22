@@ -2,14 +2,14 @@
 
 **文件**：`src/observability.ts`
 
-DeepAgents 通过 [Langfuse](https://langfuse.com/) 实现生产级可观测性，自动追踪 LLM 调用、工具执行和 Agent 运行全流程。集成基于 LangChain 的 Callback 机制，**不是中间件**。
+UniverseAgents 通过 [Langfuse](https://langfuse.com/) 实现生产级可观测性，自动追踪 LLM 调用、工具执行和 Agent 运行全流程。集成基于 LangChain 的 Callback 机制，**不是中间件**。
 
 ---
 
 ## 架构概览
 
 ```
-createDeepAgent()
+createUniverseAgent()
     │
     ▼
 autoCreateLangfuseHandler()  ←── 检测环境变量
@@ -56,14 +56,14 @@ LangChain 自动通过 callback 追踪：
 
 ### 方式一：零代码自动启用（推荐）
 
-只需设置环境变量，`createDeepAgent()` 会自动检测并创建 handler：
+只需设置环境变量，`createUniverseAgent()` 会自动检测并创建 handler：
 
 ```typescript
 // 设置环境变量即可，无需任何代码修改
 // LANGFUSE_PUBLIC_KEY=pk-...
 // LANGFUSE_SECRET_KEY=sk-...
 
-const agent = createDeepAgent({
+const agent = createUniverseAgent({
   model: 'anthropic:claude-sonnet-4-6',
   tools: [...],
 });
@@ -75,7 +75,7 @@ const agent = createDeepAgent({
 适用于需要自定义 session、metadata 等场景：
 
 ```typescript
-import { createLangfuseHandler, flushLangfuseHandler } from 'deepagents';
+import { createLangfuseHandler, flushLangfuseHandler } from 'universe-agent';
 
 const handler = await createLangfuseHandler({
   sessionId: 'my-session-123',
@@ -84,7 +84,7 @@ const handler = await createLangfuseHandler({
   metadata: { environment: 'staging' },
 });
 
-const agent = createDeepAgent({
+const agent = createUniverseAgent({
   callbacks: [handler],
   // ...
 });
@@ -121,7 +121,7 @@ async function createLangfuseHandler(
 
 ### `autoCreateLangfuseHandler(config?)`
 
-**同步**函数，检测环境变量后自动创建。供 `createDeepAgent()` 内部调用。
+**同步**函数，检测环境变量后自动创建。供 `createUniverseAgent()` 内部调用。
 
 - 环境变量齐全 → 返回 `BaseCallbackHandler`
 - 环境变量缺失 → 返回 `undefined`（静默跳过）
@@ -201,4 +201,4 @@ Langfuse 通过 LangChain Callback 自动捕获：
 | Agent 步骤     | 完整的推理-工具-推理循环              |
 | OTel Spans     | 通过 `LangfuseSpanProcessor` 上报     |
 
-所有 trace 自动附带 `ls_integration: 'deepagents'` 和 `lc_agent_name` 元数据。
+所有 trace 自动附带 `ls_integration: 'universe-agent'` 和 `lc_agent_name` 元数据。

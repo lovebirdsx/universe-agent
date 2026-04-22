@@ -6,10 +6,10 @@
  */
 export type ConfigurationErrorCode = 'TOOL_NAME_COLLISION';
 
-const CONFIGURATION_ERROR_SYMBOL = Symbol.for('deepagents.configuration_error');
+const CONFIGURATION_ERROR_SYMBOL = Symbol.for('universe-agent.configuration_error');
 
 /**
- * Thrown when `createDeepAgent` receives invalid configuration.
+ * Thrown when `createUniverseAgent` receives invalid configuration.
  *
  * Follows the same pattern as {@link SandboxError}: a human-readable
  * `message`, a structured `code` for programmatic handling, and a
@@ -18,7 +18,7 @@ const CONFIGURATION_ERROR_SYMBOL = Symbol.for('deepagents.configuration_error');
  * @example
  * ```typescript
  * try {
- *   createDeepAgent({ tools: [myTool] });
+ *   createUniverseAgent({ tools: [myTool] });
  * } catch (error) {
  *   if (ConfigurationError.isInstance(error)) {
  *     switch (error.code) {

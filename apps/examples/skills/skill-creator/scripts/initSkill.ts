@@ -6,7 +6,7 @@
  *   npx tsx init_skill.ts <skill-name> --path <output-directory>
  *
  * Example:
- *   npx tsx init_skill.ts web-research --path ~/.deepagents/agent/skills
+ *   npx tsx init_skill.ts web-research --path ~/.universe-agent/agent/skills
  */
 
 import fs from 'node:fs';
@@ -106,7 +106,7 @@ Arguments:
   --path <dir>        Directory where the skill folder will be created
 
 Example:
-  npx tsx init_skill.ts web-research --path ~/.deepagents/agent/skills
+  npx tsx init_skill.ts web-research --path ~/.universe-agent/agent/skills
 `);
     process.exit(0);
   }

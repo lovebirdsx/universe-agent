@@ -4,7 +4,7 @@ import { tool } from 'langchain';
 import { TavilySearch } from '@langchain/tavily';
 import { HumanMessage } from '@langchain/core/messages';
 
-import { createDeepAgent, StateBackend } from '@universe-agent/agent';
+import { createUniverseAgent, StateBackend } from '@universe-agent/agent';
 
 const internetSearch = tool(
   async ({ query, maxResults = 5 }: { query: string; maxResults?: number }) => {
@@ -37,7 +37,7 @@ Your files are stored in memory and will be lost when the conversation ends.
 3. Write your findings to \`research_notes.txt\` as you discover them
 4. Once you have enough information, write a final summary to \`summary.md\``;
 
-export const agent = createDeepAgent({
+export const agent = createUniverseAgent({
   tools: [internetSearch],
   systemPrompt,
   backend: new StateBackend(),

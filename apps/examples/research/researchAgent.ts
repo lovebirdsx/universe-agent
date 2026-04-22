@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { HumanMessage, tool } from 'langchain';
 import { TavilySearch } from '@langchain/tavily';
 
-import { createDeepAgent, type SubAgent } from '@universe-agent/agent';
+import { createUniverseAgent, type SubAgent } from '@universe-agent/agent';
 
 type Topic = 'general' | 'news' | 'finance';
 
@@ -191,7 +191,7 @@ Use this to run an internet search for a given query. You can specify the number
 `;
 
 // Create the agent
-export const agent = createDeepAgent({
+export const agent = createUniverseAgent({
   tools: [internetSearch],
   systemPrompt: researchInstructions,
   subagents: [critiqueSubAgent, researchSubAgent],
