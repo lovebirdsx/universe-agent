@@ -266,15 +266,18 @@ describe('LocalShellBackend', () => {
         inheritEnv: true,
       });
 
-      await backend.write('/script.sh', "#!/bin/bash\necho 'Script output'");
+      await backend.write('/input.txt', 'Script output');
 
-      await backend.execute('chmod +x script.sh');
-      const result = await backend.execute('bash script.sh');
+      const result = await backend.execute(
+        "node -e \"const fs=require('fs'); process.stdout.write(fs.readFileSync('input.txt', 'utf8'))\"",
+      );
 
       expect(result.exitCode).toBe(0);
       expect(result.output).toContain('Script output');
 
-      await backend.execute("echo 'Shell created' > shell_file.txt");
+      await backend.execute(
+        "node -e \"require('fs').writeFileSync('shell_file.txt', 'Shell created')\"",
+      );
 
       const content = await backend.read('/shell_file.txt');
       expect(content.error).toBeUndefined();
