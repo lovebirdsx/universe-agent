@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { loadConfigFile } from '../load-file.js';
+import { loadConfigFile } from '../loadFile.js';
 
 vi.mock('node:fs');
 
@@ -57,8 +57,11 @@ describe('loadConfigFile', () => {
     const result = loadConfigFile({ projectDir: '/project' });
 
     expect(result).toEqual({ model: 'project-model' });
-    // 应该只读取一次（第一个匹配项）
-    expect(fs.readFileSync).toHaveBeenCalledTimes(1);
+    // 应该用第一个候选路径调用（找到后即停止）
+    expect(fs.readFileSync).toHaveBeenCalledWith(
+      path.join('/project', '.universe-agent', 'config.json'),
+      'utf-8',
+    );
   });
 
   it('validates config against schema', () => {

@@ -1,0 +1,78 @@
+{
+  "name": "@universe-agent/acp",
+  "version": "0.0.0",
+  "description": "ACP (Agent Client Protocol) server for UniverseAgent - enables IDE integration with Zed, JetBrains, and other ACP clients",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "type": "module",
+  "bin": {
+    "universe-agent-acp": "./dist/cli.mjs"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "clean": "rm -rf dist/ .tsdown/",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "lint:fix": "eslint --fix src",
+    "prepublishOnly": "pnpm build",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:int": "vitest run --mode int",
+    "test:all": "vitest run --mode all",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "acp",
+    "agent-client-protocol",
+    "zed",
+    "ide",
+    "langgraph",
+    "langchain",
+    "typescript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@agentclientprotocol/sdk": "catalog:",
+    "@universe-agent/agent": "workspace:*"
+  },
+  "devDependencies": {
+    "@langchain/core": "catalog:",
+    "@langchain/langgraph": "catalog:",
+    "@langchain/langgraph-checkpoint": "catalog:",
+    "@types/node": "catalog:",
+    "@universe-agent/config-eslint": "workspace:*",
+    "@universe-agent/config-ts": "workspace:*",
+    "@vitest/coverage-v8": "catalog:",
+    "@vitest/ui": "catalog:",
+    "tsdown": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@langchain/core": "^1.1.38",
+    "@langchain/langgraph": "^1.2.8"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/**/*"
+  ]
+}

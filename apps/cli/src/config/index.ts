@@ -6,7 +6,7 @@ export {
   type FileConfig,
   type ReplayConfig,
 } from './schema.js';
-export { loadConfigFile, type LoadFileOptions } from './load-file.js';
+export { loadConfigFile, type LoadFileOptions } from './loadFile.js';
 export { createConfig, type ConfigSources, type ConfigResult } from './create-config.js';
 
 import type { ConfigResult } from './create-config.js';

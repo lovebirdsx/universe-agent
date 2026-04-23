@@ -7,7 +7,7 @@ import {
   type CliConfig,
   type ReplayConfig,
 } from './schema.js';
-import { loadConfigFile } from './load-file.js';
+import { loadConfigFile } from './loadFile.js';
 
 export interface ConfigSources {
   argv?: string[];

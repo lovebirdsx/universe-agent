@@ -17,6 +17,7 @@
     "@langchain/openai": "catalog:",
     "@langchain/tavily": "catalog:",
     "@modelcontextprotocol/sdk": "catalog:",
+    "@universe-agent/acp": "workspace:*",
     "@universe-agent/agent": "workspace:*",
     "dedent": "catalog:",
     "dotenv": "catalog:",
