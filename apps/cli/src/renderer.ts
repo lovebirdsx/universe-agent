@@ -57,6 +57,26 @@ function formatToolHeader(toolName: string, argsJson: string): string {
     }
   }
 
+  // 默认：显示工具名及截断后的参数
+  if (argsJson && argsJson !== '{}') {
+    try {
+      const args = JSON.parse(argsJson) as Record<string, unknown>;
+      const entries = Object.entries(args);
+      const parts = entries.map(([k, v]) => {
+        const valStr = typeof v === 'string' ? v : JSON.stringify(v);
+        const truncated = valStr.length > 60 ? valStr.slice(0, 57) + '...' : valStr;
+        return `${k}=${fmt.dim(JSON.stringify(truncated))}`;
+      });
+      const summary = parts.join(', ');
+      const MAX_HEADER_LEN = 120;
+      const displayed =
+        summary.length > MAX_HEADER_LEN ? summary.slice(0, MAX_HEADER_LEN) + '...' : summary;
+      return `\n  ${fmt.toolName(toolName)}(${displayed})`;
+    } catch {
+      // 参数不完整，fallback
+    }
+  }
+
   return `\n  ${fmt.toolName(toolName)}`;
 }
 
@@ -99,6 +119,18 @@ export async function renderStream(
       !AIMessageChunk.isInstance(message) &&
       message.tool_calls?.length
     ) {
+      // 先输出 AI 文本内容（回放模式下 text 和 tool_calls 在同一个 AIMessage 中）
+      if (message.text) {
+        if (currentToolName && !toolHeaderPrinted) {
+          process.stdout.write(formatToolHeader(currentToolName, currentToolArgs));
+          toolHeaderPrinted = true;
+          currentToolName = '';
+          currentToolArgs = '';
+          process.stdout.write('\n');
+        }
+        process.stdout.write(message.text);
+      }
+
       for (const tc of message.tool_calls) {
         // 刷新前一个待打印的工具头部
         if (currentToolName && !toolHeaderPrinted) {
@@ -116,6 +148,7 @@ export async function renderStream(
       // 如果尚未打印工具头部则打印
       if (currentToolName && !toolHeaderPrinted) {
         process.stdout.write(formatToolHeader(currentToolName, currentToolArgs));
+        process.stdout.write('\n');
         toolHeaderPrinted = true;
       }
 
@@ -129,6 +162,7 @@ export async function renderStream(
           .map((line) => `    ${line}`)
           .join('\n');
         process.stdout.write(`\n${fmt.toolResult(indented)}`);
+        process.stdout.write('\n');
       }
 
       if (toolName === 'write_file' && text) {

@@ -7,10 +7,10 @@ export {
   type ReplayConfig,
 } from './schema.js';
 export { loadConfigFile, type LoadFileOptions } from './loadFile.js';
-export { createConfig, type ConfigSources, type ConfigResult } from './create-config.js';
+export { createConfig, type ConfigSources, type ConfigResult } from './createConfig.js';
 
-import type { ConfigResult } from './create-config.js';
-import { createConfig, type ConfigSources } from './create-config.js';
+import type { ConfigResult } from './createConfig.js';
+import { createConfig, type ConfigSources } from './createConfig.js';
 
 let _config: ConfigResult | undefined;
 

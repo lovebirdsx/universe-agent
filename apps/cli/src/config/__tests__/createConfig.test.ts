@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { createConfig } from '../create-config.js';
+import { createConfig } from '../createConfig.js';
 
 /** 从 ConfigResult 中取出 default 模式下的 config */
 function defaultConfig(argv: string[], env: Record<string, string | undefined> = {}) {

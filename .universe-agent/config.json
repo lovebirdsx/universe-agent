@@ -1,10 +1,10 @@
 {
   "model": "claude-sonnet-4.6",
-  "record": true
+  "record": true,
   // "apiKey": 
   // "apiBaseUrl": 
   // "tavilyApiKey": 
   // "memory": 
   // "skills": 
-  // "verbose": 
+  "verbose": true
 }

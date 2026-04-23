@@ -23,7 +23,7 @@ export function createConfig(sources: ConfigSources = {}): ConfigResult {
   const env = sources.env ?? (process.env as Record<string, string | undefined>);
   const argv = sources.argv ?? process.argv;
 
-  // 1. 使用 Commander 解析 CLI 参数
+  // 使用 Commander 解析 CLI 参数
   const program = createProgram();
   program.exitOverride();
   program.configureOutput({
@@ -58,28 +58,28 @@ export function createConfig(sources: ConfigSources = {}): ConfigResult {
     replay?: string | true;
   }>();
 
-  // 2. --replay 模式
-  if (opts.replay !== undefined) {
-    const replayConfig = ReplayConfigSchema.parse({
-      projectDir: opts.project,
-      recordingId: typeof opts.replay === 'string' ? opts.replay : undefined,
-      verbose: opts.verbose,
-    });
-    return { command: 'replay', replayConfig };
-  }
-
   const promptArgs = program.args;
 
-  // 3. 确定项目目录（CLI > cwd）
+  // 确定项目目录（CLI > cwd）
   const projectDir = opts.project;
 
-  // 4. 加载配置文件
+  // 加载配置文件
   const fileConfig = loadConfigFile({
     explicitPath: sources.configPath ?? opts.config,
     projectDir,
   });
 
-  // 5. 将环境变量映射到配置形状
+  // --replay 模式
+  if (opts.replay !== undefined) {
+    const replayConfig = ReplayConfigSchema.parse({
+      projectDir: opts.project,
+      recordingId: typeof opts.replay === 'string' ? opts.replay : undefined,
+      verbose: opts.verbose || (fileConfig?.verbose ?? false),
+    });
+    return { command: 'replay', replayConfig };
+  }
+
+  // 将环境变量映射到配置形状
   const envVarConfig = stripUndefined({
     model: env.OPENAI_MODEL,
     apiKey: env.OPENAI_API_KEY,
@@ -87,7 +87,7 @@ export function createConfig(sources: ConfigSources = {}): ConfigResult {
     tavilyApiKey: env.TAVILY_API_KEY,
   });
 
-  // 6. 将 CLI 选项映射到配置形状（仅包括用户显式设置的值，排除默认值）
+  // 将 CLI 选项映射到配置形状（仅包括用户显式设置的值，排除默认值）
   const explicit = (name: string) => program.getOptionValueSource(name) !== 'default';
 
   const cliConfig = stripUndefined({
@@ -100,14 +100,14 @@ export function createConfig(sources: ConfigSources = {}): ConfigResult {
     record: explicit('record') ? opts.record : undefined,
   });
 
-  // 7. 合并：defaults < file < envVars < cli
+  // 合并：defaults < file < envVars < cli
   const merged = {
     ...stripUndefined(fileConfig ?? {}),
     ...envVarConfig,
     ...cliConfig,
   };
 
-  // 8. 使用 Zod 验证
+  // 使用 Zod 验证
   const config = CliConfigSchema.parse(merged);
 
   return {
