@@ -21,6 +21,8 @@ import {
   type SubAgent,
   createAsyncSubAgentMiddleware,
   isAsyncSubAgent,
+  createMcpMiddleware,
+  type McpMiddleware,
 } from './middleware/index.js';
 import { StateBackend } from './backends/index.js';
 import { ConfigurationError } from './errors.js';
@@ -587,4 +589,69 @@ export function createUniverseAgent<
       TSubagents
     >
   >;
+}
+
+/**
+ * Async version of {@link createUniverseAgent} that supports MCP server initialization.
+ *
+ * Use this when you need `mcp` config — MCP server connections and tool discovery
+ * are inherently async. The returned agent includes a `close()` method to
+ * disconnect from MCP servers.
+ *
+ * @example
+ * ```typescript
+ * const agent = await createUniverseAgentAsync({
+ *   mcp: {
+ *     servers: {
+ *       filesystem: {
+ *         transport: 'stdio',
+ *         command: 'npx',
+ *         args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+ *       },
+ *     },
+ *   },
+ * });
+ *
+ * try {
+ *   const result = await agent.invoke({ messages: [...] });
+ * } finally {
+ *   await agent.close?.();
+ * }
+ * ```
+ */
+export async function createUniverseAgentAsync<
+  TResponse extends SupportedResponseFormat = SupportedResponseFormat,
+  ContextSchema extends InteropZodObject = InteropZodObject,
+  const TMiddleware extends readonly AgentMiddleware[] = readonly [],
+  const TSubagents extends readonly AnySubAgent[] = readonly [],
+  const TTools extends readonly (ClientTool | ServerTool)[] = readonly [],
+>(params: CreateUniverseAgentParams<TResponse, ContextSchema, TMiddleware, TSubagents, TTools>) {
+  let mcpMiddleware: McpMiddleware | undefined;
+
+  if (params.mcp) {
+    mcpMiddleware = await createMcpMiddleware({ config: params.mcp });
+  }
+
+  const {
+    mcp: _mcp,
+    middleware: customMiddleware = [] as unknown as TMiddleware,
+    ...rest
+  } = params;
+
+  const agent = createUniverseAgent({
+    ...rest,
+    middleware: [
+      ...(mcpMiddleware ? [mcpMiddleware as AgentMiddleware] : []),
+      ...(customMiddleware as readonly AgentMiddleware[]),
+    ] as unknown as TMiddleware,
+  });
+
+  if (mcpMiddleware) {
+    const mw = mcpMiddleware;
+    (agent as unknown as Record<string, unknown>).close = async () => {
+      await mw.close();
+    };
+  }
+
+  return agent as typeof agent & { close?: () => Promise<void> };
 }

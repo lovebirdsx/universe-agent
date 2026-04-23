@@ -28,6 +28,7 @@
   "dependencies": {
     "@langchain/anthropic": "catalog:",
     "@langchain/core": "catalog:",
+    "@langchain/mcp-adapters": "catalog:",
     "@langchain/langgraph": "catalog:",
     "@langchain/langgraph-checkpoint": "catalog:",
     "@langchain/langgraph-sdk": "catalog:",

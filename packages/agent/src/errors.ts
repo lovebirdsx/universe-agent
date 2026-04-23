@@ -4,7 +4,10 @@
  * Each code represents a distinct misconfiguration that can be detected at
  * agent-construction time. Add new codes here as new validations are added.
  */
-export type ConfigurationErrorCode = 'TOOL_NAME_COLLISION';
+export type ConfigurationErrorCode =
+  | 'TOOL_NAME_COLLISION'
+  | 'MCP_TOOL_NAME_COLLISION'
+  | 'MCP_CONNECTION_ERROR';
 
 const CONFIGURATION_ERROR_SYMBOL = Symbol.for('universe-agent.configuration_error');
 

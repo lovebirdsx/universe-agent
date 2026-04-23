@@ -448,6 +448,13 @@ export interface CreateUniverseAgentParams<
    */
   recording?: RecordingConfig;
 
+  /**
+   * MCP 服务器配置。
+   * 连接到外部 MCP 服务器并将其工具暴露给 agent。
+   * 由于 MCP 初始化是异步的，使用此参数时需通过 `createUniverseAgentAsync` 创建 agent。
+   */
+  mcp?: McpConfig;
+
   // Observability config (for internal use when creating Langfuse handlers)
   observabilityConfig?: ObservabilityConfig;
 }
@@ -466,4 +473,58 @@ export interface LangfuseHandlerOptions {
   version?: string;
   /** Additional metadata to attach to all Langfuse traces */
   metadata?: Record<string, unknown>;
+}
+
+// ---------------------------------------------------------------------------
+// MCP (Model Context Protocol) types
+// ---------------------------------------------------------------------------
+
+/** Restart/reconnect strategy for MCP server connections */
+export interface McpRetryConfig {
+  enabled: boolean;
+  maxAttempts?: number;
+  delayMs?: number;
+}
+
+/** Transport configuration for a single MCP server */
+export type McpTransportConfig =
+  | {
+      transport: 'stdio';
+      command: string;
+      args?: string[] | undefined;
+      env?: Record<string, string> | undefined;
+      restart?: McpRetryConfig | undefined;
+    }
+  | {
+      transport: 'sse';
+      url: string;
+      headers?: Record<string, string> | undefined;
+      reconnect?: McpRetryConfig | undefined;
+    }
+  | {
+      transport: 'streamable-http';
+      url: string;
+      headers?: Record<string, string> | undefined;
+    };
+
+/** Configuration for a single MCP server */
+export type McpServerConfig = McpTransportConfig & {
+  /**
+   * Whether to prefix tool names with the server name to avoid collisions.
+   * When enabled, a server named "github" with tool "search" becomes "github__search".
+   * @default false
+   */
+  prefixToolNames?: boolean | undefined;
+};
+
+/** MCP configuration for the agent */
+export interface McpConfig {
+  /** Named MCP server configurations */
+  servers: Record<string, McpServerConfig>;
+  /**
+   * Behavior when a server fails to connect during initialization.
+   * - `'throw'` (default): raises a ConfigurationError
+   * - `'ignore'`: logs a warning and continues without the failed server
+   */
+  onConnectionError?: 'throw' | 'ignore';
 }

@@ -1,4 +1,9 @@
-import { createUniverseAgent, LocalShellBackend, createSettings } from '@universe-agent/agent';
+import {
+  createUniverseAgent,
+  createUniverseAgentAsync,
+  LocalShellBackend,
+  createSettings,
+} from '@universe-agent/agent';
 import type { RecordingConfig } from '@universe-agent/agent';
 import { ChatOpenAI } from '@langchain/openai';
 import { MemorySaver } from '@langchain/langgraph';
@@ -20,6 +25,7 @@ Guidelines:
 export interface CliAgent {
   agent: ReturnType<typeof createUniverseAgent>;
   backend: LocalShellBackend;
+  close?: (() => Promise<void>) | undefined;
 }
 
 function resolveModel(config: CliConfig): BaseLanguageModel | string {
@@ -54,7 +60,7 @@ export async function createCliAgent(
     skills.push(settings.getUserSkillsDir('cli'));
   }
 
-  const agent = createUniverseAgent({
+  const agentParams = {
     model: resolveModel(config),
     systemPrompt: config.systemPrompt ?? CLI_SYSTEM_PROMPT,
     backend,
@@ -62,9 +68,22 @@ export async function createCliAgent(
     ...(memory.length > 0 ? { memory } : {}),
     ...(skills.length > 0 ? { skills } : {}),
     ...(recording ? { recording } : {}),
-  });
+  } as const;
+
+  let close: (() => Promise<void>) | undefined;
+
+  const agent = config.mcpServers
+    ? await (async () => {
+        const result = await createUniverseAgentAsync({
+          ...agentParams,
+          mcp: { servers: config.mcpServers! },
+        });
+        close = result.close;
+        return result;
+      })()
+    : createUniverseAgent(agentParams);
 
   await backend.initialize();
 
-  return { agent, backend };
+  return { agent, backend, close };
 }

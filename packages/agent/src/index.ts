@@ -5,7 +5,7 @@
  * This implementation maintains 1:1 compatibility with the Python version.
  */
 
-export { createUniverseAgent } from './agent.js';
+export { createUniverseAgent, createUniverseAgentAsync } from './agent.js';
 export { ConfigurationError, type ConfigurationErrorCode } from './errors.js';
 export type {
   AnySubAgent,
@@ -29,6 +29,11 @@ export type {
   InferStructuredResponse,
   // Langfuse config
   LangfuseHandlerOptions,
+  // MCP types
+  McpConfig,
+  McpServerConfig,
+  McpTransportConfig,
+  McpRetryConfig,
 } from './types.js';
 
 // Export observability utilities
@@ -73,6 +78,10 @@ export {
   type AsyncSubAgent,
   type AsyncTask,
   type AsyncTaskStatus,
+  // MCP middleware
+  createMcpMiddleware,
+  type McpMiddlewareOptions,
+  type McpMiddleware,
 } from './middleware/index.js';
 
 // Export shared state values (similar to LangGraph's messagesValue pattern)

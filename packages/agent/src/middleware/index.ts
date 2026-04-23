@@ -65,3 +65,6 @@ export {
   ASYNC_TASK_SYSTEM_PROMPT,
   ASYNC_TASK_TOOL_NAMES,
 } from './async_subagents.js';
+
+// MCP (Model Context Protocol) middleware
+export { createMcpMiddleware, type McpMiddlewareOptions, type McpMiddleware } from './mcp.js';

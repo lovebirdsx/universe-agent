@@ -64,6 +64,7 @@ async function main(): Promise<void> {
       await startRepl(cliAgent, config, threadId);
     }
   } finally {
+    await cliAgent.close?.();
     await cliAgent.backend.close();
   }
 }
