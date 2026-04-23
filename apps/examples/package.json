@@ -16,6 +16,7 @@
     "@langchain/langgraph-checkpoint": "catalog:",
     "@langchain/openai": "catalog:",
     "@langchain/tavily": "catalog:",
+    "@modelcontextprotocol/sdk": "catalog:",
     "@universe-agent/agent": "workspace:*",
     "dedent": "catalog:",
     "dotenv": "catalog:",
