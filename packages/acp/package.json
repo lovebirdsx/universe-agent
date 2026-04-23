@@ -6,8 +6,10 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "type": "module",
-  "bin": {
-    "universe-agent-acp": "./dist/cli.mjs"
+  "publishConfig": {
+    "bin": {
+      "universe-agent-acp": "./dist/cli.mjs"
+    }
   },
   "scripts": {
     "build": "tsdown",
