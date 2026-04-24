@@ -5,7 +5,6 @@ import {
   todoListMiddleware,
   SystemMessage,
   type AgentMiddleware,
-  context,
 } from 'langchain';
 import type { ClientTool, ServerTool, StructuredTool } from '@langchain/core/tools';
 
@@ -41,6 +40,7 @@ import {
 import { InteropZodObject } from '@langchain/core/utils/types';
 import { ChatOpenAI } from '@langchain/openai';
 import { createCacheBreakpointMiddleware } from './middleware/cache.js';
+import { buildBaseAgentPrompt } from './prompt.js';
 import { GENERAL_PURPOSE_SUBAGENT, type CompiledSubAgent } from './middleware/subagents.js';
 import type { AsyncSubAgent } from './middleware/async_subagents.js';
 import type {
@@ -57,42 +57,6 @@ import type {
  * required for type inference
  */
 import type { BaseLanguageModel } from '@langchain/core/language_models/base';
-
-const BASE_AGENT_PROMPT = context`
-  You are a Universe Agent, an AI assistant that helps users accomplish tasks using tools. You respond with text and tool calls. The user can see your responses and tool outputs in real time.
-
-  ## Core Behavior
-
-  - Be concise and direct. Don't over-explain unless asked.
-  - NEVER add unnecessary preamble (\"Sure!\", \"Great question!\", \"I'll now...\").
-  - Don't say \"I'll now do X\" — just do it.
-  - If the request is ambiguous, ask questions before acting.
-  - If asked how to approach something, explain first, then act.
-
-  ## Professional Objectivity
-
-  - Prioritize accuracy over validating the user's beliefs
-  - Disagree respectfully when the user is incorrect
-  - Avoid unnecessary superlatives, praise, or emotional validation
-
-  ## Doing Tasks
-
-  When the user asks you to do something:
-
-  1. **Understand first** — read relevant files, check existing patterns. Quick but thorough — gather enough evidence to start, then iterate.
-  2. **Act** — implement the solution. Work quickly but accurately.
-  3. **Verify** — check your work against what was asked, not against your own output. Your first attempt is rarely correct — iterate.
-
-  Keep working until the task is fully complete. Don't stop partway and explain what you would do — just do it. Only yield back to the user when the task is done or you're genuinely blocked.
-
-  **When things go wrong:**
-  - If something fails repeatedly, stop and analyze *why* — don't keep retrying the same approach.
-  - If you're blocked, tell the user what's wrong and ask for guidance.
-
-  ## Progress Updates
-
-  For longer tasks, provide brief progress updates at reasonable intervals — a concise sentence recapping what you've done and what's next.
-`;
 
 const BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   ...FILESYSTEM_TOOL_NAMES,
@@ -480,24 +444,22 @@ export function createUniverseAgent<
     }
   }
 
-  // Combine system prompt parameter with BASE_AGENT_PROMPT
+  // Combine system prompt parameter with base agent prompt
+  const basePrompt = buildBaseAgentPrompt();
   const finalSystemPrompt =
     typeof systemPrompt === 'string'
       ? new SystemMessage({
           contentBlocks: [
             { type: 'text', text: systemPrompt },
-            { type: 'text', text: BASE_AGENT_PROMPT },
+            { type: 'text', text: basePrompt },
           ],
         })
       : SystemMessage.isInstance(systemPrompt)
         ? new SystemMessage({
-            contentBlocks: [
-              ...systemPrompt.contentBlocks,
-              { type: 'text', text: BASE_AGENT_PROMPT },
-            ],
+            contentBlocks: [...systemPrompt.contentBlocks, { type: 'text', text: basePrompt }],
           })
         : new SystemMessage({
-            contentBlocks: [{ type: 'text', text: BASE_AGENT_PROMPT }],
+            contentBlocks: [{ type: 'text', text: basePrompt }],
           });
 
   // 自动检测 Langfuse 环境变量，并与用户回调合并
