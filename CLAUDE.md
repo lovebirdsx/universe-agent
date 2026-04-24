@@ -29,6 +29,7 @@ apps/
   cli/            # 命令行工具
 packages/
   agent/          # UniverseAgent 框架（见下文）
+  acp/            # 基于UniverseAgent的 ACP 服务器
   shared/         # 纯工具函数
   ui/             # React 组件库
   configEslint/   # 共享 ESLint flat config
