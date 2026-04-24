@@ -363,7 +363,7 @@ const FILESYSTEM_SYSTEM_PROMPT = context`
   ## Filesystem Tools \`ls\`, \`read_file\`, \`write_file\`, \`edit_file\`, \`glob\`, \`grep\`
 
   You have access to a filesystem which you can interact with using these tools.
-  All file paths must start with a /.
+  All file paths must be absolute paths (e.g., /path/to/file on Unix or C:/path/to/file on Windows).
 
   - ls: list files in a directory (requires absolute path)
   - read_file: read a file from the filesystem
@@ -426,7 +426,7 @@ export const GLOB_TOOL_DESCRIPTION = context`
   Examples:
   - \`**/*.py\` - Find all Python files
   - \`*.txt\` - Find all text files in root
-  - \`/subdir/**/*.md\` - Find all markdown files under /subdir
+  - \`/subdir/**/*.md\` (or \`C:/subdir/**/*.md\` on Windows) - Find all markdown files under a subdirectory
 `;
 
 export const GREP_TOOL_DESCRIPTION = context`
