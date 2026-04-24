@@ -13,16 +13,21 @@
  *   --workspace <path>    Workspace root directory (default: cwd)
  *   --skills <paths>      Comma-separated skill paths
  *   --memory <paths>      Comma-separated memory/AGENTS.md paths
+ *   --record              Record all interactions to disk
  *   --debug               Enable debug logging to stderr
  *   --log-file <path>     Write logs to file (for production debugging)
  *   --help                Show this help message
  *   --version             Show version
  */
 
-import { UniverseAgentServer } from './server.js';
-import { FilesystemBackend } from '@universe-agent/agent';
+import 'dotenv/config';
+import crypto from 'node:crypto';
 import path from 'node:path';
 import fs from 'node:fs';
+
+import { UniverseAgentServer } from './server.js';
+import { FilesystemBackend } from '@universe-agent/agent';
+import type { RecordingConfig } from '@universe-agent/agent';
 
 interface CLIOptions {
   name: string;
@@ -33,6 +38,7 @@ interface CLIOptions {
   memory: string[];
   debug: boolean;
   logFile: string | null;
+  record: boolean;
   help: boolean;
   version: boolean;
 }
@@ -78,6 +84,7 @@ function parseArgs(args: string[]): CLIOptions {
     memory: [],
     debug: process.env.DEBUG === 'true',
     logFile: process.env.UNIVERSE_AGENT_LOG_FILE ?? null,
+    record: false,
     help: false,
     version: false,
   };
@@ -141,6 +148,10 @@ function parseArgs(args: string[]): CLIOptions {
         options.debug = true;
         break;
 
+      case '--record':
+        options.record = true;
+        break;
+
       case '--log-file':
       case '-l':
         if (nextArg) {
@@ -182,6 +193,7 @@ OPTIONS:
   -s, --skills <paths>      Comma-separated skill paths (SKILL.md locations)
       --memory <paths>      Comma-separated memory paths (AGENTS.md locations)
       --debug               Enable debug logging to stderr
+      --record              Record all agent interactions to disk
   -l, --log-file <path>     Write logs to file (for production debugging)
   -h, --help                Show this help message
   -v, --version             Show version
@@ -293,15 +305,26 @@ async function main(): Promise<void> {
     log('Log file:', options.logFile);
   }
 
+  let recording: RecordingConfig | undefined;
+  if (options.record) {
+    recording = {
+      mode: 'record',
+      path: path.join(workspaceRoot, '.universe-agent', 'recordings'),
+      id: crypto.randomUUID(),
+    };
+    log('Recording:', recording.path);
+    log('Recording ID:', recording.id);
+  }
+
   try {
     const server = new UniverseAgentServer({
       agents: {
         name: options.name,
         description: options.description,
-        model: options.model,
         backend: new FilesystemBackend({ rootDir: workspaceRoot }),
         skills,
         memory,
+        ...(recording != null ? { recording } : {}),
       },
       serverName: 'universe-agent-acp',
       workspaceRoot,

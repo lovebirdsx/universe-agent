@@ -209,11 +209,14 @@ export async function handleReplay(replayConfig: ReplayConfig): Promise<void> {
   // 从录像中提取每轮用户消息
   const recordingDirPath = selected.dirPath;
   const manifest = loadManifest(recordingDirPath);
-  const mainRecording = loadAgentRecording(recordingDirPath, 'main');
+  const mainAgentName = manifest.sequence[0]?.agent || 'main'; // 默认主 agent 名称为 'main'
+  const mainRecording = loadAgentRecording(recordingDirPath, mainAgentName);
   const modelTurns = mainRecording.turns.filter((t): t is ModelTurn => t.type === 'model');
 
   // 从 sequence 中找出主 agent 的 model 条目，提取每轮用户输入
-  const mainModelEntries = manifest.sequence.filter((s) => s.agent === 'main' && s.type !== 'tool');
+  const mainModelEntries = manifest.sequence.filter(
+    (s) => s.agent === mainAgentName && s.type !== 'tool',
+  );
 
   // 收集每轮的用户消息（从 request 增量中提取 HumanMessage）
   interface ReplayTurn {

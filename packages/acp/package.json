@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist/ .tsdown/",
-    "dev": "tsc --watch",
+    "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
@@ -41,7 +41,8 @@
   "license": "MIT",
   "dependencies": {
     "@agentclientprotocol/sdk": "catalog:",
-    "@universe-agent/agent": "workspace:*"
+    "@universe-agent/agent": "workspace:*",
+    "dotenv": "catalog:"
   },
   "devDependencies": {
     "@langchain/core": "catalog:",

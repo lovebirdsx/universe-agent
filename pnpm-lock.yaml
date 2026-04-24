@@ -420,6 +420,9 @@ importers:
       '@universe-agent/agent':
         specifier: workspace:*
         version: link:../agent
+      dotenv:
+        specifier: 'catalog:'
+        version: 17.4.2
     devDependencies:
       '@langchain/core':
         specifier: 'catalog:'
