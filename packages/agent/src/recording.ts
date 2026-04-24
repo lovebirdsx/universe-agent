@@ -728,6 +728,9 @@ export function createRecordingModel<T extends BaseLanguageModel>(
   recorder: Recorder,
   agentName: string = 'main',
 ): T {
+  // 从模型实例获取 model ID（ChatAnthropic / ChatOpenAI 均有 .model 属性）
+  const modelId = 'model' in model && typeof model.model === 'string' ? model.model : undefined;
+
   const handler: ProxyHandler<T> = {
     get(target, prop, receiver) {
       const value = Reflect.get(target, prop, receiver);
@@ -743,11 +746,6 @@ export function createRecordingModel<T extends BaseLanguageModel>(
             const name = resolveAgentName(config, agentName);
             // 捕获输入消息
             const inputMessages = Array.isArray(args[0]) ? (args[0] as BaseMessage[]) : undefined;
-            // 从 response_metadata 中提取模型 ID
-            const meta = (result as Record<string, unknown>).response_metadata as
-              | Record<string, unknown>
-              | undefined;
-            const modelId = typeof meta?.model_name === 'string' ? meta.model_name : undefined;
             recorder.record(name, result as BaseMessage, inputMessages, modelId);
           }
           return result;
