@@ -1,0 +1,32 @@
+{
+  "name": "@universe-agent/acp-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "universe-agent-acp-client": "./dist/index.js"
+  },
+  "scripts": {
+    "start:dev": "cd ../../ && tsx apps/acp-client/src/index.ts",
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "lint": "eslint src",
+    "lint:fix": "eslint --fix src",
+    "clean": "tsc --build --clean"
+  },
+  "dependencies": {
+    "@agentclientprotocol/sdk": "catalog:",
+    "commander": "catalog:",
+    "dotenv": "catalog:",
+    "picocolors": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@universe-agent/config-eslint": "workspace:*",
+    "@universe-agent/config-ts": "workspace:*",
+    "eslint": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  }
+}
