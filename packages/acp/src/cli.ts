@@ -26,7 +26,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 
 import { UniverseAgentServer } from './server.js';
-import { FilesystemBackend } from '@universe-agent/agent';
+import { FilesystemBackend, createSettings } from '@universe-agent/agent';
 import type { RecordingConfig } from '@universe-agent/agent';
 
 interface CLIOptions {
@@ -268,14 +268,12 @@ async function main(): Promise<void> {
   const workspaceRoot = options.workspace || process.env.WORKSPACE_ROOT || process.cwd();
 
   // Build default skill/memory paths if not provided
+  // Use createSettings to discover memory sources consistently with CLI
+  const settings = createSettings({ startPath: workspaceRoot });
+
   const defaultSkillPaths = [
     path.join(workspaceRoot, '.deepagents', 'skills'),
     path.join(workspaceRoot, 'skills'),
-  ];
-
-  const defaultMemoryPaths = [
-    path.join(workspaceRoot, '.deepagents', 'AGENTS.md'),
-    path.join(workspaceRoot, 'AGENTS.md'),
   ];
 
   const skills =
@@ -286,7 +284,7 @@ async function main(): Promise<void> {
   const memory =
     options.memory.length > 0
       ? options.memory.map((p) => path.resolve(workspaceRoot, p))
-      : defaultMemoryPaths;
+      : settings.getAllMemorySources();
 
   // Log startup info to stderr (stdout is reserved for ACP protocol)
   const log = (...msgArgs: unknown[]) => {
