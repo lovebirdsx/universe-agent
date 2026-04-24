@@ -452,6 +452,25 @@ describe('recording', () => {
       const content = fs.readFileSync(path.join(recDir, 'transcript.md'), 'utf-8');
       expect(content).toContain(longContent);
     });
+
+    it('should include modelId in transcript and recording JSON', () => {
+      const recorder = new Recorder();
+      const recDir = path.join(tmpDir, 'transcript-modelid');
+
+      const ai = new AIMessage({ content: 'Hello!' });
+      recorder.record('main', ai, [new HumanMessage('Hi')], 'claude-sonnet-4-6');
+      recorder.flush(recDir, 'modelid-test', 'completed');
+
+      // transcript.md 中应包含模型 ID
+      const content = fs.readFileSync(path.join(recDir, 'transcript.md'), 'utf-8');
+      expect(content).toContain('[main] Model #0 (claude-sonnet-4-6)');
+
+      // recording JSON 中应包含 modelId
+      const recJson = JSON.parse(
+        fs.readFileSync(path.join(recDir, 'main.recording.json'), 'utf-8'),
+      ) as { turns: Array<{ modelId?: string }> };
+      expect(recJson.turns[0]?.modelId).toBe('claude-sonnet-4-6');
+    });
   });
 
   // -----------------------------------------------------------------------

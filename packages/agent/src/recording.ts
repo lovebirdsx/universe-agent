@@ -60,6 +60,8 @@ export interface ModelTurn {
   requestTotalLength: number;
   /** 模型响应 */
   response: StoredMessage;
+  /** 模型 ID（如 claude-sonnet-4-6），来自 response_metadata.model_name */
+  modelId?: string;
 }
 
 export interface ToolTurn {
@@ -216,6 +218,9 @@ export class Recorder {
   /** 每个 agent 绑定的工具定义（序列化后） */
   readonly agentTools = new Map<string, SerializedToolDefinition[]>();
 
+  /** 每次模型调用的模型 ID（来自 response_metadata.model_name） */
+  readonly modelIds = new Map<string, (string | undefined)[]>();
+
   /**
    * 注册 agent 的工具列表，序列化为 OpenAI function 格式用于录像。
    */
@@ -227,7 +232,12 @@ export class Recorder {
   /**
    * 记录一条模型输出及其输入。
    */
-  record(agentName: string, message: BaseMessage, inputMessages?: BaseMessage[]): void {
+  record(
+    agentName: string,
+    message: BaseMessage,
+    inputMessages?: BaseMessage[],
+    modelId?: string,
+  ): void {
     const stored = mapChatMessagesToStoredMessages([message]);
     const first = stored[0];
     if (!first) return;
@@ -240,6 +250,14 @@ export class Recorder {
 
     const index = agentResponses.length;
     agentResponses.push(first);
+
+    // 记录模型 ID
+    let agentModelIds = this.modelIds.get(agentName);
+    if (!agentModelIds) {
+      agentModelIds = [];
+      this.modelIds.set(agentName, agentModelIds);
+    }
+    agentModelIds.push(modelId);
 
     // 记录请求增量
     if (inputMessages) {
@@ -379,12 +397,14 @@ export class Recorder {
         if (storedResponse) {
           const request = this.requests.get(entry.agent)?.[entry.index] ?? [];
           const requestTotalLength = this.requestLengths.get(entry.agent)?.[entry.index] ?? 0;
+          const modelId = this.modelIds.get(entry.agent)?.[entry.index];
           const turn: ModelTurn = {
             type: 'model',
             index: entry.index,
             request,
             requestTotalLength,
             response: storedResponse,
+            ...(modelId !== undefined ? { modelId } : {}),
           };
           turns.push(turn);
         }
@@ -481,7 +501,8 @@ function writeTranscript(
     lines.push('');
 
     if (turn.type === 'model') {
-      lines.push(`## 🤖 [${agentKey}] Model #${turn.index}`);
+      const modelLabel = turn.modelId ? ` (${turn.modelId})` : '';
+      lines.push(`## 🤖 [${agentKey}] Model #${turn.index}${modelLabel}`);
       lines.push('');
 
       const requestMessages = mapStoredMessagesToChatMessages(turn.request);
@@ -722,7 +743,12 @@ export function createRecordingModel<T extends BaseLanguageModel>(
             const name = resolveAgentName(config, agentName);
             // 捕获输入消息
             const inputMessages = Array.isArray(args[0]) ? (args[0] as BaseMessage[]) : undefined;
-            recorder.record(name, result as BaseMessage, inputMessages);
+            // 从 response_metadata 中提取模型 ID
+            const meta = (result as Record<string, unknown>).response_metadata as
+              | Record<string, unknown>
+              | undefined;
+            const modelId = typeof meta?.model_name === 'string' ? meta.model_name : undefined;
+            recorder.record(name, result as BaseMessage, inputMessages, modelId);
           }
           return result;
         };
