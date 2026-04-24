@@ -15,7 +15,11 @@ import {
   type ContentBlock,
 } from '@agentclientprotocol/sdk';
 
-import { createUniverseAgent, FilesystemBackend } from '@universe-agent/agent';
+import {
+  createUniverseAgent,
+  createUniverseAgentAsync,
+  FilesystemBackend,
+} from '@universe-agent/agent';
 
 import { ACPFilesystemBackend } from './acpFileSystemBackend.js';
 
@@ -44,6 +48,7 @@ import {
   getToolCallKind,
   formatToolCallTitle,
   extractToolCallLocations,
+  acpMcpServersToConfig,
 } from './adapter.js';
 
 // Type definitions for ACP requests/responses (SDK uses generic types)
@@ -132,6 +137,7 @@ export class UniverseAgentServer {
   private isRunning = false;
   private currentPromptAbortController: AbortController | null = null;
   private acpBackends: Map<string, ACPFilesystemBackend> = new Map();
+  private mcpCloseHandlers: Map<string, () => Promise<void>> = new Map();
 
   private readonly serverName: string;
   private readonly serverVersion: string;
@@ -304,6 +310,18 @@ export class UniverseAgentServer {
 
     this.isRunning = false;
     this.connection = null;
+
+    // Close all MCP connections
+    for (const [id, closeFn] of this.mcpCloseHandlers) {
+      try {
+        await closeFn();
+        this.log('Closed MCP connections for session:', id);
+      } catch (err) {
+        this.log('Error closing MCP connections for session:', id, err);
+      }
+    }
+    this.mcpCloseHandlers.clear();
+
     this.sessions.clear();
     this.log('Server stopped');
 
@@ -374,8 +392,8 @@ export class UniverseAgentServer {
         },
         // MCP capabilities
         mcpCapabilities: {
-          http: false,
-          sse: false,
+          http: true,
+          sse: true,
         },
         // Session capabilities (modes, commands, etc.)
         sessionCapabilities: {
@@ -430,7 +448,15 @@ export class UniverseAgentServer {
 
     this.sessions.set(sessionId, session);
 
-    if (!this.agents.has(agentName)) {
+    // Extract MCP servers from client request and create agent
+    const mcpServers = params.mcpServers as Array<Record<string, unknown>> | undefined;
+    const mcpConfig = mcpServers ? acpMcpServersToConfig(mcpServers as never[]) : undefined;
+
+    if (mcpConfig) {
+      // MCP configured: create a session-specific agent with MCP middleware
+      await this.createSessionAgent(agentName, sessionId, mcpConfig);
+    } else if (!this.agents.has(agentName)) {
+      // No MCP: use shared agent (existing behavior)
       this.createAgent(agentName);
     }
 
@@ -541,7 +567,7 @@ export class UniverseAgentServer {
       throw new Error(`Session not found: ${sessionId}`);
     }
 
-    const agent = this.agents.get(session.agentName);
+    const agent = this.getAgentForSession(session);
 
     if (!agent) {
       this.log('Prompt failed: agent not found:', session.agentName);
@@ -1231,6 +1257,68 @@ export class UniverseAgentServer {
 
     this.agents.set(agentName, agent);
     this.log('Agent created successfully:', agentName);
+  }
+
+  /**
+   * Create a session-specific agent with MCP middleware
+   *
+   * Unlike shared agents (keyed by name), session agents are keyed by session ID
+   * and have their own MCP connections that are cleaned up when the session ends.
+   */
+  private async createSessionAgent(
+    agentName: string,
+    sessionId: string,
+    mcpConfig: NonNullable<import('@universe-agent/agent').McpConfig>,
+  ): Promise<void> {
+    const config = this.agentConfigs.get(agentName);
+
+    if (!config) {
+      this.log('Agent configuration not found:', agentName);
+      throw new Error(`Agent configuration not found: ${agentName}`);
+    }
+
+    this.log('Creating session agent with MCP:', {
+      name: agentName,
+      sessionId,
+      mcpServers: Object.keys(mcpConfig.servers),
+    });
+
+    const backend = this.createBackend(config);
+
+    const { contextSchema: _cs, ...restConfig } = config;
+    const result = await createUniverseAgentAsync({
+      ...restConfig,
+      ...(config.contextSchema != null
+        ? { contextSchema: config.contextSchema as unknown as InteropZodObject }
+        : {}),
+      backend,
+      checkpointer: this.checkpointer,
+      mcp: mcpConfig,
+    });
+
+    // Store agent by session ID for session-specific lookup
+    this.agents.set(sessionId, result);
+
+    // Store MCP close handler for cleanup
+    if ((result as unknown as { close?: () => Promise<void> }).close) {
+      this.mcpCloseHandlers.set(
+        sessionId,
+        (result as unknown as { close: () => Promise<void> }).close,
+      );
+    }
+
+    this.log('Session agent created successfully:', { agentName, sessionId });
+  }
+
+  /**
+   * Get the agent for a session.
+   * Checks session-specific agents first (MCP sessions), then shared agents.
+   */
+  private getAgentForSession(
+    session: SessionState,
+  ): ReturnType<typeof createUniverseAgent> | undefined {
+    // Session-specific agent (created with MCP)
+    return this.agents.get(session.id) ?? this.agents.get(session.agentName);
   }
 
   private createBackend(config: UniverseAgentConfig): NonNullable<UniverseAgentConfig['backend']> {

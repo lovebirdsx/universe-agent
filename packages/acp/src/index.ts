@@ -69,6 +69,8 @@ export {
   getToolCallKind,
   formatToolCallTitle,
   extractToolCallLocations,
+  acpContentToLangChain,
+  acpMcpServersToConfig,
   fileUriToPath,
   pathToFileUri,
 } from './adapter.js';

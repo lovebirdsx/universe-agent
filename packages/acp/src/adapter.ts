@@ -8,6 +8,9 @@
 import { HumanMessage, AIMessage, BaseMessage } from '@langchain/core/messages';
 import type { ContentBlock } from '@agentclientprotocol/sdk';
 
+import type { McpConfig, McpServerConfig } from '@universe-agent/agent';
+import type { McpServer } from '@agentclientprotocol/sdk';
+
 import type { ToolCallInfo, PlanEntry } from './types.js';
 
 /**
@@ -227,4 +230,53 @@ export function extractToolCallLocations(
 
   const line = (args.line ?? args.startLine) as number | undefined;
   return [{ path: absPath, ...(line != null ? { line } : {}) }];
+}
+
+/**
+ * Convert ACP McpServer[] to agent McpConfig
+ *
+ * ACP clients pass MCP server configurations in session/new and session/load requests.
+ * This function converts them from ACP format to the format expected by the agent framework.
+ *
+ * Key differences:
+ * - ACP uses `Array<{name, value}>` for env/headers, agent uses `Record<string, string>`
+ * - ACP `type: "http"` maps to agent `transport: "streamable-http"`
+ * - ACP stdio servers have no `type` field (they're the default)
+ *
+ * @returns McpConfig or undefined if the array is empty
+ */
+export function acpMcpServersToConfig(mcpServers: McpServer[]): McpConfig | undefined {
+  if (mcpServers.length === 0) return undefined;
+
+  const servers: Record<string, McpServerConfig> = {};
+
+  for (const server of mcpServers) {
+    if ('command' in server) {
+      // stdio transport (default, no type field)
+      const env: Record<string, string> = {};
+      for (const { name, value } of server.env) {
+        env[name] = value;
+      }
+      servers[server.name] = {
+        transport: 'stdio' as const,
+        command: server.command,
+        args: server.args,
+        ...(Object.keys(env).length > 0 ? { env } : {}),
+      };
+    } else {
+      // http or sse transport
+      const headers: Record<string, string> = {};
+      for (const { name, value } of server.headers) {
+        headers[name] = value;
+      }
+      const httpServer = server as { type: 'http' | 'sse'; url: string; name: string };
+      servers[httpServer.name] = {
+        transport: httpServer.type === 'http' ? ('streamable-http' as const) : ('sse' as const),
+        url: httpServer.url,
+        ...(Object.keys(headers).length > 0 ? { headers } : {}),
+      };
+    }
+  }
+
+  return { servers, onConnectionError: 'ignore' };
 }
