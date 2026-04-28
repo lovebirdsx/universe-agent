@@ -35,8 +35,8 @@ pnpm publish-packages   # 发布
 | pnpm-workspace.yaml | workspace glob + catalog 版本统一管理    |
 | turbo.json          | 任务依赖图 + 缓存配置                    |
 | tsconfig.json       | Solution file（引用 shared + ui）        |
-| configTs            | 共享 TS 预设（base / react / node）      |
-| configEslint        | 共享 ESLint flat config                  |
+| config-ts            | 共享 TS 预设（base / react / node）      |
+| config-eslint        | 共享 ESLint flat config                  |
 | shared              | 纯工具函数，`composite` + `declaration`  |
 | ui                  | React 组件库，引用 shared                |
 | web                 | Vite + React，`noEmit`，引用 shared + ui |

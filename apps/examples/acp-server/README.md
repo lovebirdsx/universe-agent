@@ -20,19 +20,19 @@ This example demonstrates how to run UniverseAgent as an ACP (Agent Client Proto
 ### Direct Execution
 
 ```bash
-npx tsx examples/acpServer/server.ts
+npx tsx examples/acp-server/server.ts
 ```
 
 ### With Debug Logging
 
 ```bash
-DEBUG=true npx tsx examples/acpServer/server.ts
+DEBUG=true npx tsx examples/acp-server/server.ts
 ```
 
 ### With Custom Workspace
 
 ```bash
-WORKSPACE_ROOT=/path/to/your/project npx tsx examples/acpServer/server.ts
+WORKSPACE_ROOT=/path/to/your/project npx tsx examples/acp-server/server.ts
 ```
 
 ## IDE Configuration
@@ -48,7 +48,7 @@ Add to your Zed settings (`~/.config/zed/settings.json` on Linux, `~/Library/App
       "universe-agent": {
         "name": "UniverseAgent",
         "command": "npx",
-        "args": ["tsx", "examples/acpServer/server.ts"],
+        "args": ["tsx", "examples/acp-server/server.ts"],
         "cwd": "/path/to/universe-agent",
         "env": {
           "WORKSPACE_ROOT": "${workspaceFolder}"
@@ -107,7 +107,7 @@ The server implements the [Agent Client Protocol](https://agentclientprotocol.co
 Enable debug mode to see detailed logs:
 
 ```bash
-DEBUG=true npx tsx examples/acpServer/server.ts
+DEBUG=true npx tsx examples/acp-server/server.ts
 ```
 
 Logs are written to stderr to avoid interfering with the ACP protocol on stdout.

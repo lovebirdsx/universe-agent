@@ -9,7 +9,7 @@
  * immediately without any setup.
  *
  * To run this example:
- *   npx tsx examples/skillsMemory/skillsMemoryAgent.ts
+ *   npx tsx examples/skills-memory/skills-memoryAgent.ts
  *
  */
 

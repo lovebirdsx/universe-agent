@@ -302,7 +302,7 @@
         "--import",
         "tsx",
       ],
-      "program": "${workspaceFolder}/apps/examples/skillsMemory/skillsMemoryAgent.ts",
+      "program": "${workspaceFolder}/apps/examples/skills-memory/skills-memoryAgent.ts",
       "args": [],
       "sourceMaps": true,
       "outFiles": [

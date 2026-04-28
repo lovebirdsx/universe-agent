@@ -32,8 +32,8 @@ packages/
   acp/            # 基于UniverseAgent的 ACP 服务器
   shared/         # 纯工具函数
   ui/             # React 组件库
-  configEslint/   # 共享 ESLint flat config
-  configTs/       # 共享 tsconfig 预设
+  config-eslint/   # 共享 ESLint flat config
+  config-ts/       # 共享 tsconfig 预设
 ```
 
 ## 开发命令

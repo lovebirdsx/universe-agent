@@ -346,7 +346,7 @@ export class ACPClient {
       cmdArgs.push('--workspace', workspace);
     }
 
-    // 推断 monorepo 根目录（apps/acpClient/src/../../../）
+    // 推断 monorepo 根目录（apps/acp-client/src/../../../）
     const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
     const monorepoRoot = path.resolve(__dirname, '..', '..', '..');
 

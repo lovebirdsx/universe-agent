@@ -5,7 +5,7 @@
  * that can be used with IDEs like Zed, JetBrains, and other ACP clients.
  *
  * Usage:
- *   npx tsx examples/acpServer/server.ts
+ *   npx tsx examples/acp-server/server.ts
  *
  * Then configure your IDE to use this agent. For Zed, add to settings.json:
  *
@@ -15,7 +15,7 @@
  *       "universe-agent": {
  *         "name": "UniverseAgent",
  *         "command": "npx",
- *         "args": ["tsx", "examples/acpServer/server.ts"],
+ *         "args": ["tsx", "examples/acp-server/server.ts"],
  *         "cwd": "/path/to/universe-agent"
  *       }
  *     }
