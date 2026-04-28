@@ -9,6 +9,9 @@ export interface CliOptions {
   permission: 'interactive' | 'auto-approve' | 'deny-all';
   mode: string | undefined;
   session: string | undefined;
+  model: string | undefined;
+  apiKey: string | undefined;
+  baseUrl: string | undefined;
 }
 
 export function createProgram(): Command {
@@ -27,7 +30,10 @@ export function createProgram(): Command {
     .option('-V, --verbose', '在会话更新中显示详细内容', false)
     .option('--permission <mode>', '权限模式：interactive、auto-approve、deny-all', 'interactive')
     .option('--mode <mode>', '初始会话模式：agent、plan、ask')
-    .option('--session <id>', '按 ID 加载已有会话');
+    .option('--session <id>', '按 ID 加载已有会话')
+    .option('-m, --model <model>', 'LLM 模型，支持 "provider:model" 格式（透传给 ACP 服务器）')
+    .option('--api-key <key>', 'OpenAI-compatible provider 的 API Key（透传给 ACP 服务器）')
+    .option('--base-url <url>', '自定义 API Base URL（透传给 ACP 服务器）');
 
   return program;
 }
@@ -55,6 +61,9 @@ export function parseOptions(program: Command): {
       permission: opts['permission'] as CliOptions['permission'],
       mode: opts['mode'] as string | undefined,
       session: opts['session'] as string | undefined,
+      model: opts['model'] as string | undefined,
+      apiKey: opts['apiKey'] as string | undefined,
+      baseUrl: opts['baseUrl'] as string | undefined,
     },
     prompt,
   };

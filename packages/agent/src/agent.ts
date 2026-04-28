@@ -38,7 +38,6 @@ import {
   createToolReplayMiddleware,
 } from './recording.js';
 import { InteropZodObject } from '@langchain/core/utils/types';
-import { ChatOpenAI } from '@langchain/openai';
 import { createCacheBreakpointMiddleware } from './middleware/cache.js';
 import { buildBaseAgentPrompt } from './prompt.js';
 import { GENERAL_PURPOSE_SUBAGENT, type CompiledSubAgent } from './middleware/subagents.js';
@@ -52,6 +51,7 @@ import type {
   InferStructuredResponse,
   SupportedResponseFormat,
 } from './types.js';
+import { resolveModelFromConfig } from './modelResolver.js';
 
 /**
  * required for type inference
@@ -196,17 +196,12 @@ export function createUniverseAgent<
 
   let resolvedModel: BaseLanguageModel | string | undefined = model;
   if (!resolvedModel) {
-    if (process.env.OPENAI_API_BASEURL && process.env.OPENAI_API_KEY && process.env.OPENAI_MODEL) {
-      resolvedModel = new ChatOpenAI({
-        model: process.env.OPENAI_MODEL,
-        apiKey: process.env.OPENAI_API_KEY,
-        configuration: {
-          baseURL: process.env.OPENAI_API_BASEURL,
-        },
-      });
-    } else {
-      resolvedModel = 'anthropic:claude-sonnet-4-6';
-    }
+    const envModel = process.env['OPENAI_MODEL'] ?? 'anthropic:claude-sonnet-4-6';
+    resolvedModel = resolveModelFromConfig({
+      model: envModel,
+      apiKey: process.env['OPENAI_API_KEY'],
+      apiBaseUrl: process.env['OPENAI_API_BASEURL'],
+    });
   }
 
   // --- Recording: resolve mode and apply model substitution ---

@@ -9,7 +9,9 @@
  * Options:
  *   --name <name>         Agent name (default: "universe-agent")
  *   --description <desc>  Agent description
- *   --model <model>       LLM model (default: "claude-sonnet-4-5-20250929")
+ *   --model <model>       LLM model (default: "anthropic:claude-sonnet-4-6")
+ *   --api-key <key>       API key for OpenAI-compatible providers
+ *   --base-url <url>      Custom API base URL for OpenAI-compatible endpoints
  *   --workspace <path>    Workspace root directory (default: cwd)
  *   --skills <paths>      Comma-separated skill paths
  *   --memory <paths>      Comma-separated memory/AGENTS.md paths
@@ -26,13 +28,15 @@ import path from 'node:path';
 import fs from 'node:fs';
 
 import { UniverseAgentServer } from './server.js';
-import { FilesystemBackend, createSettings } from '@universe-agent/agent';
+import { FilesystemBackend, createSettings, resolveModelFromConfig } from '@universe-agent/agent';
 import type { RecordingConfig } from '@universe-agent/agent';
 
 interface CLIOptions {
   name: string;
   description: string;
   model: string;
+  apiKey: string | null;
+  baseUrl: string | null;
   workspace: string;
   skills: string[];
   memory: string[];
@@ -78,7 +82,9 @@ function parseArgs(args: string[]): CLIOptions {
   const options: CLIOptions = {
     name: 'universe-agent',
     description: 'AI coding assistant powered by UniverseAgent',
-    model: 'claude-sonnet-4-5-20250929',
+    model: 'anthropic:claude-sonnet-4-6',
+    apiKey: null,
+    baseUrl: null,
     workspace: process.cwd(),
     skills: [],
     memory: [],
@@ -152,6 +158,20 @@ function parseArgs(args: string[]): CLIOptions {
         options.record = true;
         break;
 
+      case '--api-key':
+        if (nextArg) {
+          options.apiKey = nextArg;
+          i++;
+        }
+        break;
+
+      case '--base-url':
+        if (nextArg) {
+          options.baseUrl = nextArg;
+          i++;
+        }
+        break;
+
       case '--log-file':
       case '-l':
         if (nextArg) {
@@ -188,7 +208,16 @@ USAGE:
 OPTIONS:
   -n, --name <name>         Agent name (default: "universe-agent")
   -d, --description <desc>  Agent description
-  -m, --model <model>       LLM model (default: "claude-sonnet-4-5-20250929")
+  -m, --model <model>       LLM model, supports "provider:model" format
+                            (default: "anthropic:claude-sonnet-4-6")
+                            Examples: "anthropic:claude-opus-4-5", "gpt-4o",
+                                      "openai:gpt-4o", "deepseek-chat", "llama3"
+      --api-key <key>       API key for OpenAI-compatible providers
+                            (overrides OPENAI_API_KEY env var)
+      --base-url <url>      Custom API base URL for OpenAI-compatible endpoints
+                            (overrides OPENAI_API_BASEURL env var)
+                            Examples: "http://localhost:11434/v1" (Ollama),
+                                      "https://api.deepseek.com/v1"
   -w, --workspace <path>    Workspace root directory (default: current directory)
   -s, --skills <paths>      Comma-separated skill paths (SKILL.md locations)
       --memory <paths>      Comma-separated memory paths (AGENTS.md locations)
@@ -199,27 +228,32 @@ OPTIONS:
   -v, --version             Show version
 
 ENVIRONMENT VARIABLES:
-  ANTHROPIC_API_KEY             API key for Anthropic models (required for Claude)
-  OPENAI_API_KEY                API key for OpenAI models
-  DEBUG                         Set to "true" to enable debug logging
-  UNIVERSE_AGENT_LOG_FILE       Path to log file (alternative to --log-file)
-  WORKSPACE_ROOT                Alternative to --workspace flag
+  ANTHROPIC_API_KEY         API key for Anthropic models (required for Claude)
+  OPENAI_API_KEY            API key for OpenAI-compatible providers
+  OPENAI_API_BASEURL        Custom API base URL (overridden by --base-url)
+  OPENAI_MODEL              Model name fallback (overridden by --model)
+  DEBUG                     Set to "true" to enable debug logging
+  UNIVERSE_AGENT_LOG_FILE   Path to log file (alternative to --log-file)
+  WORKSPACE_ROOT            Alternative to --workspace flag
 
 EXAMPLES:
-  # Start with defaults
+  # Start with defaults (Anthropic Claude, requires ANTHROPIC_API_KEY)
   npx universe-agent-acp
 
-  # Custom agent with skills
-  npx universe-agent-acp --name my-agent --skills ./skills,~/.universe-agent/skills
+  # Use OpenAI GPT-4o
+  npx universe-agent-acp --model gpt-4o --api-key sk-xxx
 
-  # Debug mode with custom workspace
-  npx universe-agent-acp --debug --workspace /path/to/project
+  # Use local Ollama
+  npx universe-agent-acp --model llama3 --base-url http://localhost:11434/v1
+
+  # Use DeepSeek
+  npx universe-agent-acp --model deepseek-chat --base-url https://api.deepseek.com/v1 --api-key sk-xxx
+
+  # Custom agent with skills and debug mode
+  npx universe-agent-acp --name my-agent --skills ./skills,~/.universe-agent/skills --debug
 
   # Production debugging with log file
   npx universe-agent-acp --log-file /var/log/universe-agent.log
-
-  # Combined debug and file logging
-  npx universe-agent-acp --debug --log-file ./debug.log
 
 ZED INTEGRATION:
   Add to your Zed settings.json:
@@ -296,12 +330,20 @@ async function main(): Promise<void> {
   log('Starting...');
   log('Agent:', options.name);
   log('Model:', options.model);
+  if (options.baseUrl) log('Base URL:', options.baseUrl);
+  if (options.apiKey ?? process.env['OPENAI_API_KEY']) log('API Key: [configured]');
   log('Workspace:', workspaceRoot);
   log('Skills:', skills.join(', '));
   log('Memory:', memory.join(', '));
   if (options.logFile) {
     log('Log file:', options.logFile);
   }
+
+  const resolvedModel = resolveModelFromConfig({
+    model: options.model,
+    ...(options.apiKey !== null ? { apiKey: options.apiKey } : {}),
+    ...(options.baseUrl !== null ? { apiBaseUrl: options.baseUrl } : {}),
+  });
 
   let recording: RecordingConfig | undefined;
   if (options.record) {
@@ -322,6 +364,7 @@ async function main(): Promise<void> {
         backend: new FilesystemBackend({ rootDir: workspaceRoot }),
         skills,
         memory,
+        model: resolvedModel,
         ...(recording != null ? { recording } : {}),
       },
       serverName: 'universe-agent-acp',

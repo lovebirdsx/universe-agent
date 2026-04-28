@@ -53,6 +53,8 @@ export function createConfig(sources: ConfigSources = {}): ConfigResult {
     skills: boolean;
     verbose: boolean;
     model?: string;
+    apiKey?: string;
+    baseUrl?: string;
     config?: string;
     record: boolean;
     replay?: string | true;
@@ -92,6 +94,8 @@ export function createConfig(sources: ConfigSources = {}): ConfigResult {
 
   const cliConfig = stripUndefined({
     model: explicit('model') ? opts.model : undefined,
+    apiKey: explicit('apiKey') ? opts.apiKey : undefined,
+    apiBaseUrl: explicit('baseUrl') ? opts.baseUrl : undefined,
     systemPrompt: explicit('system') ? opts.system : undefined,
     projectDir,
     memory: explicit('memory') ? opts.memory : undefined,

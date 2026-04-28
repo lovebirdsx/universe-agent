@@ -3,11 +3,10 @@ import {
   createUniverseAgentAsync,
   LocalShellBackend,
   createSettings,
+  resolveModelFromConfig,
 } from '@universe-agent/agent';
 import type { RecordingConfig } from '@universe-agent/agent';
-import { ChatOpenAI } from '@langchain/openai';
 import { MemorySaver } from '@langchain/langgraph';
-import type { BaseLanguageModel } from '@langchain/core/language_models/base';
 
 import type { CliConfig } from './config/index.js';
 
@@ -26,17 +25,6 @@ export interface CliAgent {
   agent: ReturnType<typeof createUniverseAgent>;
   backend: LocalShellBackend;
   close?: (() => Promise<void>) | undefined;
-}
-
-function resolveModel(config: CliConfig): BaseLanguageModel | string {
-  if (config.apiBaseUrl && config.apiKey) {
-    return new ChatOpenAI({
-      model: config.model,
-      apiKey: config.apiKey,
-      configuration: { baseURL: config.apiBaseUrl },
-    });
-  }
-  return config.model;
 }
 
 export async function createCliAgent(
@@ -61,7 +49,11 @@ export async function createCliAgent(
   }
 
   const agentParams = {
-    model: resolveModel(config),
+    model: resolveModelFromConfig({
+      model: config.model,
+      ...(config.apiKey !== undefined ? { apiKey: config.apiKey } : {}),
+      ...(config.apiBaseUrl !== undefined ? { apiBaseUrl: config.apiBaseUrl } : {}),
+    }),
     systemPrompt: config.systemPrompt ?? CLI_SYSTEM_PROMPT,
     backend,
     checkpointer: new MemorySaver(),

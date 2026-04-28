@@ -26,6 +26,11 @@ export function createProgram(): Command {
     .option('--no-skills', '禁用 skills 加载')
     .option('--verbose', '显示调试信息', false)
     .option('-m, --model <model>', '模型名称')
+    .option(
+      '--api-key <key>',
+      'OpenAI-compatible provider 的 API Key（覆盖 OPENAI_API_KEY 环境变量）',
+    )
+    .option('--base-url <url>', '自定义 API Base URL（覆盖 OPENAI_API_BASEURL 环境变量）')
     .option('-c, --config <path>', '配置文件路径')
     .option('--record', '录制当前会话', false)
     .option('--replay [id]', '播放录像（可选指定录像 ID）');

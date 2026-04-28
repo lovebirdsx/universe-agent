@@ -334,7 +334,7 @@ export class ACPClient {
   }
 
   async connect(): Promise<void> {
-    const { command, args, workspace } = this.options;
+    const { command, args, workspace, model, apiKey, baseUrl } = this.options;
 
     // 解析命令为可执行程序与初始参数
     const parts = command.split(/\s+/);
@@ -344,6 +344,17 @@ export class ACPClient {
     // 若未指定 workspace 参数则自动补充
     if (!cmdArgs.includes('--workspace') && !cmdArgs.includes('-w')) {
       cmdArgs.push('--workspace', workspace);
+    }
+
+    // 透传模型参数给 ACP 服务器（仅在未包含在 --command 或 --args 中时注入）
+    if (model && !cmdArgs.includes('--model') && !cmdArgs.includes('-m')) {
+      cmdArgs.push('--model', model);
+    }
+    if (apiKey && !cmdArgs.includes('--api-key')) {
+      cmdArgs.push('--api-key', apiKey);
+    }
+    if (baseUrl && !cmdArgs.includes('--base-url')) {
+      cmdArgs.push('--base-url', baseUrl);
     }
 
     // 推断 monorepo 根目录（apps/acp-client/src/../../../）
