@@ -15,11 +15,28 @@ pnpm run check              # 类型检查 + 代码检查 + 测试
 * 在 npm 网站上生成一个 Granular Access Token，勾选 `Bypass two-factor authentication (2FA)`
 * 将 token 添加到 ~/.npmrc 文件中，格式为 `//registry.npmjs.org/:_authToken=YOUR_TOKEN`
 
+### 本地发布
+
 ``` bash
 pnpm changeset              # 选择包和bump类型，填写变更描述
 pnpm version-packages       # 应用版本号
 pnpm publish-packages       # 发布到 npm
 git push --follow-tags      # 推送代码和标签
+```
+
+### github 发布
+
+* 需要在 GitHub 仓库中开启此设置：
+  * Settings → Actions → General → Workflow permissions
+  * "Allow GitHub Actions to create and approve pull requests"，然后保存。
+* GitHub仓库添加一个新的 Secret：
+  * 在 npm 网站上生成一个 Granular Access Token，勾选 `Bypass two-factor authentication (2FA)`
+  * Settings → Secrets and variables → Actions → New repository secret
+  * 名称为 `NPM_TOKEN`，值为上面生成的 Granular Access Token。
+
+``` bash
+pnpm changeset              # 选择包和bump类型，填写变更描述
+git push                    # 推送代码，触发 GitHub Action 发布流程
 ```
 
 ## 发布前测试
