@@ -1,6 +1,6 @@
 {
   "name": "@universe-agent/cli",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "CLI for UniverseAgent",
   "license": "MIT",
   "repository": {
@@ -8,14 +8,22 @@
     "url": "git+https://github.com/lovebirdsx/universe-agent.git",
     "directory": "packages/cli"
   },
-  "keywords": ["cli", "ai", "agents", "universe-agent"],
+  "keywords": [
+    "cli",
+    "ai",
+    "agents",
+    "universe-agent"
+  ],
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "bin": {
-    "universe-agent": "./dist/index.js"
+    "universe-agent": "dist/index.js"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   },
   "scripts": {
     "start:dev": "cd ../../ && tsx apps/cli/src/index.ts",

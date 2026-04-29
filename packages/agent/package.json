@@ -1,6 +1,6 @@
 {
   "name": "@universe-agent/agent",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "LangGraph-based AI agent framework",
   "license": "MIT",
   "repository": {
@@ -8,7 +8,13 @@
     "url": "git+https://github.com/lovebirdsx/universe-agent.git",
     "directory": "packages/agent"
   },
-  "keywords": ["ai", "agents", "langgraph", "langchain", "typescript"],
+  "keywords": [
+    "ai",
+    "agents",
+    "langgraph",
+    "langchain",
+    "typescript"
+  ],
   "type": "module",
   "files": [
     "dist"
@@ -20,7 +26,8 @@
     }
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   },
   "scripts": {
     "build": "tsc --build",

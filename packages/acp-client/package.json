@@ -1,6 +1,6 @@
 {
   "name": "@universe-agent/acp-client",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "CLI client for ACP servers",
   "license": "MIT",
   "repository": {
@@ -8,14 +8,21 @@
     "url": "git+https://github.com/lovebirdsx/universe-agent.git",
     "directory": "packages/acp-client"
   },
-  "keywords": ["cli", "acp", "agent-client-protocol"],
+  "keywords": [
+    "cli",
+    "acp",
+    "agent-client-protocol"
+  ],
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "bin": {
     "universe-agent-acp-client": "./dist/index.js"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   },
   "scripts": {
     "start:dev": "cd ../../ && tsx apps/acp-client/src/index.ts",

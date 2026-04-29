@@ -1,6 +1,6 @@
 {
   "name": "@universe-agent/acp",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "ACP (Agent Client Protocol) server for UniverseAgent - enables IDE integration with Zed, JetBrains, and other ACP clients",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -13,6 +13,7 @@
   },
   "publishConfig": {
     "access": "public",
+    "registry": "https://registry.npmjs.org",
     "bin": {
       "universe-agent-acp": "./dist/cli.mjs"
     }
