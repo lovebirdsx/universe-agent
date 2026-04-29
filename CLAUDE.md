@@ -26,10 +26,11 @@ apps/
   api/            # 后端 API 服务，使用 Hono
   web/            # 前端 React 应用，使用 Vite
   examples/       # 示例代码
-  cli/            # 命令行工具
 packages/
-  agent/          # UniverseAgent 框架（见下文）
   acp/            # 基于UniverseAgent的 ACP 服务器
+  acp-client/     # ACP 客户端测试工具，基于 UniverseAgent
+  agent/          # UniverseAgent 框架（见下文）
+  cli/            # 命令行工具
   shared/         # 纯工具函数
   ui/             # React 组件库
   config-eslint/   # 共享 ESLint flat config
@@ -49,30 +50,6 @@ pnpm check                # lint + typecheck + unit test + build
 
 ## 注意
 
-* 回答请使用中文
 * 换行采用 LF（Unix 风格）
 * 修复代码后，使用 `pnpm check` 验证修复结果
-
-## UniverseAgent（packages/agent）
-
-基于 LangChain/LangGraph 的 AI Agent 框架，入口为 `createUniverseAgent()`。
-
-**核心结构：**
-
-| 目录/文件      | 说明                                                                  |
-| -------------- | --------------------------------------------------------------------- |
-| `agent.ts`     | `createUniverseAgent()` 主函数，组装模型、中间件、subagent                |
-| `types.ts`     | 类型定义（`CreateUniverseAgentParams`、`UniverseAgent` 等）                   |
-| `recording.ts` | 录像模式：录制 LLM 输出 / fakeModel 回放                              |
-| `middleware/`  | 内置中间件（filesystem、subagents、summarization、skills、memory 等） |
-| `backends/`    | 后端抽象（State、Store、Filesystem、Sandbox、LocalShell）             |
-| `skills/`      | Skills 加载器                                                         |
-| `testing/`     | 测试工具（`assertAllUniverseAgentQualities`、mock tools）                 |
-
-**关键概念：**
-
-* `createUniverseAgent({ model, tools, middleware, subagents, recording, ... })` → 返回 `UniverseAgent`（扩展自 LangChain `ReactAgent`）
-* 中间件栈：todoList → skills → filesystem → subagents → summarization → patchToolCalls → async → custom → cache → memory → HITL
-* Subagent 通过 `task` tool 委派，自动继承 `defaultModel`
-* 录像模式（`recording`）：`record` 录制模型输出到 JSON，`replay` 用 `fakeModel()` 回放，`auto` 自动选择
-* 测试分 unit（`*.test.ts`）和 integration（`*.int.test.ts`），集成测试需要 API key
+* apps和packages的每个包都有自己独立的CLAUDE.md，你在完成功能后，若有需要，请务必更新对应的CLAUDE.md，保持文档与代码同步
