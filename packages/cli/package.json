@@ -1,6 +1,6 @@
 {
   "name": "@universe-agent/cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI for UniverseAgent",
   "license": "MIT",
   "repository": {
@@ -19,7 +19,7 @@
     "dist"
   ],
   "bin": {
-    "universe-agent": "dist/index.js"
+    "universe-agent": "./dist/index.js"
   },
   "publishConfig": {
     "access": "public",

@@ -1,5 +1,11 @@
 # @universe-agent/cli
 
+## 1.0.1
+
+### Patch Changes
+
+- 支持独立bin文件运行
+
 ## 1.0.0
 
 ### Major Changes
