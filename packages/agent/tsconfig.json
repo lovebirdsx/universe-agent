@@ -19,9 +19,5 @@
     "src"
   ],
   "exclude": [],
-  "references": [
-    {
-      "path": "../shared"
-    }
-  ]
+  "references": []
 }

@@ -1,6 +1,14 @@
 {
   "name": "@universe-agent/agent",
   "version": "0.0.0",
+  "description": "LangGraph-based AI agent framework",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lovebirdsx/universe-agent.git",
+    "directory": "packages/agent"
+  },
+  "keywords": ["ai", "agents", "langgraph", "langchain", "typescript"],
   "type": "module",
   "files": [
     "dist"
@@ -10,6 +18,9 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc --build",
@@ -23,7 +34,8 @@
     "test:unit:watch": "vitest --config vitest.unit.config.ts",
     "test:int:watch": "vitest --config vitest.int.config.ts",
     "dev": "tsc --build --watch",
-    "clean": "tsc --build --clean"
+    "clean": "tsc --build --clean",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "@langchain/anthropic": "catalog:",
@@ -36,7 +48,6 @@
     "@langfuse/langchain": "catalog:",
     "@langfuse/otel": "catalog:",
     "@opentelemetry/sdk-node": "catalog:",
-    "@universe-agent/shared": "workspace:*",
     "fast-glob": "catalog:",
     "langchain": "catalog:",
     "langsmith": "catalog:",

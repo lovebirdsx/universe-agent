@@ -6,5 +6,7 @@
     { "path": "./packages/ui" },
     { "path": "./packages/agent" },
     { "path": "./packages/acp" },
+    { "path": "./packages/cli" },
+    { "path": "./packages/acp-client" }
   ]
 }

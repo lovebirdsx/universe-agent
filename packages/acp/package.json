@@ -6,7 +6,13 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lovebirdsx/universe-agent.git",
+    "directory": "packages/acp"
+  },
   "publishConfig": {
+    "access": "public",
     "bin": {
       "universe-agent-acp": "./dist/cli.mjs"
     }

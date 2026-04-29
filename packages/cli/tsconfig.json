@@ -9,5 +9,5 @@
     "tsBuildInfoFile": ".tsbuildinfo"
   },
   "include": ["src"],
-  "references": [{ "path": "../../packages/agent" }]
+  "references": [{ "path": "../agent" }]
 }

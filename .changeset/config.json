@@ -3,9 +3,24 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
-  "linked": [],
-  "access": "restricted",
+  "linked": [
+    [
+      "@universe-agent/agent",
+      "@universe-agent/acp",
+      "@universe-agent/acp-client",
+      "@universe-agent/cli"
+    ]
+  ],
+  "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": [
+    "@universe-agent/shared",
+    "@universe-agent/ui",
+    "@universe-agent/config-eslint",
+    "@universe-agent/config-ts",
+    "@universe-agent/api",
+    "@universe-agent/web",
+    "@universe-agent/examples"
+  ]
 }
