@@ -28,7 +28,8 @@ git push --follow-tags      # 推送代码和标签
 
 * 需要在 GitHub 仓库中开启此设置：
   * Settings → Actions → General → Workflow permissions
-  * "Allow GitHub Actions to create and approve pull requests"，然后保存。
+  * "Allow GitHub Actions to create and approve pull requests"，然后保存
+  * Settings → General → Pull Requests，启用 "Allow auto-merge" 选项 (避免 gh pr merge --auto 会报错)
 * GitHub仓库添加一个新的 Secret：
   * 在 npm 网站上生成一个 Granular Access Token，勾选 `Bypass two-factor authentication (2FA)`
   * Settings → Secrets and variables → Actions → New repository secret
