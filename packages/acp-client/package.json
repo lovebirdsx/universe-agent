@@ -1,6 +1,6 @@
 {
   "name": "@universe-agent/acp-client",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "CLI client for ACP servers",
   "license": "MIT",
   "repository": {
