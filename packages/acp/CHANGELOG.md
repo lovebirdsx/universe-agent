@@ -1,5 +1,11 @@
 # @universe-agent/acp
 
+## 1.0.2
+
+### Patch Changes
+
+- fa5db94: acp服务器使用OPENAI_MODEL作为默认模型
+
 ## 1.0.1
 
 ### Patch Changes
