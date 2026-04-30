@@ -1,5 +1,11 @@
 # @universe-agent/acp
 
+## 1.0.5
+
+### Patch Changes
+
+- 43961a9: 发版测试
+
 ## 1.0.3
 
 ### Patch Changes
