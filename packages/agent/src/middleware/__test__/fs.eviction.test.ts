@@ -272,14 +272,14 @@ describe('read_file character-based truncation', () => {
     expect(result[0].text).not.toContain('line200');
   });
 
-  it('should not truncate when toolTokenLimitBeforeEvict is null', async () => {
+  it('should not truncate when toolTokenLimitBeforeEvict is disabled', async () => {
     const longLine = 'x'.repeat(100000);
     const files = { '/huge.txt': createFileData(longLine) };
     const { runtime } = setupStateWithFiles(files);
 
     const middleware = createFilesystemMiddleware({
       backend: () => new StateBackend(runtime),
-      toolTokenLimitBeforeEvict: null, // Disabled
+      toolTokenLimitBeforeEvict: 0, // Disabled
     });
 
     const readFileTool = (middleware as any).tools.find((t: any) => t.name === 'read_file');

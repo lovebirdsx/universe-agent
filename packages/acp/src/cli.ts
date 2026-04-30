@@ -37,13 +37,13 @@ interface CLIOptions {
   name: string;
   description: string;
   model: string;
-  apiKey: string | null;
-  baseUrl: string | null;
+  apiKey: string | undefined;
+  baseUrl: string | undefined;
   workspace: string;
   skills: string[];
   memory: string[];
   debug: boolean;
-  logFile: string | null;
+  logFile: string | undefined;
   record: boolean;
   help: boolean;
   version: boolean;
@@ -84,14 +84,14 @@ function parseArgs(args: string[]): CLIOptions {
   const options: CLIOptions = {
     name: 'universe-agent',
     description: 'AI coding assistant powered by UniverseAgent',
-    model: 'anthropic:claude-sonnet-4-6',
-    apiKey: null,
-    baseUrl: null,
+    model: process.env.OPENAI_MODEL ?? 'anthropic:claude-sonnet-4-6',
+    apiKey: process.env.OPENAI_API_KEY,
+    baseUrl: process.env.OPENAI_API_BASEURL,
     workspace: process.cwd(),
     skills: [],
     memory: [],
     debug: process.env.DEBUG === 'true',
-    logFile: process.env.UNIVERSE_AGENT_LOG_FILE ?? null,
+    logFile: process.env.UNIVERSE_AGENT_LOG_FILE,
     record: false,
     help: false,
     version: false,
@@ -343,8 +343,8 @@ async function main(): Promise<void> {
 
   const resolvedModel = resolveModelFromConfig({
     model: options.model,
-    ...(options.apiKey !== null ? { apiKey: options.apiKey } : {}),
-    ...(options.baseUrl !== null ? { apiBaseUrl: options.baseUrl } : {}),
+    ...(options.apiKey ? { apiKey: options.apiKey } : {}),
+    ...(options.baseUrl ? { apiBaseUrl: options.baseUrl } : {}),
   });
 
   let recording: RecordingConfig | undefined;

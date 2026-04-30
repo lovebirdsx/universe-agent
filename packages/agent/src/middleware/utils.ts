@@ -24,7 +24,7 @@ import { SystemMessage } from '@langchain/core/messages';
  * ```
  */
 export function appendToSystemMessage(
-  systemMessage: SystemMessage | null | undefined,
+  systemMessage: SystemMessage | undefined,
   text: string,
 ): SystemMessage {
   if (!systemMessage) {
@@ -69,7 +69,7 @@ export function appendToSystemMessage(
  * ```
  */
 export function prependToSystemMessage(
-  systemMessage: SystemMessage | null | undefined,
+  systemMessage: SystemMessage | undefined,
   text: string,
 ): SystemMessage {
   if (!systemMessage) {

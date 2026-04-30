@@ -128,14 +128,14 @@ const DEFAULT_COMMANDS = [
  * ```
  */
 export class UniverseAgentServer {
-  private connection: AgentSideConnection | null = null;
+  private connection: AgentSideConnection | undefined;
   private agents: Map<string, ReturnType<typeof createUniverseAgent>> = new Map();
   private agentConfigs: Map<string, UniverseAgentConfig> = new Map();
   private sessions: Map<string, SessionState> = new Map();
   private checkpointer: MemorySaver;
   private clientCapabilities: ACPCapabilities = {};
   private isRunning = false;
-  private currentPromptAbortController: AbortController | null = null;
+  private currentPromptAbortController: AbortController | undefined;
   private acpBackends: Map<string, ACPFilesystemBackend> = new Map();
   private mcpCloseHandlers: Map<string, () => Promise<void>> = new Map();
 
@@ -309,7 +309,7 @@ export class UniverseAgentServer {
     }
 
     this.isRunning = false;
-    this.connection = null;
+    this.connection = undefined;
 
     // Close all MCP connections
     for (const [id, closeFn] of this.mcpCloseHandlers) {
@@ -609,7 +609,7 @@ export class UniverseAgentServer {
       this.log('Prompt error:', { sessionId, error: (error as Error).message });
       throw error;
     } finally {
-      this.currentPromptAbortController = null;
+      this.currentPromptAbortController = undefined;
     }
   }
 
@@ -987,12 +987,12 @@ export class UniverseAgentServer {
     session: SessionState,
     prompt: ContentBlock[],
     conn: AgentSideConnection,
-  ): Promise<PromptResponse | null> {
+  ): Promise<PromptResponse | undefined> {
     const textBlocks = prompt.filter((b) => b.type === 'text');
-    if (textBlocks.length === 0) return null;
+    if (textBlocks.length === 0) return undefined;
 
     const text = (textBlocks[0] as { text: string }).text.trim();
-    if (!text.startsWith('/')) return null;
+    if (!text.startsWith('/')) return undefined;
 
     const [command] = text.split(/\s+/, 1) as [string, ...string[]];
     const commandName = command.slice(1).toLowerCase();
@@ -1039,7 +1039,7 @@ export class UniverseAgentServer {
         return { stopReason: 'end_turn' };
       }
       default:
-        return null;
+        return undefined;
     }
   }
 
@@ -1350,10 +1350,10 @@ export class UniverseAgentServer {
   /**
    * Read a file through the ACP client (if supported)
    */
-  async readFileViaClient(path: string): Promise<string | null> {
+  async readFileViaClient(path: string): Promise<string | undefined> {
     if (!this.connection || !this.clientCapabilities.fsReadTextFile) {
       this.log('readFileViaClient: client does not support file read');
-      return null;
+      return undefined;
     }
 
     this.log('Reading file via client:', path);
@@ -1366,7 +1366,7 @@ export class UniverseAgentServer {
       return result.text;
     } catch (err) {
       this.log('File read failed:', { path, error: (err as Error).message });
-      return null;
+      return undefined;
     }
   }
 

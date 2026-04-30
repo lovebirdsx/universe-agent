@@ -156,24 +156,24 @@ function validateSkillName(name: string, directoryName: string): ValidationResul
  * Parse YAML frontmatter from content.
  *
  * @param content - The file content
- * @returns Parsed frontmatter object, or null if parsing fails
+ * @returns Parsed frontmatter object, or undefined if parsing fails
  */
-function parseFrontmatter(content: string): Record<string, unknown> | null {
+function parseFrontmatter(content: string): Record<string, unknown> | undefined {
   const match = content.match(FRONTMATTER_PATTERN);
   if (!match) {
-    return null;
+    return undefined;
   }
 
   const frontmatterContent = match[1];
   if (frontmatterContent == null) {
-    return null;
+    return undefined;
   }
 
   try {
     const parsed = yaml.parse(frontmatterContent);
-    return typeof parsed === 'object' && parsed !== null ? parsed : null;
+    return typeof parsed === 'object' && parsed !== null ? parsed : undefined;
   } catch {
-    return null;
+    return undefined;
   }
 }
 
@@ -182,19 +182,19 @@ function parseFrontmatter(content: string): Record<string, unknown> | null {
  *
  * @param skillMdPath - Path to the SKILL.md file
  * @param source - Source of the skill ('user' or 'project')
- * @returns SkillMetadata with all fields, or null if parsing fails
+ * @returns SkillMetadata with all fields, or undefined if parsing fails
  */
 export function parseSkillMetadata(
   skillMdPath: string,
   source: 'user' | 'project',
-): SkillMetadata | null {
+): SkillMetadata | undefined {
   try {
     // Security: Check file size to prevent DoS attacks
     const stats = fs.statSync(skillMdPath);
     if (stats.size > MAX_SKILL_FILE_SIZE) {
       // oxlint-disable-next-line no-console
       console.warn(`Skipping ${skillMdPath}: file too large (${stats.size} bytes)`);
-      return null;
+      return undefined;
     }
 
     const content = fs.readFileSync(skillMdPath, 'utf-8');
@@ -203,7 +203,7 @@ export function parseSkillMetadata(
     if (!frontmatter) {
       // oxlint-disable-next-line no-console
       console.warn(`Skipping ${skillMdPath}: no valid YAML frontmatter found`);
-      return null;
+      return undefined;
     }
 
     // Validate required fields
@@ -213,7 +213,7 @@ export function parseSkillMetadata(
     if (!name || !description) {
       // oxlint-disable-next-line no-console
       console.warn(`Skipping ${skillMdPath}: missing required 'name' or 'description'`);
-      return null;
+      return undefined;
     }
 
     // Validate name format per spec (warn but still load for backwards compatibility)
@@ -254,7 +254,7 @@ export function parseSkillMetadata(
   } catch (error) {
     // oxlint-disable-next-line no-console
     console.warn(`Error reading ${skillMdPath}: ${error}`);
-    return null;
+    return undefined;
   }
 }
 

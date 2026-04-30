@@ -660,7 +660,7 @@ export class StoreBackend implements BackendProtocolV2 {
    * Search file contents for a literal text pattern.
    * Binary files are skipped.
    */
-  async grep(pattern: string, path: string = '/', glob: string | null = null): Promise<GrepResult> {
+  async grep(pattern: string, path: string = '/', glob?: string): Promise<GrepResult> {
     const store = this.getStore();
     const namespace = this.getNamespace();
     const items = await this.searchStorePaginated(store, namespace);

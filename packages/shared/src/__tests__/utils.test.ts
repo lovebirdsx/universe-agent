@@ -21,10 +21,10 @@ describe('cn', () => {
   });
 
   it('filters out falsy values', () => {
-    expect(cn('foo', false, undefined, null, 'bar')).toBe('foo bar');
+    expect(cn('foo', false, undefined, 'bar')).toBe('foo bar');
   });
 
   it('returns empty string when all values are falsy', () => {
-    expect(cn(false, undefined, null)).toBe('');
+    expect(cn(false, undefined)).toBe('');
   });
 });

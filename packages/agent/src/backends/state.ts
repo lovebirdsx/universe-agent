@@ -307,7 +307,7 @@ export class StateBackend implements BackendProtocolV2 {
    * Search file contents for a literal text pattern.
    * Binary files are skipped.
    */
-  grep(pattern: string, path: string = '/', glob: string | null = null): GrepResult {
+  grep(pattern: string, path: string = '/', glob?: string): GrepResult {
     const files = this.getFiles();
     const result = grepMatchesFromFiles(files, pattern, path, glob);
     return { matches: result };

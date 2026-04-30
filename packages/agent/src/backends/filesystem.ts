@@ -470,11 +470,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
    * @param glob - Optional glob pattern to filter which files to search.
    * @returns List of GrepMatch dicts containing path, line number, and matched text.
    */
-  async grep(
-    pattern: string,
-    dirPath: string = '/',
-    glob: string | null = null,
-  ): Promise<GrepResult> {
+  async grep(pattern: string, dirPath: string = '/', glob?: string): Promise<GrepResult> {
     // Resolve base path
     let baseFull: string;
     try {
@@ -491,7 +487,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
 
     // Try ripgrep first (with -F flag for literal search), fallback to substring search
     let results = await this.ripgrepSearch(pattern, baseFull, glob);
-    if (results === null) {
+    if (results === undefined) {
       results = await this.literalSearch(pattern, baseFull, glob);
     }
 
@@ -516,8 +512,8 @@ export class FilesystemBackend implements BackendProtocolV2 {
   private async ripgrepSearch(
     pattern: string,
     baseFull: string,
-    includeGlob: string | null,
-  ): Promise<Record<string, Array<[number, string]>> | null> {
+    includeGlob?: string,
+  ): Promise<Record<string, Array<[number, string]>> | undefined> {
     return new Promise((resolve) => {
       // -F enables fixed-string (literal) mode
       const args = ['--json', '-F'];
@@ -537,7 +533,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
       proc.on('close', (code) => {
         if (code !== 0 && code !== 1) {
           // Error (code 1 means no matches, which is ok)
-          resolve(null);
+          resolve(undefined);
           return;
         }
 
@@ -584,7 +580,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
       });
 
       proc.on('error', () => {
-        resolve(null);
+        resolve(undefined);
       });
     });
   }
@@ -602,7 +598,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
   private async literalSearch(
     pattern: string,
     baseFull: string,
-    includeGlob: string | null,
+    includeGlob?: string,
   ): Promise<Record<string, Array<[number, string]>>> {
     const results: Record<string, Array<[number, string]>> = {};
     const stat = await fs.stat(baseFull);

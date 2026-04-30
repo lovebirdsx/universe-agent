@@ -101,9 +101,11 @@ function truncateId(id: string, maxLen = 20): string {
 }
 
 /**
- * 交互式选择录像。返回选中的录像条目，或 null 表示取消。
+ * 交互式选择录像。返回选中的录像条目，或 undefined 表示取消。
  */
-export async function selectRecording(entries: RecordingEntry[]): Promise<RecordingEntry | null> {
+export async function selectRecording(
+  entries: RecordingEntry[],
+): Promise<RecordingEntry | undefined> {
   console.log(fmt.bold('\n可用录像:'));
   console.log();
 
@@ -126,20 +128,20 @@ export async function selectRecording(entries: RecordingEntry[]): Promise<Record
     output: process.stdout,
   });
 
-  return new Promise<RecordingEntry | null>((resolve) => {
+  return new Promise<RecordingEntry | undefined>((resolve) => {
     rl.question(`请选择录像 (1-${String(entries.length)})，输入 q 退出: `, (answer) => {
       rl.close();
 
       const trimmed = answer.trim().toLowerCase();
       if (trimmed === 'q' || trimmed === 'quit' || trimmed === 'exit') {
-        resolve(null);
+        resolve(undefined);
         return;
       }
 
       const index = parseInt(trimmed, 10);
       if (isNaN(index) || index < 1 || index > entries.length) {
         console.log(fmt.error('无效选择'));
-        resolve(null);
+        resolve(undefined);
         return;
       }
 
@@ -179,7 +181,7 @@ export async function handleReplay(replayConfig: ReplayConfig): Promise<void> {
   }
 
   // 确定要播放的录像
-  let selected: RecordingEntry | null | undefined;
+  let selected: RecordingEntry | undefined;
 
   if (replayConfig.recordingId) {
     // 直接指定 ID

@@ -43,10 +43,10 @@ describe('Config Module', () => {
       expect(result).toBe(tempDir);
     });
 
-    it('should return null when no .git found', () => {
+    it('should return undefined when no .git found', () => {
       // No .git directory
       const result = findProjectRoot(tempDir);
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
 
     it('should use cwd when startPath is not provided', () => {
@@ -67,7 +67,7 @@ describe('Config Module', () => {
       const settings = createSettings({ startPath: tempDir });
 
       expect(settings.userUniverseAgentDir).toBe(path.join(os.homedir(), '.universe-agent'));
-      expect(settings.projectRoot).toBeNull();
+      expect(settings.projectRoot).toBeUndefined();
       expect(settings.hasProject).toBe(false);
     });
 
@@ -156,9 +156,9 @@ describe('Config Module', () => {
     });
 
     describe('getProjectAgentMdPath', () => {
-      it('should return null when not in project', () => {
+      it('should return undefined when not in project', () => {
         const settings = createSettings({ startPath: tempDir });
-        expect(settings.getProjectAgentMdPath()).toBeNull();
+        expect(settings.getProjectAgentMdPath()).toBeUndefined();
       });
 
       it('should return correct path when in project', () => {
@@ -193,9 +193,9 @@ describe('Config Module', () => {
     });
 
     describe('getProjectSkillsDir', () => {
-      it('should return null when not in project', () => {
+      it('should return undefined when not in project', () => {
         const settings = createSettings({ startPath: tempDir });
-        expect(settings.getProjectSkillsDir()).toBeNull();
+        expect(settings.getProjectSkillsDir()).toBeUndefined();
       });
 
       it('should return correct path when in project', () => {
@@ -209,9 +209,9 @@ describe('Config Module', () => {
     });
 
     describe('ensureProjectSkillsDir', () => {
-      it('should return null when not in project', () => {
+      it('should return undefined when not in project', () => {
         const settings = createSettings({ startPath: tempDir });
-        expect(settings.ensureProjectSkillsDir()).toBeNull();
+        expect(settings.ensureProjectSkillsDir()).toBeUndefined();
       });
 
       it('should create directory when in project', () => {
@@ -226,9 +226,9 @@ describe('Config Module', () => {
     });
 
     describe('ensureProjectUniverseAgentDir', () => {
-      it('should return null when not in project', () => {
+      it('should return undefined when not in project', () => {
         const settings = createSettings({ startPath: tempDir });
-        expect(settings.ensureProjectUniverseAgentDir()).toBeNull();
+        expect(settings.ensureProjectUniverseAgentDir()).toBeUndefined();
       });
 
       it('should create directory when in project', () => {

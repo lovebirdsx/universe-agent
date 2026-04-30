@@ -627,8 +627,8 @@ export function grepSearchFiles(
 export function grepMatchesFromFiles(
   files: Record<string, FileData>,
   pattern: string,
-  path: string | null = null,
-  glob: string | null = null,
+  path?: string,
+  glob?: string,
 ): GrepMatch[] {
   let normalizedPath: string;
   try {

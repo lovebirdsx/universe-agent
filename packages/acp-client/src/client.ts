@@ -85,7 +85,7 @@ export class ACPClientHandler implements Client {
   private options: CliOptions;
   private terminals = new Map<string, ManagedTerminal>();
   private nextTerminalId = 1;
-  private rl: readline.Interface | null = null;
+  private rl: readline.Interface | undefined;
 
   constructor(renderer: Renderer, options: CliOptions) {
     this.renderer = renderer;
@@ -314,14 +314,14 @@ export class ACPClientHandler implements Client {
 // --- ACP Client（高层编排器）---
 
 export class ACPClient {
-  private child: ChildProcess | null = null;
-  private connection: ClientSideConnection | null = null;
+  private child: ChildProcess | undefined;
+  private connection: ClientSideConnection | undefined;
   private handler: ACPClientHandler;
   private renderer: Renderer;
   private options: CliOptions;
 
-  sessionId: string | null = null;
-  initResult: InitializeResponse | null = null;
+  sessionId: string | undefined;
+  initResult: InitializeResponse | undefined;
 
   constructor(renderer: Renderer, options: CliOptions) {
     this.renderer = renderer;
@@ -469,10 +469,10 @@ export class ACPClient {
     this.handler.cleanup();
     if (this.child) {
       this.child.kill();
-      this.child = null;
+      this.child = undefined;
     }
-    this.connection = null;
-    this.sessionId = null;
+    this.connection = undefined;
+    this.sessionId = undefined;
   }
 
   get closed(): Promise<void> | undefined {

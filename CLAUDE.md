@@ -53,3 +53,4 @@ pnpm check                # lint + typecheck + unit test + build
 * 换行采用 LF（Unix 风格）
 * 修复代码后，使用 `pnpm check` 验证修复结果
 * apps和packages的每个包都有自己独立的CLAUDE.md，你在完成功能后，若有需要，请务必更新对应的CLAUDE.md，保持文档与代码同步
+* 表达"无值"统一使用 `undefined`，`null` 仅用于：外部 API 要求、JSON 序列化（`JSON.stringify(data, null, 2)`）、显式删除标记（`null` = 删除 vs `undefined` = 不更新）。ESLint `no-restricted-syntax` 规则会对 `null` 字面量发出警告，合法使用需加 `// eslint-disable-next-line no-restricted-syntax` 注释

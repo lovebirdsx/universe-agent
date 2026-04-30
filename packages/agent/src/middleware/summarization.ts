@@ -252,8 +252,8 @@ const SummarizationEventSchema = z.object({
   cutoffIndex: z.number(),
   /** The HumanMessage containing the summary. */
   summaryMessage: z.instanceof(HumanMessage),
-  /** Path where the conversation history was offloaded, or null if offload failed. */
-  filePath: z.string().nullable(),
+  /** Path where the conversation history was offloaded, or undefined if offload failed. */
+  filePath: z.string().optional(),
 });
 
 /**
@@ -352,7 +352,7 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
   }
 
   // Session ID for this middleware instance (fallback if no thread_id)
-  let sessionId: string | null = null;
+  let sessionId: string | undefined;
 
   // Calibration multiplier for token estimation. countTokensApproximately
   // can significantly undercount (e.g. it ignores tool_use content blocks,
@@ -501,7 +501,7 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
     }
 
     // Search backward for AIMessage with matching tool_calls
-    let backwardIdx: number | null = null;
+    let backwardIdx: number | undefined;
     for (let i = cutoffIndex - 1; i >= 0; i--) {
       const msg = messages[i];
       if (AIMessage.isInstance(msg) && msg.tool_calls) {
@@ -514,11 +514,11 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
             break;
           }
         }
-        if (backwardIdx !== null) break;
+        if (backwardIdx !== undefined) break;
       }
     }
 
-    if (backwardIdx === null) {
+    if (backwardIdx === undefined) {
       // No matching AIMessage found - advance forward past ToolMessages
       return forwardIdx;
     }
@@ -814,7 +814,7 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
     resolvedBackend: BackendProtocolV2,
     messages: BaseMessage[],
     state: Record<string, unknown>,
-  ): Promise<string | null> {
+  ): Promise<string | undefined> {
     const filePath = getHistoryPath(state);
     const filteredMessages = filterSummaryMessages(messages);
 
@@ -824,7 +824,7 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
 
     try {
       // Read existing content as raw bytes (no string decode needed)
-      let existingBytes: Uint8Array | null = null;
+      let existingBytes: Uint8Array | undefined;
       if (resolvedBackend.downloadFiles) {
         try {
           const responses = await resolvedBackend.downloadFiles([filePath]);
@@ -862,14 +862,14 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
       if (result.error) {
         // oxlint-disable-next-line no-console
         console.warn(`Failed to offload conversation history to ${filePath}: ${result.error}`);
-        return null;
+        return undefined;
       }
 
       return filePath;
     } catch (e) {
       // oxlint-disable-next-line no-console
       console.warn(`Exception offloading conversation history to ${filePath}:`, e);
-      return null;
+      return undefined;
     }
   }
 
@@ -912,7 +912,7 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
   /**
    * Build the summary message with file path reference.
    */
-  function buildSummaryMessage(summary: string, filePath: string | null): HumanMessage {
+  function buildSummaryMessage(summary: string, filePath: string | undefined): HumanMessage {
     let content: string;
     if (filePath) {
       content = context`
@@ -973,13 +973,13 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
     cutoffIndex: number,
   ): Promise<{
     summaryMessage: HumanMessage;
-    filePath: string | null;
+    filePath: string | undefined;
     stateCutoffIndex: number;
   }> {
     const resolvedBackend = await resolveBackend(backend, { state });
     const filePath = await offloadToBackend(resolvedBackend, messagesToSummarize, state);
 
-    if (filePath === null) {
+    if (filePath === undefined) {
       // oxlint-disable-next-line no-console
       console.warn(
         `[SummarizationMiddleware] Backend offload failed during summarization. Proceeding with summary generation.`,

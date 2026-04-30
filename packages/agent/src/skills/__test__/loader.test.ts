@@ -57,24 +57,24 @@ describe('Skill Loader Module', () => {
         'user',
       );
 
-      expect(result).not.toBeNull();
+      expect(result).not.toBeUndefined();
       expect(result!.name).toBe('web-research');
       expect(result!.description).toBe('Research the web for information');
       expect(result!.source).toBe('user');
       expect(result!.path).toContain(path.join('web-research', 'SKILL.md'));
     });
 
-    it('should return null for missing frontmatter', () => {
+    it('should return undefined for missing frontmatter', () => {
       const skillDir = path.join(userSkillsDir, 'no-frontmatter');
       fs.mkdirSync(skillDir, { recursive: true });
       fs.writeFileSync(path.join(skillDir, 'SKILL.md'), '# No Frontmatter\n\nJust content');
 
       const result = parseSkillMetadata(path.join(skillDir, 'SKILL.md'), 'user');
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
 
-    it('should return null when name is missing', () => {
+    it('should return undefined when name is missing', () => {
       createSkill(userSkillsDir, 'missing-name', {
         description: 'A skill without a name',
       });
@@ -84,10 +84,10 @@ describe('Skill Loader Module', () => {
         'user',
       );
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
 
-    it('should return null when description is missing', () => {
+    it('should return undefined when description is missing', () => {
       createSkill(userSkillsDir, 'missing-desc', {
         name: 'missing-desc',
       });
@@ -97,7 +97,7 @@ describe('Skill Loader Module', () => {
         'user',
       );
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
 
     it('should parse optional fields', () => {
@@ -118,7 +118,7 @@ allowed-tools: read_file write_file
 
       const result = parseSkillMetadata(path.join(skillDir, 'SKILL.md'), 'project');
 
-      expect(result).not.toBeNull();
+      expect(result).not.toBeUndefined();
       expect(result!.license).toBe('MIT');
       expect(result!.compatibility).toBe('Node.js 18+');
       expect(result!.allowedTools).toBe('read_file write_file');
@@ -134,7 +134,7 @@ allowed-tools: read_file write_file
 
       const result = parseSkillMetadata(path.join(userSkillsDir, 'long-desc', 'SKILL.md'), 'user');
 
-      expect(result).not.toBeNull();
+      expect(result).not.toBeUndefined();
       expect(result!.description.length).toBe(1024);
     });
 
@@ -147,7 +147,7 @@ allowed-tools: read_file write_file
       // Should still parse, just with a warning
       const result = parseSkillMetadata(path.join(userSkillsDir, 'my-skill', 'SKILL.md'), 'user');
 
-      expect(result).not.toBeNull();
+      expect(result).not.toBeUndefined();
       expect(result!.name).toBe('different-name');
     });
   });

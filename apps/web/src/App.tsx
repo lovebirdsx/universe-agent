@@ -9,7 +9,7 @@ const PRODUCTS = [
 ] as const;
 
 export default function App() {
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number>();
 
   return (
     <main
@@ -38,7 +38,7 @@ export default function App() {
             <Button
               variant={selected === p.id ? 'secondary' : 'primary'}
               size="sm"
-              onClick={() => setSelected(selected === p.id ? null : p.id)}
+              onClick={() => setSelected(selected === p.id ? undefined : p.id)}
             >
               {selected === p.id ? 'Deselect' : 'Select'}
             </Button>
@@ -46,7 +46,7 @@ export default function App() {
         ))}
       </ul>
 
-      {selected !== null && (
+      {selected !== undefined && (
         <p style={{ marginTop: '1.5rem', color: '#16a34a' }}>
           Selected: <strong>{PRODUCTS.find((p) => p.id === selected)?.name}</strong>
         </p>

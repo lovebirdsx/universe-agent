@@ -207,22 +207,22 @@ function formatMemoryContents(contents: Record<string, string>, sources: string[
  *
  * @param backend - Backend to load from.
  * @param path - Path to the AGENTS.md file.
- * @returns File content if found, null otherwise.
+ * @returns File content if found, undefined otherwise.
  */
 async function loadMemoryFromBackend(
   backend: AnyBackendProtocol,
   path: string,
-): Promise<string | null> {
+): Promise<string | undefined> {
   const adaptedBackend = adaptBackendProtocol(backend);
 
   // Use downloadFiles if available, otherwise fall back to read
   if (!adaptedBackend.downloadFiles) {
     const content = await adaptedBackend.read(path);
     if (content.error) {
-      return null;
+      return undefined;
     }
     if (typeof content.content !== 'string') {
-      return null;
+      return undefined;
     }
     return content.content;
   }
@@ -242,7 +242,7 @@ async function loadMemoryFromBackend(
     // For now, memory files are treated as optional. file_not_found is expected
     // and we skip silently to allow graceful degradation.
     if (response.error === 'file_not_found') {
-      return null;
+      return undefined;
     }
     // Other errors should be raised
     throw new Error(`Failed to download ${path}: ${response.error}`);
@@ -253,7 +253,7 @@ async function loadMemoryFromBackend(
     return new TextDecoder().decode(response.content);
   }
 
-  return null;
+  return undefined;
 }
 
 /**

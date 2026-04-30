@@ -28,8 +28,8 @@ export interface SettingsOptions {
  * - Multi-tool memory file discovery (Copilot, Claude Code, Codex)
  */
 export interface Settings {
-  /** Detected project root directory, or null if not in a git project */
-  readonly projectRoot: string | null;
+  /** Detected project root directory, or undefined if not in a git project */
+  readonly projectRoot: string | undefined;
 
   /** Base user-level .universe-agent directory (~/.universe-agent) */
   readonly userUniverseAgentDir: string;
@@ -61,9 +61,9 @@ export interface Settings {
 
   /**
    * Get project-level AGENTS.md path.
-   * @returns Path to {projectRoot}/.universe-agent/AGENTS.md, or null if not in a project
+   * @returns Path to {projectRoot}/.universe-agent/AGENTS.md, or undefined if not in a project
    */
-  getProjectAgentMdPath(): string | null;
+  getProjectAgentMdPath(): string | undefined;
 
   /**
    * Get user-level skills directory path for a specific agent.
@@ -81,21 +81,21 @@ export interface Settings {
 
   /**
    * Get project-level skills directory path.
-   * @returns Path to {projectRoot}/.universe-agent/skills/, or null if not in a project
+   * @returns Path to {projectRoot}/.universe-agent/skills/, or undefined if not in a project
    */
-  getProjectSkillsDir(): string | null;
+  getProjectSkillsDir(): string | undefined;
 
   /**
    * Ensure project-level skills directory exists and return path.
-   * @returns Path to {projectRoot}/.universe-agent/skills/, or null if not in a project
+   * @returns Path to {projectRoot}/.universe-agent/skills/, or undefined if not in a project
    */
-  ensureProjectSkillsDir(): string | null;
+  ensureProjectSkillsDir(): string | undefined;
 
   /**
    * Ensure project .universe-agent directory exists.
-   * @returns Path to {projectRoot}/.universe-agent/, or null if not in a project
+   * @returns Path to {projectRoot}/.universe-agent/, or undefined if not in a project
    */
-  ensureProjectUniverseAgentDir(): string | null;
+  ensureProjectUniverseAgentDir(): string | undefined;
 
   /**
    * Get all candidate memory file paths across supported AI coding tools.
@@ -124,9 +124,9 @@ export interface Settings {
  * directory, which indicates the project root.
  *
  * @param startPath - Directory to start searching from. Defaults to current working directory.
- * @returns Path to the project root if found, null otherwise.
+ * @returns Path to the project root if found, undefined otherwise.
  */
-export function findProjectRoot(startPath?: string): string | null {
+export function findProjectRoot(startPath?: string): string | undefined {
   let current = path.resolve(startPath || process.cwd());
 
   // Walk up the directory tree
@@ -144,7 +144,7 @@ export function findProjectRoot(startPath?: string): string | null {
     return current;
   }
 
-  return null;
+  return undefined;
 }
 
 /**
@@ -174,7 +174,7 @@ export function createSettings(options: SettingsOptions = {}): Settings {
   return {
     projectRoot,
     userUniverseAgentDir,
-    hasProject: projectRoot !== null,
+    hasProject: projectRoot !== undefined,
 
     getAgentDir(agentName: string): string {
       if (!isValidAgentName(agentName)) {
@@ -196,9 +196,9 @@ export function createSettings(options: SettingsOptions = {}): Settings {
       return path.join(userUniverseAgentDir, 'AGENTS.md');
     },
 
-    getProjectAgentMdPath(): string | null {
+    getProjectAgentMdPath(): string | undefined {
       if (!projectRoot) {
-        return null;
+        return undefined;
       }
       return path.join(projectRoot, '.universe-agent', 'AGENTS.md');
     },
@@ -213,25 +213,25 @@ export function createSettings(options: SettingsOptions = {}): Settings {
       return skillsDir;
     },
 
-    getProjectSkillsDir(): string | null {
+    getProjectSkillsDir(): string | undefined {
       if (!projectRoot) {
-        return null;
+        return undefined;
       }
       return path.join(projectRoot, '.universe-agent', 'skills');
     },
 
-    ensureProjectSkillsDir(): string | null {
+    ensureProjectSkillsDir(): string | undefined {
       const skillsDir = this.getProjectSkillsDir();
       if (!skillsDir) {
-        return null;
+        return undefined;
       }
       fs.mkdirSync(skillsDir, { recursive: true });
       return skillsDir;
     },
 
-    ensureProjectUniverseAgentDir(): string | null {
+    ensureProjectUniverseAgentDir(): string | undefined {
       if (!projectRoot) {
-        return null;
+        return undefined;
       }
       const universeAgentDir = path.join(projectRoot, '.universe-agent');
       fs.mkdirSync(universeAgentDir, { recursive: true });

@@ -12,6 +12,6 @@ export function formatMoney(amount: number, currency = 'USD'): string {
  * 合并 className 字符串，过滤 falsy 值。
  * 可与 Tailwind CSS 搭配使用。
  */
-export function cn(...classes: (string | undefined | false | null)[]): string {
+export function cn(...classes: (string | undefined | false)[]): string {
   return classes.filter(Boolean).join(' ');
 }

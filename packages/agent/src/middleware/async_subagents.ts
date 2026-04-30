@@ -871,14 +871,14 @@ export function createAsyncSubAgentMiddleware(options: AsyncSubAgentMiddlewareOp
 
   const fullSystemPrompt = systemPrompt
     ? `${systemPrompt}\n\nAvailable async subagent types:\n${agentsDescription}`
-    : null;
+    : undefined;
 
   return createMiddleware({
     name: 'asyncSubAgentMiddleware',
     stateSchema: AsyncTaskStateSchema,
     tools,
     wrapModelCall: async (request, handler) => {
-      if (fullSystemPrompt !== null) {
+      if (fullSystemPrompt !== undefined) {
         return handler({
           ...request,
           systemMessage: request.systemMessage.concat(

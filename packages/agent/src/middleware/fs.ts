@@ -557,7 +557,7 @@ function createReadFileTool(
   backend: AnyBackendProtocol | BackendFactory,
   options: {
     customDescription: string | undefined;
-    toolTokenLimitBeforeEvict: number | null;
+    toolTokenLimitBeforeEvict: number | undefined;
   },
 ) {
   const { customDescription, toolTokenLimitBeforeEvict } = options;
@@ -819,7 +819,7 @@ function createGrepTool(
   return tool(
     async (input, runtime: ToolRuntime) => {
       const resolvedBackend = await resolveBackend(backend, runtime);
-      const { pattern, path = '/', glob = null } = input;
+      const { pattern, path = '/', glob } = input;
       const result = await resolvedBackend.grep(pattern, path, glob);
 
       // If string, it's an error
@@ -835,7 +835,7 @@ function createGrepTool(
 
       // Format output: group by file
       const lines: string[] = [];
-      let currentFile: string | null = null;
+      let currentFile: string | undefined;
       for (const match of matches) {
         if (match.path !== currentFile) {
           currentFile = match.path;
@@ -860,8 +860,6 @@ function createGrepTool(
         glob: z
           .string()
           .optional()
-          .nullable()
-          .default(null)
           .describe("Optional glob pattern to filter files (e.g., '*.py')"),
       }),
     },
@@ -922,13 +920,13 @@ export interface FilesystemMiddlewareOptions {
   /** Backend instance or factory (default: StateBackend) */
   backend?: AnyBackendProtocol | BackendFactory;
   /** Optional custom system prompt override */
-  systemPrompt?: string | null;
+  systemPrompt?: string;
   /** Optional custom tool descriptions override */
-  customToolDescriptions?: Record<string, string> | null;
+  customToolDescriptions?: Record<string, string>;
   /** Optional token limit before evicting a tool result to the filesystem (default: 20000 tokens, ~80KB) */
-  toolTokenLimitBeforeEvict?: number | null;
+  toolTokenLimitBeforeEvict?: number;
   /** Optional token limit before evicting a HumanMessage to the filesystem (default: 50000 tokens, ~200KB) */
-  humanMessageTokenLimitBeforeEvict?: number | null;
+  humanMessageTokenLimitBeforeEvict?: number;
 }
 
 /**
@@ -937,8 +935,8 @@ export interface FilesystemMiddlewareOptions {
 export function createFilesystemMiddleware(options: FilesystemMiddlewareOptions = {}) {
   const {
     backend = (runtime: BackendRuntime) => new StateBackend(runtime),
-    systemPrompt: customSystemPrompt = null,
-    customToolDescriptions = null,
+    systemPrompt: customSystemPrompt,
+    customToolDescriptions,
     toolTokenLimitBeforeEvict = 20000,
     humanMessageTokenLimitBeforeEvict = 50000,
   } = options;

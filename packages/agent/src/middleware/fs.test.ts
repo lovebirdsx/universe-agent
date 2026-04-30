@@ -459,7 +459,7 @@ describe('createFilesystemMiddleware', () => {
     it('should pass through handler when eviction is disabled', async () => {
       const middleware = createFilesystemMiddleware({
         backend: createMockBackend(),
-        toolTokenLimitBeforeEvict: null,
+        toolTokenLimitBeforeEvict: 0,
       });
 
       const mockMessage = new ToolMessage({
@@ -784,15 +784,21 @@ describe('createFilesystemMiddleware', () => {
         backend: () => createMockBackend(),
       });
 
+      // Properties that are intentionally optional (not required) in the schema
+      const optionalByDesign: Record<string, string[]> = {
+        grep: ['glob'],
+      };
+
       for (const t of middleware.tools!) {
+        const toolName = (t as any).name as string;
         const jsonSchema = (t as any).schema.toJSONSchema();
         const properties = Object.keys(jsonSchema.properties ?? {});
         const required = jsonSchema.required ?? [];
+        const allowed = optionalByDesign[toolName] ?? [];
 
         for (const prop of properties) {
-          expect(required, `tool "${(t as any).name}" is missing "${prop}" in required`).toContain(
-            prop,
-          );
+          if (allowed.includes(prop)) continue;
+          expect(required, `tool "${toolName}" is missing "${prop}" in required`).toContain(prop);
         }
       }
     });
@@ -994,7 +1000,7 @@ describe('createFilesystemMiddleware', () => {
     it('should return undefined when eviction is disabled', async () => {
       const middleware = createFilesystemMiddleware({
         backend: createMockBackend(),
-        humanMessageTokenLimitBeforeEvict: null,
+        humanMessageTokenLimitBeforeEvict: 0,
       });
 
       const state = {
@@ -1426,10 +1432,10 @@ describe('createFilesystemMiddleware', () => {
       expect(preservedImage).toBeDefined();
     });
 
-    it('should not truncate when humanMessageTokenLimitBeforeEvict is null', async () => {
+    it('should not truncate when humanMessageTokenLimitBeforeEvict is disabled', async () => {
       const middleware = createFilesystemMiddleware({
         backend: createMockBackend(),
-        humanMessageTokenLimitBeforeEvict: null,
+        humanMessageTokenLimitBeforeEvict: 0,
       });
 
       const taggedMessage = new HumanMessage({

@@ -238,7 +238,7 @@ function buildReadCommand(filePath: string, offset: number, limit: number): stri
  * @param searchPath - Base path to search in.
  * @param globPattern - Optional glob pattern to filter files.
  */
-function buildGrepCommand(pattern: string, searchPath: string, globPattern: string | null): string {
+function buildGrepCommand(pattern: string, searchPath: string, globPattern?: string): string {
   const patternEscaped = shellQuote(pattern);
   const searchPathQuoted = shellQuote(searchPath);
 
@@ -401,7 +401,7 @@ export abstract class BaseSandbox implements SandboxBackendProtocolV2 {
    * @param glob - Optional glob pattern to filter which files to search.
    * @returns List of GrepMatch dicts containing path, line number, and matched text.
    */
-  async grep(pattern: string, path: string = '/', glob: string | null = null): Promise<GrepResult> {
+  async grep(pattern: string, path: string = '/', glob?: string): Promise<GrepResult> {
     const command = buildGrepCommand(pattern, path, glob);
     const result = await this.execute(command);
 

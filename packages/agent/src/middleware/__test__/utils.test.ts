@@ -4,8 +4,8 @@ import { SystemMessage } from '@langchain/core/messages';
 import { appendToSystemMessage, prependToSystemMessage } from '../utils.js';
 
 describe('appendToSystemMessage', () => {
-  it('should create a new SystemMessage when original is null', () => {
-    const result = appendToSystemMessage(null, 'Hello world');
+  it('should create a new SystemMessage when original is undefined', () => {
+    const result = appendToSystemMessage(undefined, 'Hello world');
     expect(result).toBeInstanceOf(SystemMessage);
     expect(result.content).toBe('Hello world');
   });
@@ -51,8 +51,8 @@ describe('appendToSystemMessage', () => {
 });
 
 describe('prependToSystemMessage', () => {
-  it('should create a new SystemMessage when original is null', () => {
-    const result = prependToSystemMessage(null, 'Hello world');
+  it('should create a new SystemMessage when original is undefined', () => {
+    const result = prependToSystemMessage(undefined, 'Hello world');
     expect(result).toBeInstanceOf(SystemMessage);
     expect(result.content).toBe('Hello world');
   });

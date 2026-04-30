@@ -17,7 +17,7 @@ import path from 'node:path';
  */
 export class ACPFilesystemBackend extends FilesystemBackend {
   private conn: AgentSideConnection;
-  private currentSessionId: string | null = null;
+  private currentSessionId: string | undefined;
 
   constructor(options: { conn: AgentSideConnection; rootDir: string }) {
     super({ rootDir: options.rootDir });

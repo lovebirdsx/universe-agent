@@ -75,7 +75,7 @@ export interface BackendProtocolV2 extends Omit<
    * @param glob - Optional glob pattern to filter files (e.g., "*.py")
    * @returns GrepResult with matches on success or error on failure
    */
-  grep(pattern: string, path?: string | null, glob?: string | null): MaybePromise<GrepResult>;
+  grep(pattern: string, path?: string, glob?: string): MaybePromise<GrepResult>;
 
   /**
    * Structured glob matching returning FileInfo objects.

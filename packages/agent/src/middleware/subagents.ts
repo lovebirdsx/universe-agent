@@ -449,10 +449,10 @@ function returnCommandWithStateUpdate(
 function getSubagents(options: {
   defaultModel: LanguageModelLike | string;
   defaultTools: StructuredTool[];
-  defaultMiddleware: AgentMiddleware[] | null;
+  defaultMiddleware?: AgentMiddleware[];
   /** Middleware specifically for the general-purpose subagent (includes skills from main agent) */
-  generalPurposeMiddleware: AgentMiddleware[] | null;
-  defaultInterruptOn: Record<string, boolean | InterruptOnConfig> | null;
+  generalPurposeMiddleware?: AgentMiddleware[];
+  defaultInterruptOn?: Record<string, boolean | InterruptOnConfig>;
   subagents: (SubAgent | CompiledSubAgent)[];
   generalPurposeAgent: boolean;
 }): {
@@ -530,13 +530,13 @@ function getSubagents(options: {
 function createTaskTool(options: {
   defaultModel: LanguageModelLike | string;
   defaultTools: StructuredTool[];
-  defaultMiddleware: AgentMiddleware[] | null;
+  defaultMiddleware?: AgentMiddleware[];
   /** Middleware specifically for the general-purpose subagent (includes skills from main agent) */
-  generalPurposeMiddleware: AgentMiddleware[] | null;
-  defaultInterruptOn: Record<string, boolean | InterruptOnConfig> | null;
+  generalPurposeMiddleware?: AgentMiddleware[];
+  defaultInterruptOn?: Record<string, boolean | InterruptOnConfig>;
   subagents: (SubAgent | CompiledSubAgent)[];
   generalPurposeAgent: boolean;
-  taskDescription: string | null;
+  taskDescription?: string;
 }) {
   const {
     defaultModel,
@@ -651,22 +651,22 @@ export interface SubAgentMiddlewareOptions {
   /** The tools to use for the default general-purpose subagent */
   defaultTools?: StructuredTool[];
   /** Default middleware to apply to custom subagents (WITHOUT skills from main agent) */
-  defaultMiddleware?: AgentMiddleware[] | null;
+  defaultMiddleware?: AgentMiddleware[];
   /**
    * Middleware specifically for the general-purpose subagent (includes skills from main agent).
    * If not provided, falls back to defaultMiddleware.
    */
-  generalPurposeMiddleware?: AgentMiddleware[] | null;
+  generalPurposeMiddleware?: AgentMiddleware[];
   /** The tool configs for the default general-purpose subagent */
-  defaultInterruptOn?: Record<string, boolean | InterruptOnConfig> | null;
+  defaultInterruptOn?: Record<string, boolean | InterruptOnConfig>;
   /** A list of additional subagents to provide to the agent */
   subagents?: (SubAgent | CompiledSubAgent)[];
   /** Full system prompt override */
-  systemPrompt?: string | null;
+  systemPrompt?: string;
   /** Whether to include the general-purpose agent */
   generalPurposeAgent?: boolean;
   /** Custom description for the task tool */
-  taskDescription?: string | null;
+  taskDescription?: string;
 }
 
 /**
@@ -676,13 +676,13 @@ export function createSubAgentMiddleware(options: SubAgentMiddlewareOptions) {
   const {
     defaultModel,
     defaultTools = [],
-    defaultMiddleware = null,
-    generalPurposeMiddleware = null,
-    defaultInterruptOn = null,
+    defaultMiddleware,
+    generalPurposeMiddleware,
+    defaultInterruptOn,
     subagents = [],
     systemPrompt = TASK_SYSTEM_PROMPT,
     generalPurposeAgent = true,
-    taskDescription = null,
+    taskDescription,
   } = options;
 
   const taskTool = createTaskTool({

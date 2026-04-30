@@ -168,7 +168,7 @@ export class CompositeBackend implements BackendProtocolV2 {
   /**
    * Structured search results or error string for invalid input.
    */
-  async grep(pattern: string, path: string = '/', glob: string | null = null): Promise<GrepResult> {
+  async grep(pattern: string, path: string = '/', glob?: string): Promise<GrepResult> {
     // If path targets a specific route, search only that backend
     for (const [routePrefix, backend] of this.sortedRoutes) {
       if (path.startsWith(routePrefix.replace(/\/$/, ''))) {
