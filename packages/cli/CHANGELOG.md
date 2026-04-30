@@ -1,5 +1,11 @@
 # @universe-agent/cli
 
+## 1.0.4
+
+### Patch Changes
+
+- 652ee89: 发布测试
+
 ## 1.0.1
 
 ### Patch Changes
