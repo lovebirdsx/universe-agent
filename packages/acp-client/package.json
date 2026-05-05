@@ -25,7 +25,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "scripts": {
-    "start:dev": "cd ../../ && tsx apps/acp-client/src/index.ts",
+    "start:dev": "cd ../../ && tsx packages/acp-client/src/index.ts",
     "build": "tsc --build",
     "typecheck": "tsc --noEmit",
     "start": "node dist/index.js",
