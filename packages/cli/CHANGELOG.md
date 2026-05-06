@@ -1,5 +1,12 @@
 # @universe-agent/cli
 
+## 1.0.7
+
+### Patch Changes
+
+- Updated dependencies [f642da3]
+  - @universe-agent/agent@1.0.7
+
 ## 1.0.4
 
 ### Patch Changes

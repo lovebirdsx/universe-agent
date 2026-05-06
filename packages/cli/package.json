@@ -1,6 +1,6 @@
 {
   "name": "@universe-agent/cli",
-  "version": "1.0.4",
+  "version": "1.0.7",
   "description": "CLI for UniverseAgent",
   "license": "MIT",
   "repository": {
