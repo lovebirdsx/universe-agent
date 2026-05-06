@@ -2,6 +2,37 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "acp-client",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--enable-source-maps",
+        "--import",
+        "tsx",
+      ],
+      "program": "${workspaceFolder}/packages/acp-client/src/index.ts",
+      "args": [
+        "-P",
+        "-V",
+        "--mcp-config",
+        "./.universe-agent/mcp.json"
+      ],
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/packages/**/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
       "name": "cli",
       "type": "node",
       "request": "launch",
@@ -12,7 +43,7 @@
         "--import",
         "tsx",
       ],
-      "program": "${workspaceFolder}/apps/cli/src/index.ts",
+      "program": "${workspaceFolder}/packages/cli/src/index.ts",
       "args": [
         "项目介绍"
       ],
@@ -40,7 +71,7 @@
         "--import",
         "tsx",
       ],
-      "program": "${workspaceFolder}/apps/cli/src/index.ts",
+      "program": "${workspaceFolder}/packages/cli/src/index.ts",
       "args": [
         "--replay"
       ],

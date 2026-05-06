@@ -206,6 +206,11 @@ export interface SessionState {
    * Cached permission decisions for tools (always-allow / always-reject)
    */
   permissionDecisions?: Map<string, 'allow_always' | 'reject_always'>;
+
+  /**
+   * MCP servers configured for this session
+   */
+  mcpServers?: Array<{ name: string; transport: string; url?: string; command?: string }>;
 }
 
 /**

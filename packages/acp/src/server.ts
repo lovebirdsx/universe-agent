@@ -19,6 +19,7 @@ import {
   createUniverseAgent,
   createUniverseAgentAsync,
   FilesystemBackend,
+  resolveModelName,
 } from '@universe-agent/agent';
 
 import { ACPFilesystemBackend } from './acpFileSystemBackend.js';
@@ -455,6 +456,12 @@ export class UniverseAgentServer {
     const mcpConfig = mcpServers ? acpMcpServersToConfig(mcpServers as never[]) : undefined;
 
     if (mcpConfig) {
+      session.mcpServers = Object.entries(mcpConfig.servers).map(([name, cfg]) => ({
+        name,
+        transport: cfg.transport,
+        ...('url' in cfg ? { url: cfg.url } : {}),
+        ...('command' in cfg ? { command: cfg.command } : {}),
+      }));
       // MCP configured: create a session-specific agent with MCP middleware
       await this.createSessionAgent(agentName, sessionId, mcpConfig);
     } else if (!this.agents.has(agentName)) {
@@ -1029,14 +1036,26 @@ export class UniverseAgentServer {
       }
       case 'status': {
         const config = this.agentConfigs.get(session.agentName);
-        const status = [
-          `**Agent:** ${session.agentName}`,
-          `**Mode:** ${session.mode ?? 'agent'}`,
-          `**Model:** ${config?.model ?? 'default'}`,
-          `**Skills:** ${config?.skills?.length ?? 0} loaded`,
-          `**Memory:** ${config?.memory?.length ?? 0} sources`,
-          `**Session:** ${session.id}`,
-        ].join('\n');
+        const mcpLines =
+          session.mcpServers && session.mcpServers.length > 0
+            ? session.mcpServers.map((s) => {
+                const detail = s.url ?? s.command ?? s.transport;
+                return `  - **${s.name}** (${s.transport}): ${detail}`;
+              })
+            : ['  (无)'];
+        const memoryLines = config?.memory ? config.memory.map((m) => `  - ${m}`) : ['  (无)'];
+        const skillLines = config?.skills ? config.skills.map((s) => `  - ${s}`) : ['  (无)'];
+        const status =
+          [
+            `**Agent:** ${session.agentName}`,
+            `**Mode:** ${session.mode ?? 'agent'}`,
+            `**Model:** ${config?.model ? resolveModelName(config.model) : 'default'}`,
+            // `**Skills:** ${config?.skills?.length ?? 0} loaded`,
+            `**Skills:**\n${skillLines.join('\n')}`,
+            `**Memory:**\n${memoryLines.join('\n')}`,
+            `**Session:** ${session.id}`,
+            `**MCP Servers:**\n${mcpLines.join('\n')}`,
+          ].join('\n') + '\n';
         await this.sendMessageChunk(session.id, conn, 'agent', [
           { type: 'text', text: status } as ContentBlock,
         ]);

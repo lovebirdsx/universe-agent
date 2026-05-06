@@ -179,4 +179,8 @@ export {
 } from './backends/index.js';
 
 // Export model resolver
-export { resolveModelFromConfig, type ModelResolverConfig } from './modelResolver.js';
+export {
+  resolveModelFromConfig,
+  type ModelResolverConfig,
+  resolveModelName,
+} from './modelResolver.js';

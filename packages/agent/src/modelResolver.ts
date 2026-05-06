@@ -49,6 +49,7 @@ function isOpenAIModel(model: string): boolean {
   if (model.includes(':')) {
     return model.split(':')[0]!.toLowerCase() === 'openai';
   }
+
   const lower = model.toLowerCase();
   return (
     lower.startsWith('gpt-') ||
@@ -57,4 +58,16 @@ function isOpenAIModel(model: string): boolean {
     lower.startsWith('o4') ||
     lower === 'chatgpt-4o-latest'
   );
+}
+
+export function resolveModelName(model: BaseLanguageModel | string): string {
+  if (typeof model === 'string') {
+    return model;
+  }
+
+  if (model instanceof ChatOpenAI) {
+    return model.model;
+  }
+
+  return model.getName();
 }
