@@ -66,7 +66,7 @@ catalog:
 
   # Node runtime
   tsx: ^4.21.0
-  turbo: ^2.5.0
+  turbo: ^2.9.9
   typescript: ^5.8.0
   typescript-eslint: ^8.0.0
   uuid: ^13.0.0
