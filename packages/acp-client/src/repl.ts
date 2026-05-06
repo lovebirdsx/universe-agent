@@ -111,9 +111,20 @@ export class Repl {
         this.rl.close();
         break;
 
-      case '/help':
-        process.stderr.write(HELP_TEXT + '\n\n');
+      case '/help': {
+        let helpText = HELP_TEXT;
+        if (this.client.getHandler().getAvailableCommands().length > 0) {
+          helpText +=
+            '\n\nServer commands:\n' +
+            this.client
+              .getHandler()
+              .getAvailableCommands()
+              .map((c) => `  /${c.name.padEnd(20)}${c.description ?? ''}`)
+              .join('\n');
+        }
+        process.stderr.write(fmt.dim(helpText) + '\n\n');
         break;
+      }
 
       case '/session':
         await this.handleSessionCommand(parts.slice(1));
@@ -161,10 +172,35 @@ export class Repl {
         process.stderr.write('\x1B[2J\x1B[H');
         break;
 
-      default:
-        process.stderr.write(
-          fmt.error(`Unknown command: ${cmd}. Type /help for available commands.\n`),
-        );
+      default: {
+        // 查找 server 下发的命令
+        const cmdName = cmd.slice(1);
+        const serverCmd = this.client
+          .getHandler()
+          .getAvailableCommands()
+          .find((c) => c.name === cmdName);
+
+        if (serverCmd) {
+          // 将整个输入（含参数）原样作为 prompt 发给 server
+          this.prompting = true;
+          try {
+            const result = await this.client.prompt(input);
+            this.renderer.ensureNewline();
+            process.stderr.write(fmt.dim(`[Stop reason: ${result.stopReason}]\n\n`));
+          } catch (err) {
+            this.renderer.ensureNewline();
+            process.stderr.write(
+              fmt.error(`Error: ${err instanceof Error ? err.message : String(err)}\n\n`),
+            );
+          } finally {
+            this.prompting = false;
+          }
+        } else {
+          process.stderr.write(
+            fmt.error(`Unknown command: ${cmd}. Type /help for available commands.\n`),
+          );
+        }
+      }
     }
   }
 

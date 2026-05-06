@@ -87,10 +87,15 @@ export class ACPClientHandler implements Client {
   private terminals = new Map<string, ManagedTerminal>();
   private nextTerminalId = 1;
   private rl: readline.Interface | undefined;
+  private availableCommands: Array<{ name: string; description?: string }> = [];
 
   constructor(renderer: Renderer, options: CliOptions) {
     this.renderer = renderer;
     this.options = options;
+  }
+
+  getAvailableCommands(): Array<{ name: string; description?: string }> {
+    return this.availableCommands;
   }
 
   setReadline(rl: readline.Interface): void {
@@ -99,6 +104,11 @@ export class ACPClientHandler implements Client {
 
   async sessionUpdate(params: SessionNotification): Promise<void> {
     this.renderer.renderSessionUpdate(params);
+
+    // 更新可用命令列表
+    if (params.update.sessionUpdate === 'available_commands_update') {
+      this.availableCommands = params.update.availableCommands;
+    }
   }
 
   async requestPermission(params: RequestPermissionRequest): Promise<RequestPermissionResponse> {
