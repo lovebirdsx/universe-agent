@@ -5,6 +5,7 @@ import { ACPClient } from './client.js';
 import { Renderer } from './renderer.js';
 import { Repl } from './repl.js';
 import { fmt, createSpinner } from './format.js';
+import { loadMcpServers } from './mcp.js';
 
 async function main(): Promise<void> {
   const program = createProgram();
@@ -18,6 +19,24 @@ async function main(): Promise<void> {
   });
 
   const client = new ACPClient(renderer, options);
+
+  // 加载 MCP 配置
+  if (options.mcpConfig) {
+    try {
+      const mcpServers = await loadMcpServers(options.mcpConfig);
+      client.setMcpServers(mcpServers);
+      process.stderr.write(
+        fmt.dim(`MCP: loaded ${mcpServers.length} server(s) from ${options.mcpConfig}\n`),
+      );
+    } catch (err) {
+      process.stderr.write(
+        fmt.error(
+          `Failed to load MCP config: ${err instanceof Error ? err.message : String(err)}\n`,
+        ),
+      );
+      process.exit(1);
+    }
+  }
 
   // 优雅退出
   const cleanup = async () => {

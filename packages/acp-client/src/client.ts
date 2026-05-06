@@ -5,6 +5,7 @@ import path from 'node:path';
 import url from 'node:url';
 import * as readline from 'node:readline';
 import {
+  type McpServer,
   ClientSideConnection,
   ndJsonStream,
   PROTOCOL_VERSION,
@@ -321,6 +322,7 @@ export class ACPClient {
   private handler: ACPClientHandler;
   private renderer: Renderer;
   private options: CliOptions;
+  private mcpServers: McpServer[] = [];
 
   sessionId: string | undefined;
   initResult: InitializeResponse | undefined;
@@ -333,6 +335,10 @@ export class ACPClient {
 
   getHandler(): ACPClientHandler {
     return this.handler;
+  }
+
+  setMcpServers(servers: McpServer[]): void {
+    this.mcpServers = servers;
   }
 
   async connect(): Promise<void> {
@@ -419,7 +425,7 @@ export class ACPClient {
 
     const result = await this.connection.newSession({
       cwd: this.options.workspace,
-      mcpServers: [],
+      mcpServers: this.mcpServers,
     });
 
     this.sessionId = result.sessionId;
@@ -432,7 +438,7 @@ export class ACPClient {
     const result = await this.connection.loadSession({
       sessionId,
       cwd: this.options.workspace,
-      mcpServers: [],
+      mcpServers: this.mcpServers,
     });
 
     this.sessionId = result.sessionId;

@@ -12,6 +12,7 @@ export interface CliOptions {
   model: string | undefined;
   apiKey: string | undefined;
   baseUrl: string | undefined;
+  mcpConfig: string | undefined;
 }
 
 export function createProgram(): Command {
@@ -33,7 +34,8 @@ export function createProgram(): Command {
     .option('--session <id>', '按 ID 加载已有会话')
     .option('-m, --model <model>', 'LLM 模型，支持 "provider:model" 格式（透传给 ACP 服务器）')
     .option('--api-key <key>', 'OpenAI-compatible provider 的 API Key（透传给 ACP 服务器）')
-    .option('--base-url <url>', '自定义 API Base URL（透传给 ACP 服务器）');
+    .option('--base-url <url>', '自定义 API Base URL（透传给 ACP 服务器）')
+    .option('--mcp-config <path>', 'MCP 服务器配置文件路径（JSON 格式）');
 
   return program;
 }
@@ -64,6 +66,7 @@ export function parseOptions(program: Command): {
       model: opts['model'] as string | undefined,
       apiKey: opts['apiKey'] as string | undefined,
       baseUrl: opts['baseUrl'] as string | undefined,
+      mcpConfig: opts['mcpConfig'] as string | undefined,
     },
     prompt,
   };

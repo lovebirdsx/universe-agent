@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "my-stdio-server": {
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["tsx", "apps/examples/mcp/mcpServer.ts"]
+    }
+  }
+}
