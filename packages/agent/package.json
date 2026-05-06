@@ -1,6 +1,6 @@
 {
   "name": "@universe-agent/agent",
-  "version": "1.0.0",
+  "version": "1.0.7",
   "description": "LangGraph-based AI agent framework",
   "license": "MIT",
   "repository": {
