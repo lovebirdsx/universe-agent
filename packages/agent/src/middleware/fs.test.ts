@@ -57,6 +57,7 @@ describe('fileDataReducer', () => {
     it('should filter out null values when current is undefined', () => {
       const update: FilesRecordUpdate = {
         '/file.txt': createFileData(['hello']),
+        // eslint-disable-next-line no-restricted-syntax
         '/deleted.txt': null,
       };
       const result = fileDataReducer(undefined, update);
@@ -144,6 +145,7 @@ describe('fileDataReducer', () => {
         '/keep.txt': createFileData(['keep this']),
       };
       const update: FilesRecordUpdate = {
+        // eslint-disable-next-line no-restricted-syntax
         '/file.txt': null,
       };
       const result = fileDataReducer(current, update);
@@ -161,7 +163,9 @@ describe('fileDataReducer', () => {
         '/keep.txt': createFileData(['keep']),
       };
       const update: FilesRecordUpdate = {
+        // eslint-disable-next-line no-restricted-syntax
         '/file1.txt': null,
+        // eslint-disable-next-line no-restricted-syntax
         '/file3.txt': null,
       };
       const result = fileDataReducer(current, update);
@@ -175,6 +179,7 @@ describe('fileDataReducer', () => {
         '/file.txt': createFileData(['content']),
       };
       const update: FilesRecordUpdate = {
+        // eslint-disable-next-line no-restricted-syntax
         '/non-existent.txt': null,
       };
       const result = fileDataReducer(current, update);
@@ -194,6 +199,7 @@ describe('fileDataReducer', () => {
       const update: FilesRecordUpdate = {
         '/new-file.txt': createFileData(['new']),
         '/to-update.txt': createFileData(['updated']),
+        // eslint-disable-next-line no-restricted-syntax
         '/to-delete.txt': null,
       };
       const result = fileDataReducer(current, update);
@@ -255,6 +261,7 @@ describe('fileDataReducer', () => {
 
       // Second subagent deletes that same file (e.g., cleanup operation)
       const subagent2Update: FilesRecordUpdate = {
+        // eslint-disable-next-line no-restricted-syntax
         '/new-file.txt': null,
       };
 
@@ -329,10 +336,13 @@ describe('createFilesystemMiddleware', () => {
     return {
       ls: vi.fn().mockResolvedValue({ files: [] }),
       read: vi.fn().mockResolvedValue({ content: '' }),
+      // eslint-disable-next-line no-restricted-syntax
       write: vi.fn().mockResolvedValue({ error: null, filesUpdate: null }),
       edit: vi.fn().mockResolvedValue({
+        // eslint-disable-next-line no-restricted-syntax
         error: null,
         occurrences: 1,
+        // eslint-disable-next-line no-restricted-syntax
         filesUpdate: null,
       }),
       glob: vi.fn().mockResolvedValue({ files: [] }),
@@ -545,6 +555,7 @@ describe('createFilesystemMiddleware', () => {
     it('should evict large ToolMessage results to filesystem', async () => {
       const mockBackend = createMockBackend();
       const mockWrite = vi.fn().mockResolvedValue({
+        // eslint-disable-next-line no-restricted-syntax
         error: null,
         filesUpdate: {
           '/large_tool_results/test-id': {
@@ -600,6 +611,7 @@ describe('createFilesystemMiddleware', () => {
     it('should preserve ToolMessage metadata on eviction', async () => {
       const mockBackend = createMockBackend();
       const mockWrite = vi.fn().mockResolvedValue({
+        // eslint-disable-next-line no-restricted-syntax
         error: null,
         filesUpdate: {
           '/large_tool_results/test-id': {
@@ -658,6 +670,7 @@ describe('createFilesystemMiddleware', () => {
     it('should handle Command with multiple ToolMessages', async () => {
       const mockBackend = createMockBackend();
       const mockWrite = vi.fn().mockResolvedValue({
+        // eslint-disable-next-line no-restricted-syntax
         error: null,
         filesUpdate: {
           '/large_tool_results/test-id-1': {
@@ -729,6 +742,7 @@ describe('createFilesystemMiddleware', () => {
       const mockBackend = createMockBackend();
       const mockWrite = vi.fn().mockResolvedValue({
         error: 'Failed to write file',
+        // eslint-disable-next-line no-restricted-syntax
         filesUpdate: null,
       });
       mockBackend.write = mockWrite;
@@ -1061,6 +1075,7 @@ describe('createFilesystemMiddleware', () => {
       const mockBackend = createMockBackend();
       const mockWrite = vi.fn().mockResolvedValue({
         error: undefined,
+        // eslint-disable-next-line no-restricted-syntax
         filesUpdate: null,
       });
       mockBackend.write = mockWrite;
@@ -1104,6 +1119,7 @@ describe('createFilesystemMiddleware', () => {
       const mockBackend = createMockBackend();
       const mockWrite = vi.fn().mockResolvedValue({
         error: undefined,
+        // eslint-disable-next-line no-restricted-syntax
         filesUpdate: null,
       });
       mockBackend.write = mockWrite;
@@ -1134,6 +1150,7 @@ describe('createFilesystemMiddleware', () => {
       const mockBackend = createMockBackend();
       mockBackend.write = vi.fn().mockResolvedValue({
         error: 'Failed to write file',
+        // eslint-disable-next-line no-restricted-syntax
         filesUpdate: null,
       });
 
@@ -1161,6 +1178,7 @@ describe('createFilesystemMiddleware', () => {
       };
       const mockBackend = createMockBackend();
       const mockWrite = vi.fn().mockResolvedValue({
+        // eslint-disable-next-line no-restricted-syntax
         error: null,
         filesUpdate: { '/conversation_history/abc123': fileData },
       });
@@ -1187,7 +1205,9 @@ describe('createFilesystemMiddleware', () => {
     it('should preserve additional_kwargs and response_metadata', async () => {
       const mockBackend = createMockBackend();
       const mockWrite = vi.fn().mockResolvedValue({
+        // eslint-disable-next-line no-restricted-syntax
         error: null,
+        // eslint-disable-next-line no-restricted-syntax
         filesUpdate: null,
       });
       mockBackend.write = mockWrite;
@@ -1226,7 +1246,9 @@ describe('createFilesystemMiddleware', () => {
     it('should only check the last message', async () => {
       const mockBackend = createMockBackend();
       const mockWrite = vi.fn().mockResolvedValue({
+        // eslint-disable-next-line no-restricted-syntax
         error: null,
+        // eslint-disable-next-line no-restricted-syntax
         filesUpdate: null,
       });
       mockBackend.write = mockWrite;
@@ -1256,7 +1278,9 @@ describe('createFilesystemMiddleware', () => {
     it('should work with backend factory', async () => {
       const mockBackend = createMockBackend();
       const mockWrite = vi.fn().mockResolvedValue({
+        // eslint-disable-next-line no-restricted-syntax
         error: null,
+        // eslint-disable-next-line no-restricted-syntax
         filesUpdate: null,
       });
       mockBackend.write = mockWrite;

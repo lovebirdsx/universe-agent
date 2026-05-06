@@ -57,6 +57,7 @@ export class StateBackend implements BackendProtocolV2 {
   constructor(runtime: BackendRuntime, options?: BackendOptions);
   constructor(runtimeOrOptions?: BackendRuntime | BackendOptions, options?: BackendOptions) {
     if (
+      // eslint-disable-next-line no-restricted-syntax
       runtimeOrOptions != null &&
       typeof runtimeOrOptions === 'object' &&
       'state' in runtimeOrOptions
@@ -371,6 +372,7 @@ export class StateBackend implements BackendProtocolV2 {
           updates[path] = createFileData(contentStr, undefined, this.fileFormat, mimeType);
         }
 
+        // eslint-disable-next-line no-restricted-syntax
         responses.push({ path, error: null });
       } catch {
         responses.push({ path, error: 'invalid_path' });
@@ -408,6 +410,7 @@ export class StateBackend implements BackendProtocolV2 {
     for (const path of paths) {
       const fileData = files[path];
       if (!fileData) {
+        // eslint-disable-next-line no-restricted-syntax
         responses.push({ path, content: null, error: 'file_not_found' });
         continue;
       }
@@ -416,8 +419,10 @@ export class StateBackend implements BackendProtocolV2 {
 
       if (typeof fileDataV2.content === 'string') {
         const content = new TextEncoder().encode(fileDataV2.content);
+        // eslint-disable-next-line no-restricted-syntax
         responses.push({ path, content, error: null });
       } else {
+        // eslint-disable-next-line no-restricted-syntax
         responses.push({ path, content: fileDataV2.content, error: null });
       }
     }

@@ -182,6 +182,7 @@ function buildEvictedHumanContent(
   }
   if (Array.isArray(message.content)) {
     const mediaBlocks = message.content.filter(
+      // eslint-disable-next-line no-restricted-syntax
       (block) => typeof block === 'object' && block !== null && block.type !== 'text',
     );
     if (mediaBlocks.length === 0) {
@@ -316,6 +317,7 @@ export function fileDataReducer(
   if (current === undefined) {
     const result: FilesRecord = {};
     for (const [key, value] of Object.entries(update)) {
+      // eslint-disable-next-line no-restricted-syntax
       if (value !== null) {
         result[key] = value;
       }
@@ -326,6 +328,7 @@ export function fileDataReducer(
   // Merge: apply updates and deletions
   const result = { ...current };
   for (const [key, value] of Object.entries(update)) {
+    // eslint-disable-next-line no-restricted-syntax
     if (value === null) {
       delete result[key];
     } else {
@@ -892,6 +895,7 @@ function createExecuteTool(
       // Format output for LLM consumption
       const parts = [result.output];
 
+      // eslint-disable-next-line no-restricted-syntax
       if (result.exitCode !== null) {
         const status = result.exitCode === 0 ? 'succeeded' : 'failed';
         parts.push(`\n[Command ${status} with exit code ${result.exitCode}]`);
@@ -1112,6 +1116,7 @@ export function createFilesystemMiddleware(options: FilesystemMiddlewareOptions 
           const writeResult = await resolvedBackend.write(evictPath, msg.content);
 
           if (writeResult.error) {
+            // eslint-disable-next-line no-restricted-syntax
             return { message: msg, filesUpdate: null };
           }
 
@@ -1138,6 +1143,7 @@ export function createFilesystemMiddleware(options: FilesystemMiddlewareOptions 
             filesUpdate: writeResult.filesUpdate,
           };
         }
+        // eslint-disable-next-line no-restricted-syntax
         return { message: msg, filesUpdate: null };
       }
 
@@ -1158,7 +1164,7 @@ export function createFilesystemMiddleware(options: FilesystemMiddlewareOptions 
 
       if (isCommand(result)) {
         const update = result.update as Record<string, unknown>;
-        const updateMessages = Array.isArray(update?.messages) ? update.messages : null;
+        const updateMessages = Array.isArray(update?.messages) ? update.messages : undefined;
         if (!updateMessages) {
           return result;
         }

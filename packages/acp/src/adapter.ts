@@ -229,6 +229,7 @@ export function extractToolCallLocations(
   const absPath = filePath.startsWith('/') ? filePath : `${workspaceRoot ?? ''}/${filePath}`;
 
   const line = (args.line ?? args.startLine) as number | undefined;
+  // eslint-disable-next-line no-restricted-syntax
   return [{ path: absPath, ...(line != null ? { line } : {}) }];
 }
 

@@ -33,6 +33,7 @@ import { isSandboxBackend } from '../protocol.js';
  */
 class MockSandboxBackend implements SandboxBackendProtocolV2 {
   readonly id = 'mock-sandbox';
+  // eslint-disable-next-line no-restricted-syntax
   public lastCommand: string | null = null;
 
   async execute(command: string): Promise<ExecuteResponse> {
@@ -69,12 +70,14 @@ class MockSandboxBackend implements SandboxBackendProtocolV2 {
     return { path: '' };
   }
   uploadFiles(files: Array<[string, Uint8Array]>): FileUploadResponse[] {
+    // eslint-disable-next-line no-restricted-syntax
     return files.map(([path]) => ({ path, error: null }));
   }
   downloadFiles(paths: string[]): FileDownloadResponse[] {
     return paths.map((path) => ({
       path,
       content: new Uint8Array(),
+      // eslint-disable-next-line no-restricted-syntax
       error: null,
     }));
   }

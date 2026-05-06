@@ -293,7 +293,7 @@ export class LocalShellBackend extends FilesystemBackend implements SandboxBacke
       fg(pattern, { ...globOpts, onlyDirectories: true }),
     ]);
 
-    const statFile = async (match: string): Promise<FileInfo | null> => {
+    const statFile = async (match: string): Promise<FileInfo | undefined> => {
       try {
         const entryStat = await fs.stat(path.join(resolvedSearchPath, match));
         if (entryStat.isFile()) {
@@ -307,10 +307,10 @@ export class LocalShellBackend extends FilesystemBackend implements SandboxBacke
       } catch {
         /* skip unstatable entries */
       }
-      return null;
+      return undefined;
     };
 
-    const statDir = async (match: string): Promise<FileInfo | null> => {
+    const statDir = async (match: string): Promise<FileInfo | undefined> => {
       try {
         const entryStat = await fs.stat(path.join(resolvedSearchPath, match));
         if (entryStat.isDirectory()) {
@@ -324,7 +324,7 @@ export class LocalShellBackend extends FilesystemBackend implements SandboxBacke
       } catch {
         /* skip unstatable entries */
       }
-      return null;
+      return undefined;
     };
 
     const [fileInfos, dirInfos] = await Promise.all([
@@ -332,7 +332,9 @@ export class LocalShellBackend extends FilesystemBackend implements SandboxBacke
       Promise.all(dirMatches.map(statDir)),
     ]);
 
-    const results = [...fileInfos, ...dirInfos].filter((info): info is FileInfo => info !== null);
+    const results = [...fileInfos, ...dirInfos].filter(
+      (info): info is FileInfo => info !== undefined,
+    );
     results.sort((a, b) => a.path.localeCompare(b.path));
     return { files: results };
   }

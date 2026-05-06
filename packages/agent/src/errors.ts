@@ -50,6 +50,7 @@ export class ConfigurationError extends Error {
   static isInstance(error: unknown): error is ConfigurationError {
     return (
       typeof error === 'object' &&
+      // eslint-disable-next-line no-restricted-syntax
       error !== null &&
       (error as Record<symbol, unknown>)[CONFIGURATION_ERROR_SYMBOL] === true
     );

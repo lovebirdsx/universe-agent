@@ -384,6 +384,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
         }
       }
 
+      // eslint-disable-next-line no-restricted-syntax
       return { path: filePath, filesUpdate: null };
     } catch (error: unknown) {
       return { error: `Error writing file '${filePath}': ${getErrorMessage(error)}` };
@@ -454,6 +455,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
         await fs.writeFile(resolvedPath, newContent, 'utf-8');
       }
 
+      // eslint-disable-next-line no-restricted-syntax
       return { path: filePath, filesUpdate: null, occurrences: occurrences };
     } catch (error: unknown) {
       return { error: `Error editing file '${filePath}': ${getErrorMessage(error)}` };
@@ -767,6 +769,7 @@ export class FilesystemBackend implements BackendProtocolV2 {
 
         // Write file
         await fs.writeFile(resolvedPath, content);
+        // eslint-disable-next-line no-restricted-syntax
         responses.push({ path: filePath, error: null });
       } catch (error: unknown) {
         if ((error as { code?: string }).code === 'ENOENT') {
@@ -797,29 +800,34 @@ export class FilesystemBackend implements BackendProtocolV2 {
       try {
         const resolvedPath = this.resolvePath(filePath);
         const content = await fs.readFile(resolvedPath);
+        // eslint-disable-next-line no-restricted-syntax
         responses.push({ path: filePath, content, error: null });
       } catch (error: unknown) {
         if ((error as { code?: string }).code === 'ENOENT') {
           responses.push({
             path: filePath,
+            // eslint-disable-next-line no-restricted-syntax
             content: null,
             error: 'file_not_found',
           });
         } else if ((error as { code?: string }).code === 'EACCES') {
           responses.push({
             path: filePath,
+            // eslint-disable-next-line no-restricted-syntax
             content: null,
             error: 'permission_denied',
           });
         } else if ((error as { code?: string }).code === 'EISDIR') {
           responses.push({
             path: filePath,
+            // eslint-disable-next-line no-restricted-syntax
             content: null,
             error: 'is_directory',
           });
         } else {
           responses.push({
             path: filePath,
+            // eslint-disable-next-line no-restricted-syntax
             content: null,
             error: 'invalid_path',
           });

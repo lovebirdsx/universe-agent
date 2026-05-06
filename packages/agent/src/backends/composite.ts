@@ -324,6 +324,7 @@ export class CompositeBackend implements BackendProtocolV2 {
   async uploadFiles(files: Array<[string, Uint8Array]>): Promise<FileUploadResponse[]> {
     const results: Array<FileUploadResponse | null> = Array.from(
       { length: files.length },
+      // eslint-disable-next-line no-restricted-syntax
       () => null,
     );
     const batchesByBackend = new Map<
@@ -353,6 +354,7 @@ export class CompositeBackend implements BackendProtocolV2 {
         const originalIdx = batch[i].idx;
         results[originalIdx] = {
           path: files[originalIdx][0], // Original path
+          // eslint-disable-next-line no-restricted-syntax
           error: batchResponses[i]?.error ?? null,
         };
       }
@@ -370,6 +372,7 @@ export class CompositeBackend implements BackendProtocolV2 {
   async downloadFiles(paths: string[]): Promise<FileDownloadResponse[]> {
     const results: Array<FileDownloadResponse | null> = Array.from(
       { length: paths.length },
+      // eslint-disable-next-line no-restricted-syntax
       () => null,
     );
     const batchesByBackend = new Map<BackendProtocolV2, Array<{ idx: number; path: string }>>();
@@ -396,7 +399,9 @@ export class CompositeBackend implements BackendProtocolV2 {
         const originalIdx = batch[i].idx;
         results[originalIdx] = {
           path: paths[originalIdx], // Original path
+          // eslint-disable-next-line no-restricted-syntax
           content: batchResponses[i]?.content ?? null,
+          // eslint-disable-next-line no-restricted-syntax
           error: batchResponses[i]?.error ?? null,
         };
       }

@@ -64,6 +64,7 @@ function getErrorMessage(error: unknown): string {
 }
 
 function getObjectRecord(value: unknown): Record<string, unknown> | undefined {
+  // eslint-disable-next-line no-restricted-syntax
   return value != null && typeof value === 'object'
     ? (value as Record<string, unknown>)
     : undefined;
@@ -211,6 +212,7 @@ export class StoreBackend implements BackendProtocolV2 {
   ) {
     let opts: StoreBackendOptions | undefined;
     if (
+      // eslint-disable-next-line no-restricted-syntax
       stateAndStoreOrOptions != null &&
       typeof stateAndStoreOrOptions === 'object' &&
       'state' in stateAndStoreOrOptions
@@ -613,6 +615,7 @@ export class StoreBackend implements BackendProtocolV2 {
     const fileData = createFileData(content, undefined, this.fileFormat, mimeType);
     const storeValue = this.convertFileDataToStoreValue(fileData);
     await store.put(namespace, filePath, storeValue);
+    // eslint-disable-next-line no-restricted-syntax
     return { path: filePath, filesUpdate: null };
   }
 
@@ -650,6 +653,7 @@ export class StoreBackend implements BackendProtocolV2 {
       // Update file in store
       const storeValue = this.convertFileDataToStoreValue(newFileData);
       await store.put(namespace, filePath, storeValue);
+      // eslint-disable-next-line no-restricted-syntax
       return { path: filePath, filesUpdate: null, occurrences: occurrences };
     } catch (error: unknown) {
       return { error: `Error: ${getErrorMessage(error)}` };
@@ -749,6 +753,7 @@ export class StoreBackend implements BackendProtocolV2 {
 
         const storeValue = this.convertFileDataToStoreValue(fileData);
         await store.put(namespace, path, storeValue);
+        // eslint-disable-next-line no-restricted-syntax
         responses.push({ path, error: null });
       } catch {
         responses.push({ path, error: 'invalid_path' });
@@ -773,6 +778,7 @@ export class StoreBackend implements BackendProtocolV2 {
       try {
         const item = await store.get(namespace, path);
         if (!item) {
+          // eslint-disable-next-line no-restricted-syntax
           responses.push({ path, content: null, error: 'file_not_found' });
           continue;
         }
@@ -782,11 +788,14 @@ export class StoreBackend implements BackendProtocolV2 {
 
         if (typeof fileDataV2.content === 'string') {
           const content = new TextEncoder().encode(fileDataV2.content);
+          // eslint-disable-next-line no-restricted-syntax
           responses.push({ path, content, error: null });
         } else {
+          // eslint-disable-next-line no-restricted-syntax
           responses.push({ path, content: fileDataV2.content, error: null });
         }
       } catch {
+        // eslint-disable-next-line no-restricted-syntax
         responses.push({ path, content: null, error: 'file_not_found' });
       }
     }

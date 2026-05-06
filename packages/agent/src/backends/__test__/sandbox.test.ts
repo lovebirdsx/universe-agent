@@ -96,7 +96,7 @@ class MockSandbox extends BaseSandbox {
     for (const [path, content] of files) {
       try {
         this.files.set(path, content);
-        responses.push({ path, error: null });
+        responses.push({ path, error: null }); // eslint-disable-line no-restricted-syntax
       } catch {
         responses.push({ path, error: 'invalid_path' });
       }
@@ -109,9 +109,9 @@ class MockSandbox extends BaseSandbox {
     for (const path of paths) {
       const content = this.files.get(path);
       if (content === undefined) {
-        responses.push({ path, content: null, error: 'file_not_found' });
+        responses.push({ path, content: null, error: 'file_not_found' }); // eslint-disable-line no-restricted-syntax
       } else {
-        responses.push({ path, content, error: null });
+        responses.push({ path, content, error: null }); // eslint-disable-line no-restricted-syntax
       }
     }
     return responses;

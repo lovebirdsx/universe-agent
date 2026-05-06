@@ -1197,7 +1197,7 @@ Content
       '/skills/test-skill/SKILL.md',
       'test-skill',
     );
-    expect(result).not.toBeNull();
+    expect(result).toBeDefined();
     expect(result?.name).toBe('test-skill');
     expect(result?.description).toBe('A test skill');
   });
@@ -1215,7 +1215,7 @@ Content
       '/skills/test-skill/SKILL.md',
       'test-skill',
     );
-    expect(result).toBeNull();
+    expect(result).toBeUndefined();
   });
 
   it('should reject whitespace-only name', () => {
@@ -1231,7 +1231,7 @@ Content
       '/skills/test-skill/SKILL.md',
       'test-skill',
     );
-    expect(result).toBeNull();
+    expect(result).toBeUndefined();
   });
 
   it('should handle allowed-tools as YAML list', () => {
@@ -1251,7 +1251,7 @@ Content
       '/skills/test-skill/SKILL.md',
       'test-skill',
     );
-    expect(result).not.toBeNull();
+    expect(result).toBeDefined();
     expect(result?.allowedTools).toEqual(['Bash', 'Read', 'Write']);
   });
 
@@ -1269,7 +1269,7 @@ Content
       '/skills/test-skill/SKILL.md',
       'test-skill',
     );
-    expect(result).not.toBeNull();
+    expect(result).toBeDefined();
     expect(result?.allowedTools).toEqual(['Bash', 'Read', 'Write']);
   });
 
@@ -1287,7 +1287,7 @@ Content
       '/skills/test-skill/SKILL.md',
       'test-skill',
     );
-    expect(result).not.toBeNull();
+    expect(result).toBeDefined();
     expect(result?.license).toBe('true');
   });
 
@@ -1305,7 +1305,7 @@ Content
       '/skills/test-skill/SKILL.md',
       'test-skill',
     );
-    expect(result).not.toBeNull();
+    expect(result).toBeDefined();
     expect(result?.metadata).toEqual({});
   });
 
@@ -1324,7 +1324,7 @@ Content
       '/skills/test-skill/SKILL.md',
       'test-skill',
     );
-    expect(result).not.toBeNull();
+    expect(result).toBeDefined();
     expect(result?.compatibility).not.toBeNull();
     expect(result?.compatibility?.length).toBe(MAX_SKILL_COMPATIBILITY_LENGTH);
   });
@@ -1343,7 +1343,7 @@ Content
       '/skills/test-skill/SKILL.md',
       'test-skill',
     );
-    expect(result).not.toBeNull();
+    expect(result).toBeDefined();
     expect(result?.compatibility).toBeNull();
   });
 
@@ -1363,7 +1363,7 @@ Content
       '/skills/test-skill/SKILL.md',
       'test-skill',
     );
-    expect(result).not.toBeNull();
+    expect(result).toBeDefined();
     expect(result?.metadata).toEqual({ count: '42', active: 'true' });
   });
 });
@@ -1380,6 +1380,7 @@ describe('validateMetadata', () => {
   });
 
   it('should return empty dict for null input', () => {
+    // eslint-disable-next-line no-restricted-syntax
     const result = validateMetadata(null, '/skills/s/SKILL.md');
     expect(result).toEqual({});
   });
@@ -1420,6 +1421,7 @@ describe('formatSkillAnnotations', () => {
       description: 'd',
       path: '/p',
       license: 'Apache-2.0',
+      // eslint-disable-next-line no-restricted-syntax
       compatibility: null,
       metadata: {},
       allowedTools: [],
@@ -1432,6 +1434,7 @@ describe('formatSkillAnnotations', () => {
       name: 's',
       description: 'd',
       path: '/p',
+      // eslint-disable-next-line no-restricted-syntax
       license: null,
       compatibility: 'Requires poppler',
       metadata: {},
@@ -1445,7 +1448,9 @@ describe('formatSkillAnnotations', () => {
       name: 's',
       description: 'd',
       path: '/p',
+      // eslint-disable-next-line no-restricted-syntax
       license: null,
+      // eslint-disable-next-line no-restricted-syntax
       compatibility: null,
       metadata: {},
       allowedTools: [],
@@ -1479,6 +1484,7 @@ describe('formatSkillsList with annotations', () => {
         description: 'A licensed skill',
         path: '/skills/licensed-skill/SKILL.md',
         license: 'MIT',
+        // eslint-disable-next-line no-restricted-syntax
         compatibility: null,
         metadata: {},
         allowedTools: [],
@@ -1496,6 +1502,7 @@ describe('formatSkillsList with annotations', () => {
         name: 'compat-skill',
         description: 'A compatible skill',
         path: '/skills/compat-skill/SKILL.md',
+        // eslint-disable-next-line no-restricted-syntax
         license: null,
         compatibility: 'Python 3.10+',
         metadata: {},
@@ -1514,7 +1521,9 @@ describe('formatSkillsList with annotations', () => {
         name: 'plain-skill',
         description: 'A plain skill',
         path: '/skills/plain-skill/SKILL.md',
+        // eslint-disable-next-line no-restricted-syntax
         license: null,
+        // eslint-disable-next-line no-restricted-syntax
         compatibility: null,
         metadata: {},
         allowedTools: [],

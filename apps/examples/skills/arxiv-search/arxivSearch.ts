@@ -38,6 +38,7 @@ async function queryArxiv(query: string, maxPapers = 10): Promise<string> {
     const summaryRegex = /<summary>([\s\S]*?)<\/summary>/;
 
     let match;
+    // eslint-disable-next-line no-restricted-syntax
     while ((match = entryRegex.exec(xml)) !== null) {
       const entryXml = match[1]!;
 

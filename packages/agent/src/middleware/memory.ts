@@ -238,6 +238,7 @@ async function loadMemoryFromBackend(
     throw new Error(`Missing download response for path ${path}`);
   }
 
+  // eslint-disable-next-line no-restricted-syntax
   if (response.error != null) {
     // For now, memory files are treated as optional. file_not_found is expected
     // and we skip silently to allow graceful degradation.
@@ -248,6 +249,7 @@ async function loadMemoryFromBackend(
     throw new Error(`Failed to download ${path}: ${response.error}`);
   }
 
+  // eslint-disable-next-line no-restricted-syntax
   if (response.content != null) {
     // Content is a Uint8Array, decode to string
     return new TextDecoder().decode(response.content);
@@ -285,6 +287,7 @@ export function createMemoryMiddleware(options: MemoryMiddlewareOptions) {
 
     async beforeAgent(state) {
       // Skip if already loaded
+      // eslint-disable-next-line no-restricted-syntax
       if ('memoryContents' in state && state.memoryContents != null) {
         return undefined;
       }

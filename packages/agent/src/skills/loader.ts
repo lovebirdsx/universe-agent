@@ -165,12 +165,14 @@ function parseFrontmatter(content: string): Record<string, unknown> | undefined 
   }
 
   const frontmatterContent = match[1];
+  // eslint-disable-next-line no-restricted-syntax
   if (frontmatterContent == null) {
     return undefined;
   }
 
   try {
     const parsed = yaml.parse(frontmatterContent);
+    // eslint-disable-next-line no-restricted-syntax
     return typeof parsed === 'object' && parsed !== null ? parsed : undefined;
   } catch {
     return undefined;

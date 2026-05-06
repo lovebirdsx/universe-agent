@@ -42,6 +42,7 @@ describe('validatePath', () => {
   });
 
   it('should handle null path', () => {
+    // eslint-disable-next-line no-restricted-syntax
     expect(validatePath(null)).toBe('/');
   });
 
@@ -252,15 +253,15 @@ describe('fileDataToString', () => {
 
 describe('checkEmptyContent', () => {
   it('should return warning for empty string', () => {
-    expect(checkEmptyContent('')).not.toBeNull();
+    expect(checkEmptyContent('')).toBeDefined();
   });
 
   it('should return warning for whitespace-only string', () => {
-    expect(checkEmptyContent('   \n\t  ')).not.toBeNull();
+    expect(checkEmptyContent('   \n\t  ')).toBeDefined();
   });
 
-  it('should return null for non-empty content', () => {
-    expect(checkEmptyContent('hello')).toBeNull();
+  it('should return undefined for non-empty content', () => {
+    expect(checkEmptyContent('hello')).toBeUndefined();
   });
 });
 
@@ -465,7 +466,9 @@ describe('adaptBackendProtocol', () => {
       }),
       grepRaw: (_pattern: string) => [{ path: '/file.txt', line: 1, text: 'match' }] as GrepMatch[],
       globInfo: () => [],
+      // eslint-disable-next-line no-restricted-syntax
       write: () => ({ path: '/file.txt', filesUpdate: null }),
+      // eslint-disable-next-line no-restricted-syntax
       edit: () => ({ path: '/file.txt', filesUpdate: null, occurrences: 1 }),
     };
   }
@@ -486,7 +489,9 @@ describe('adaptBackendProtocol', () => {
         matches: [{ path: '/file.txt', line: 1, text: 'match' }],
       }),
       glob: () => ({ files: [] }),
+      // eslint-disable-next-line no-restricted-syntax
       write: () => ({ path: '/file.txt', filesUpdate: null }),
+      // eslint-disable-next-line no-restricted-syntax
       edit: () => ({ path: '/file.txt', filesUpdate: null, occurrences: 1 }),
     };
   }
@@ -607,13 +612,14 @@ describe('adaptBackendProtocol', () => {
   describe('optional methods', () => {
     it('should preserve uploadFiles when present', () => {
       const v1 = createV1Backend();
-      v1.uploadFiles = () => [{ path: '/f.txt', error: null }];
+      v1.uploadFiles = () => [{ path: '/f.txt', error: null }]; // eslint-disable-line no-restricted-syntax
       const adapted = adaptBackendProtocol(v1);
       expect(adapted.uploadFiles).toBeDefined();
     });
 
     it('should preserve downloadFiles when present', () => {
       const v1 = createV1Backend();
+      // eslint-disable-next-line no-restricted-syntax
       v1.downloadFiles = () => [{ path: '/f.txt', content: new Uint8Array(), error: null }];
       const adapted = adaptBackendProtocol(v1);
       expect(adapted.downloadFiles).toBeDefined();

@@ -313,6 +313,7 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
     value: DEFAULT_MESSAGES_TO_KEEP,
   };
   let truncateArgsSettings = options.truncateArgsSettings;
+  // eslint-disable-next-line no-restricted-syntax
   let defaultsComputed = trigger != null;
 
   // Parse truncate settings (will be re-parsed after defaults are computed)
@@ -506,7 +507,7 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
       const msg = messages[i];
       if (AIMessage.isInstance(msg) && msg.tool_calls) {
         const aiToolCallIds = new Set(
-          msg.tool_calls.map((tc) => tc.id).filter((id): id is string => id != null),
+          msg.tool_calls.map((tc) => tc.id).filter((id): id is string => id != null), // eslint-disable-line no-restricted-syntax
         );
         for (const id of toolCallIds) {
           if (aiToolCallIds.has(id)) {
@@ -660,7 +661,8 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
     const toolsArray =
       tools && Array.isArray(tools) && tools.length > 0
         ? (tools as Array<Record<string, unknown>>)
-        : null;
+        : // eslint-disable-next-line no-restricted-syntax
+          null;
 
     return countTokensApproximately(countedMessages, toolsArray);
   }
@@ -990,6 +992,7 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
     const summaryMessage = buildSummaryMessage(summary, filePath);
 
     const stateCutoffIndex =
+      // eslint-disable-next-line no-restricted-syntax
       previousCutoffIndex != null ? previousCutoffIndex + cutoffIndex - 1 : cutoffIndex;
 
     return { summaryMessage, filePath, stateCutoffIndex };
@@ -1075,6 +1078,7 @@ export function createSummarizationMiddleware(options: SummarizationMiddlewareOp
 
     const previousEvent = request.state._summarizationEvent;
     const previousCutoffIndex =
+      // eslint-disable-next-line no-restricted-syntax
       previousEvent != null ? (previousEvent as SummarizationEvent).cutoffIndex : undefined;
 
     const { summaryMessage, filePath, stateCutoffIndex } = await summarizeMessages(

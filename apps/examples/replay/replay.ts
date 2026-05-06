@@ -295,6 +295,7 @@ const mainRecDir = path.resolve(RECORDING_BASE, MAIN_RECORDING_ID);
 // Main agent manifest
 console.log('--- Main Agent manifest.json ---');
 const mainManifest = JSON.parse(fs.readFileSync(path.join(mainRecDir, 'manifest.json'), 'utf-8'));
+// eslint-disable-next-line no-restricted-syntax
 console.log(JSON.stringify(mainManifest, null, 2));
 
 // Main agent recording

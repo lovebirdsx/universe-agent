@@ -227,7 +227,9 @@ export class ACPClientHandler implements Client {
     const terminal: ManagedTerminal = {
       process: child,
       output: '',
+      // eslint-disable-next-line no-restricted-syntax
       exitCode: null,
+      // eslint-disable-next-line no-restricted-syntax
       exitSignal: null,
       exited: false,
       exitPromise,
@@ -372,6 +374,7 @@ export class ACPClient {
     });
 
     this.child.on('exit', (code) => {
+      // eslint-disable-next-line no-restricted-syntax
       if (code !== null && code !== 0) {
         process.stderr.write(fmt.error(`Server process exited with code ${code}\n`));
       }

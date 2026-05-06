@@ -51,9 +51,11 @@ export class ACPFilesystemBackend extends FilesystemBackend {
 
       let text = (result as any).content ?? (result as any).text ?? '';
 
+      // eslint-disable-next-line no-restricted-syntax
       if (offset != null || limit != null) {
         const lines = text.split('\n');
         const start = offset ?? 0;
+        // eslint-disable-next-line no-restricted-syntax
         const end = limit != null ? start + limit : lines.length;
         text = lines.slice(start, end).join('\n');
       }
@@ -80,6 +82,7 @@ export class ACPFilesystemBackend extends FilesystemBackend {
         path: absPath,
         content,
       } as any);
+      // eslint-disable-next-line no-restricted-syntax
       return { path: absPath, filesUpdate: null };
     } catch {
       return super.write(filePath, content);

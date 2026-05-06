@@ -34,6 +34,7 @@ function makeState(opts?: {
   if (opts?.messages !== undefined) {
     state.messages = opts.messages;
   }
+  // eslint-disable-next-line no-restricted-syntax
   if (opts?.callbackThreadId !== undefined && opts.callbackThreadId !== null) {
     state.callbackThreadId = opts.callbackThreadId;
   }

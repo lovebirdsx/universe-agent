@@ -28,12 +28,15 @@ export function createMockBackend(
     async downloadFiles(paths: string[]): Promise<FileDownloadResponse[]> {
       return paths.map((path) => {
         const content = files[path];
+        // eslint-disable-next-line no-restricted-syntax
         if (content === null || content === undefined) {
+          // eslint-disable-next-line no-restricted-syntax
           return { path, error: 'file_not_found', content: null };
         }
         return {
           path,
           content: new TextEncoder().encode(content),
+          // eslint-disable-next-line no-restricted-syntax
           error: null,
         };
       });

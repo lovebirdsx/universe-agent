@@ -121,22 +121,22 @@ function globToPathRegex(pattern: string): RegExp {
  */
 function parseStatLine(
   line: string,
-): { size: number; mtime: number; isDir: boolean; fullPath: string } | null {
+): { size: number; mtime: number; isDir: boolean; fullPath: string } | undefined {
   const firstTab = line.indexOf('\t');
-  if (firstTab === -1) return null;
+  if (firstTab === -1) return undefined;
 
   const secondTab = line.indexOf('\t', firstTab + 1);
-  if (secondTab === -1) return null;
+  if (secondTab === -1) return undefined;
 
   const thirdTab = line.indexOf('\t', secondTab + 1);
-  if (thirdTab === -1) return null;
+  if (thirdTab === -1) return undefined;
 
   const size = parseInt(line.slice(0, firstTab), 10);
   const mtime = parseInt(line.slice(firstTab + 1, secondTab), 10);
   const fileType = line.slice(secondTab + 1, thirdTab);
   const fullPath = line.slice(thirdTab + 1);
 
-  if (isNaN(size) || isNaN(mtime)) return null;
+  if (isNaN(size) || isNaN(mtime)) return undefined;
 
   return {
     size,
@@ -493,6 +493,7 @@ export abstract class BaseSandbox implements SandboxBackendProtocolV2 {
     // Check if file already exists
     try {
       const existCheck = await this.downloadFiles([filePath]);
+      // eslint-disable-next-line no-restricted-syntax
       if (existCheck[0].content !== null && existCheck[0].error === null) {
         return {
           error: `Cannot write to ${filePath} because it already exists. Read and then make an edit, or write to a new path.`,
@@ -519,6 +520,7 @@ export abstract class BaseSandbox implements SandboxBackendProtocolV2 {
       };
     }
 
+    // eslint-disable-next-line no-restricted-syntax
     return { path: filePath, filesUpdate: null };
   }
 
@@ -543,6 +545,7 @@ export abstract class BaseSandbox implements SandboxBackendProtocolV2 {
     }
 
     const text = new TextDecoder().decode(results[0].content);
+    // eslint-disable-next-line no-restricted-syntax
     results[0].content = null as unknown as Uint8Array;
 
     /**
@@ -561,6 +564,7 @@ export abstract class BaseSandbox implements SandboxBackendProtocolV2 {
        * if the newString is empty, we can just return the file as is
        */
       if (newString.length === 0) {
+        // eslint-disable-next-line no-restricted-syntax
         return { path: filePath, filesUpdate: null, occurrences: 0 };
       }
 
@@ -577,6 +581,7 @@ export abstract class BaseSandbox implements SandboxBackendProtocolV2 {
           error: `Failed to write edited file '${filePath}': ${uploadResults[0].error}`,
         };
       }
+      // eslint-disable-next-line no-restricted-syntax
       return { path: filePath, filesUpdate: null, occurrences: 1 };
     }
 
@@ -586,6 +591,7 @@ export abstract class BaseSandbox implements SandboxBackendProtocolV2 {
     }
 
     if (oldString === newString) {
+      // eslint-disable-next-line no-restricted-syntax
       return { path: filePath, filesUpdate: null, occurrences: 1 };
     }
 
@@ -636,6 +642,7 @@ export abstract class BaseSandbox implements SandboxBackendProtocolV2 {
       };
     }
 
+    // eslint-disable-next-line no-restricted-syntax
     return { path: filePath, filesUpdate: null, occurrences: count };
   }
 }

@@ -133,10 +133,12 @@ export class LangSmithSandbox extends BaseSandbox {
     for (const path of paths) {
       try {
         const content = await this.#sandbox.read(path);
+        // eslint-disable-next-line no-restricted-syntax
         responses.push({ path, content, error: null });
       } catch (err) {
         // oxlint-disable-next-line no-instanceof/no-instanceof
         if (err instanceof LangSmithResourceNotFoundError) {
+          // eslint-disable-next-line no-restricted-syntax
           responses.push({ path, content: null, error: 'file_not_found' });
           // oxlint-disable-next-line no-instanceof/no-instanceof
         } else if (err instanceof LangSmithSandboxError) {
@@ -144,8 +146,10 @@ export class LangSmithSandbox extends BaseSandbox {
           const error: FileOperationError = msg.includes('is a directory')
             ? 'is_directory'
             : 'file_not_found';
+          // eslint-disable-next-line no-restricted-syntax
           responses.push({ path, content: null, error });
         } else {
+          // eslint-disable-next-line no-restricted-syntax
           responses.push({ path, content: null, error: 'invalid_path' });
         }
       }
@@ -165,6 +169,7 @@ export class LangSmithSandbox extends BaseSandbox {
     for (const [path, content] of files) {
       try {
         await this.#sandbox.write(path, content);
+        // eslint-disable-next-line no-restricted-syntax
         responses.push({ path, error: null });
       } catch {
         responses.push({ path, error: 'permission_denied' });

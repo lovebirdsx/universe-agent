@@ -367,11 +367,13 @@ async function main(): Promise<void> {
         skills,
         memory,
         model: resolvedModel,
+        // eslint-disable-next-line no-restricted-syntax
         ...(recording != null ? { recording } : {}),
       },
       serverName: 'universe-agent-acp',
       workspaceRoot,
       debug: options.debug,
+      // eslint-disable-next-line no-restricted-syntax
       ...(options.logFile != null ? { logFile: options.logFile } : {}),
     });
 

@@ -332,6 +332,7 @@ export function validateSkillName(
  * @returns A validated `Record<string, string>`.
  */
 export function validateMetadata(raw: unknown, skillPath: string): Record<string, string> {
+  // eslint-disable-next-line no-restricted-syntax
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
     if (raw) {
       console.warn(`Ignoring non-object metadata in ${skillPath} (got ${typeof raw})`);
@@ -375,17 +376,17 @@ export function formatSkillAnnotations(skill: SkillMetadata): string {
  * @param content - Content of the `SKILL.md` file
  * @param skillPath - Path to the `SKILL.md` file (for error messages and metadata)
  * @param directoryName - Name of the parent directory containing the skill
- * @returns `SkillMetadata` if parsing succeeds, `null` if parsing fails or
+ * @returns `SkillMetadata` if parsing succeeds, `undefined` if parsing fails or
  *   validation errors occur
  */
 export function parseSkillMetadataFromContent(
   content: string,
   skillPath: string,
   directoryName: string,
-): SkillMetadata | null {
+): SkillMetadata | undefined {
   if (content.length > MAX_SKILL_FILE_SIZE) {
     console.warn(`Skipping ${skillPath}: content too large (${content.length} bytes)`);
-    return null;
+    return undefined;
   }
 
   // Match YAML frontmatter between --- delimiters
@@ -394,13 +395,14 @@ export function parseSkillMetadataFromContent(
 
   if (!match) {
     console.warn(`Skipping ${skillPath}: no valid YAML frontmatter found`);
-    return null;
+    return undefined;
   }
 
   const frontmatterStr = match[1];
+  // eslint-disable-next-line no-restricted-syntax
   if (frontmatterStr == null) {
     console.warn(`Skipping ${skillPath}: no valid YAML frontmatter found`);
-    return null;
+    return undefined;
   }
 
   // Parse YAML
@@ -409,12 +411,12 @@ export function parseSkillMetadataFromContent(
     frontmatterData = yaml.parse(frontmatterStr);
   } catch (e) {
     console.warn(`Invalid YAML in ${skillPath}:`, e);
-    return null;
+    return undefined;
   }
 
   if (!frontmatterData || typeof frontmatterData !== 'object') {
     console.warn(`Skipping ${skillPath}: frontmatter is not a mapping`);
-    return null;
+    return undefined;
   }
 
   // Validate required fields - coerce and strip whitespace
@@ -423,7 +425,7 @@ export function parseSkillMetadataFromContent(
 
   if (!name || !description) {
     console.warn(`Skipping ${skillPath}: missing required 'name' or 'description'`);
-    return null;
+    return undefined;
   }
 
   // Validate name format per spec (warn but continue for backwards compatibility)
@@ -458,6 +460,7 @@ export function parseSkillMetadataFromContent(
   }
 
   // Validate and truncate compatibility length
+  // eslint-disable-next-line no-restricted-syntax
   let compatibilityStr = String(frontmatterData.compatibility ?? '').trim() || null;
   if (compatibilityStr && compatibilityStr.length > MAX_SKILL_COMPATIBILITY_LENGTH) {
     console.warn(
@@ -471,7 +474,7 @@ export function parseSkillMetadataFromContent(
     description: descriptionStr,
     path: skillPath,
     metadata: validateMetadata(frontmatterData.metadata ?? {}, skillPath),
-    license: String(frontmatterData.license ?? '').trim() || null,
+    license: String(frontmatterData.license ?? '').trim() || null, // eslint-disable-line no-restricted-syntax
     compatibility: compatibilityStr,
     allowedTools,
   };
@@ -539,6 +542,7 @@ async function listSkillsFromBackend(
       if (!response) {
         continue;
       }
+      // eslint-disable-next-line no-restricted-syntax
       if (response.error != null || response.content == null) {
         continue;
       }

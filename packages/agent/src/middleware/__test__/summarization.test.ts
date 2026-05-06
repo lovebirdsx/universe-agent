@@ -47,6 +47,7 @@ async function callWrapModelCall(
   capturedRequest: { messages: BaseMessage[]; [key: string]: any } | null;
 }> {
   const messages = (state.messages ?? []) as BaseMessage[];
+  // eslint-disable-next-line no-restricted-syntax
   let capturedRequest: { messages: BaseMessage[]; [key: string]: any } | null = null;
 
   const mockResponse = new AIMessage({ content: 'Mock response' });
@@ -560,7 +561,7 @@ describe('createSummarizationMiddleware', () => {
           return { path };
         },
         async downloadFiles(): Promise<FileDownloadResponse[]> {
-          return [{ path: writtenPath, error: 'file_not_found', content: null }];
+          return [{ path: writtenPath, error: 'file_not_found', content: null }]; // eslint-disable-line no-restricted-syntax
         },
       } as unknown as BackendProtocol;
 
@@ -1210,6 +1211,7 @@ describe('createSummarizationMiddleware', () => {
       let capturedRequest: {
         messages: BaseMessage[];
         [key: string]: any;
+        // eslint-disable-next-line no-restricted-syntax
       } | null = null;
 
       const request: any = {

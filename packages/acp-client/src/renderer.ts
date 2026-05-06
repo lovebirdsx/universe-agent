@@ -207,6 +207,7 @@ export class Renderer {
 // --- 工具函数 ---
 
 function classifyMessage(msg: AnyMessage): 'request' | 'response' | 'notification' {
+  // eslint-disable-next-line no-restricted-syntax
   if ('method' in msg && 'id' in msg && msg.id !== null) return 'request';
   if ('id' in msg && !('method' in msg)) return 'response';
   return 'notification';
@@ -217,8 +218,10 @@ function classifyMessage(msg: AnyMessage): 'request' | 'response' | 'notificatio
  * verbose 时完整输出；否则折叠长字符串值和深层嵌套。
  */
 function writeJsonBlock(value: unknown, verbose: boolean): void {
+  // eslint-disable-next-line no-restricted-syntax
   if (value === undefined || value === null) return;
   try {
+    // eslint-disable-next-line no-restricted-syntax
     const json = verbose ? JSON.stringify(value, null, 2) : JSON.stringify(value, shortener(), 2);
     const colored = colorizeJson(json);
     for (const line of colored.split('\n')) {
@@ -242,6 +245,7 @@ function shortener(): (key: string, value: unknown) => unknown {
 }
 
 function formatJson(value: unknown): string {
+  // eslint-disable-next-line no-restricted-syntax
   if (value === undefined || value === null) return '';
   try {
     return JSON.stringify(value);

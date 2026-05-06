@@ -51,6 +51,7 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 export class Logger {
   private debug: boolean;
   private logFile: string | null;
+  // eslint-disable-next-line no-restricted-syntax
   private fileStream: fs.WriteStream | null = null;
   private minLevel: number;
   private prefix: string;
@@ -59,6 +60,7 @@ export class Logger {
 
   constructor(options: LoggerOptions = {}) {
     this.debug = options.debug ?? false;
+    // eslint-disable-next-line no-restricted-syntax
     this.logFile = options.logFile ?? null;
     this.prefix = options.prefix ?? '[deepagents-acp]';
     this.timestampsForStderr = options.timestamps ?? false;
@@ -104,10 +106,12 @@ export class Logger {
       // Handle stream errors
       this.fileStream.on('error', (err) => {
         console.error(`${this.prefix} Log file error:`, err);
+        // eslint-disable-next-line no-restricted-syntax
         this.fileStream = null;
       });
     } catch (err) {
       console.error(`${this.prefix} Failed to initialize log file:`, err);
+      // eslint-disable-next-line no-restricted-syntax
       this.fileStream = null;
     }
   }
@@ -126,6 +130,7 @@ export class Logger {
         }
         if (typeof arg === 'object') {
           try {
+            // eslint-disable-next-line no-restricted-syntax
             return JSON.stringify(arg, null, 2);
           } catch {
             return String(arg);
@@ -208,6 +213,7 @@ export class Logger {
    * Check if logging is enabled (either debug or file)
    */
   isEnabled(): boolean {
+    // eslint-disable-next-line no-restricted-syntax
     return this.debug || this.fileStream !== null;
   }
 
@@ -215,6 +221,7 @@ export class Logger {
    * Check if file logging is enabled
    */
   hasFileLogging(): boolean {
+    // eslint-disable-next-line no-restricted-syntax
     return this.fileStream !== null;
   }
 
@@ -234,6 +241,7 @@ export class Logger {
         const shutdownMessage = `${this.prefix} Shutting down at ${new Date().toISOString()}\n${'='.repeat(60)}\n`;
         this.fileStream.write(shutdownMessage, () => {
           this.fileStream?.end(() => {
+            // eslint-disable-next-line no-restricted-syntax
             this.fileStream = null;
             resolve();
           });
@@ -282,7 +290,7 @@ export const nullLogger: Logger = {
   logLevel: () => {},
   isEnabled: () => false,
   hasFileLogging: () => false,
-  getLogFilePath: () => null,
+  getLogFilePath: () => null, // eslint-disable-line no-restricted-syntax
   close: () => Promise.resolve(),
   flush: () => Promise.resolve(),
 } as unknown as Logger;

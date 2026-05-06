@@ -41,6 +41,7 @@ export function patchDanglingToolCalls(messages: BaseMessage[]): {
   // orphaned ToolMessages (those whose tool_call_id has no matching call).
   const allToolCallIds = new Set<string>();
   for (const msg of messages) {
+    // eslint-disable-next-line no-restricted-syntax
     if (AIMessage.isInstance(msg) && msg.tool_calls != null) {
       for (const tc of msg.tool_calls) {
         if (tc.id) {
@@ -70,6 +71,7 @@ export function patchDanglingToolCalls(messages: BaseMessage[]): {
     patchedMessages.push(msg);
 
     // Inject synthetic ToolMessages for dangling tool_calls
+    // eslint-disable-next-line no-restricted-syntax
     if (AIMessage.isInstance(msg) && msg.tool_calls != null) {
       for (const toolCall of msg.tool_calls) {
         // Look for a corresponding ToolMessage in the messages after this one

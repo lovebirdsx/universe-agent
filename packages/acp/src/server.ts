@@ -156,6 +156,7 @@ export class UniverseAgentServer {
     // Initialize logger with debug and/or file logging
     this.logger = createLogger({
       debug: this.debug,
+      // eslint-disable-next-line no-restricted-syntax
       ...(options.logFile != null ? { logFile: options.logFile } : {}),
       prefix: '[universe-agent-acp]',
     });
@@ -443,6 +444,7 @@ export class UniverseAgentServer {
       messages: [],
       createdAt: new Date(),
       lastActivityAt: new Date(),
+      // eslint-disable-next-line no-restricted-syntax
       ...(mode != null ? { mode } : {}),
     };
 
@@ -669,6 +671,7 @@ export class UniverseAgentServer {
     const signal = this.currentPromptAbortController?.signal;
     const config = {
       configurable: { thread_id: session.threadId },
+      // eslint-disable-next-line no-restricted-syntax
       ...(signal != null ? { signal } : {}),
     };
 
@@ -900,6 +903,7 @@ export class UniverseAgentServer {
 
       return {
         output: outputResult.output ?? '',
+        // eslint-disable-next-line no-restricted-syntax
         exitCode: exitResult.exitCode ?? null,
       };
     } catch (err) {
@@ -1180,7 +1184,8 @@ export class UniverseAgentServer {
       const resultText =
         typeof toolCall.result === 'string'
           ? toolCall.result
-          : JSON.stringify(toolCall.result, null, 2);
+          : // eslint-disable-next-line no-restricted-syntax
+            JSON.stringify(toolCall.result, null, 2);
 
       update.content = [
         {
@@ -1248,6 +1253,7 @@ export class UniverseAgentServer {
     const { contextSchema: _cs, ...restConfig } = config;
     const agent = createUniverseAgent({
       ...restConfig,
+      // eslint-disable-next-line no-restricted-syntax
       ...(config.contextSchema != null
         ? { contextSchema: config.contextSchema as unknown as InteropZodObject }
         : {}),
@@ -1288,6 +1294,7 @@ export class UniverseAgentServer {
     const { contextSchema: _cs, ...restConfig } = config;
     const result = await createUniverseAgentAsync({
       ...restConfig,
+      // eslint-disable-next-line no-restricted-syntax
       ...(config.contextSchema != null
         ? { contextSchema: config.contextSchema as unknown as InteropZodObject }
         : {}),

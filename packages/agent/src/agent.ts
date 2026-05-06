@@ -306,6 +306,7 @@ export function createUniverseAgent<
       // Patches tool calls to ensure compatibility across different model providers.
       createPatchToolCallsMiddleware() as LooseAgentMiddleware,
       // Loads subagent-specific skills when configured.
+      // eslint-disable-next-line no-restricted-syntax
       ...(input.skills != null && input.skills.length > 0
         ? [createSkillsMiddleware({ backend, sources: input.skills }) as LooseAgentMiddleware]
         : []),
@@ -342,12 +343,14 @@ export function createUniverseAgent<
       ...GENERAL_PURPOSE_SUBAGENT,
       model: resolvedModel,
       tools: tools as StructuredTool[],
+      // eslint-disable-next-line no-restricted-syntax
       ...(skills != null ? { skills } : {}),
     });
     inlineSubagents.unshift(generalPurposeSpec);
   }
 
   const skillsMiddleware: LooseAgentMiddleware[] =
+    // eslint-disable-next-line no-restricted-syntax
     skills != null && skills.length > 0
       ? [createSkillsMiddleware({ backend, sources: skills }) as LooseAgentMiddleware]
       : [];
@@ -471,7 +474,9 @@ export function createUniverseAgent<
     systemPrompt: finalSystemPrompt,
     tools: tools as StructuredTool[],
     middleware: middleware as readonly AgentMiddleware[],
+    // eslint-disable-next-line no-restricted-syntax
     ...(responseFormat != null ? { responseFormat } : {}),
+    // eslint-disable-next-line no-restricted-syntax
     ...(contextSchema != null ? { contextSchema } : {}),
     ...(checkpointer !== undefined ? { checkpointer } : {}),
     ...(store !== undefined ? { store } : {}),

@@ -136,11 +136,11 @@ export function formatContentWithLineNumbers(
  * @param content - Content to check
  * @returns Warning message if empty, null otherwise
  */
-export function checkEmptyContent(content: string): string | null {
+export function checkEmptyContent(content: string): string | undefined {
   if (!content || content.trim() === '') {
     return EMPTY_CONTENT_WARNING;
   }
-  return null;
+  return undefined;
 }
 
 /**
@@ -566,8 +566,8 @@ export function formatGrepResults(
 export function grepSearchFiles(
   files: Record<string, FileData>,
   pattern: string,
-  path: string | null = null,
-  glob: string | null = null,
+  path: string | undefined = undefined,
+  glob: string | undefined = undefined,
   outputMode: 'files_with_matches' | 'content' | 'count' = 'files_with_matches',
 ): string {
   let normalizedPath: string;

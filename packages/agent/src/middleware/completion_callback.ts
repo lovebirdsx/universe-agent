@@ -167,6 +167,7 @@ export async function notifyParent(
 ): Promise<void> {
   try {
     const client = new Client({
+      // eslint-disable-next-line no-restricted-syntax
       apiKey: null,
       ...(options?.url ? { apiUrl: options.url } : {}),
       defaultHeaders: resolveHeaders(options?.headers),
@@ -206,7 +207,12 @@ export function extractLastMessage(state: Record<string, unknown>, taskId?: stri
 
   if (!AIMessage.isInstance(last)) {
     throw new TypeError(
-      `Expected an AIMessage, got ${typeof last === 'object' && last !== null ? (last.constructor?.name ?? typeof last) : typeof last} instead`,
+      `Expected an AIMessage, got ${
+        // eslint-disable-next-line no-restricted-syntax
+        typeof last === 'object' && last !== null
+          ? (last.constructor?.name ?? typeof last)
+          : typeof last
+      } instead`,
     );
   }
 
@@ -305,6 +311,7 @@ export function createCompletionCallbackMiddleware(options: CompletionCallbackOp
       const callbackThreadId = state[CALLBACK_THREAD_ID_KEY] as string;
       // If callbackThreadId is not present, this will be undefined/falsy.
       // Python raises KeyError here; we match that behavior.
+      // eslint-disable-next-line no-restricted-syntax
       if (callbackThreadId == null) {
         throw new Error(`Missing required state key '${CALLBACK_THREAD_ID_KEY}'`);
       }

@@ -30,6 +30,7 @@ interface ACPNotification {
  * Helper class to manage the CLI process and ACP communication
  */
 class CLITestHelper {
+  // eslint-disable-next-line no-restricted-syntax
   private process: ChildProcess | null = null;
   private responseQueue: Map<
     number,
@@ -40,6 +41,7 @@ class CLITestHelper {
   > = new Map();
   private notifications: ACPNotification[] = [];
   private nextId = 1;
+  // eslint-disable-next-line no-restricted-syntax
   private rl: readline.Interface | null = null;
   private stderrOutput: string[] = [];
 
@@ -114,6 +116,7 @@ class CLITestHelper {
       });
 
       this.process.on('exit', (code) => {
+        // eslint-disable-next-line no-restricted-syntax
         if (code !== 0 && code !== null) {
           clearTimeout(timeout);
           reject(new Error(`CLI exited with code ${code}`));
@@ -141,6 +144,7 @@ class CLITestHelper {
       jsonrpc: '2.0' as const,
       id,
       method,
+      // eslint-disable-next-line no-restricted-syntax
       ...(params != null ? { params } : {}),
     };
 
@@ -177,6 +181,7 @@ class CLITestHelper {
     const notification = {
       jsonrpc: '2.0' as const,
       method,
+      // eslint-disable-next-line no-restricted-syntax
       ...(params != null ? { params } : {}),
     };
 
@@ -211,6 +216,7 @@ class CLITestHelper {
   async stop(): Promise<void> {
     if (this.rl) {
       this.rl.close();
+      // eslint-disable-next-line no-restricted-syntax
       this.rl = null;
     }
 
@@ -233,6 +239,7 @@ class CLITestHelper {
         this.process?.kill('SIGTERM');
       });
 
+      // eslint-disable-next-line no-restricted-syntax
       this.process = null;
     }
   }
@@ -241,6 +248,7 @@ class CLITestHelper {
    * Check if process is running
    */
   isRunning(): boolean {
+    // eslint-disable-next-line no-restricted-syntax
     return this.process !== null && !this.process.killed;
   }
 }

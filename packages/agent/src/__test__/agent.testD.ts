@@ -54,6 +54,7 @@ const CounterStateSchema = z.object({
     .default(0)
     .meta({
       reducer: {
+        // eslint-disable-next-line no-restricted-syntax
         fn: (left: number, right: number | null) => (right !== null ? right : left),
         schema: z.number().nullable(),
       },

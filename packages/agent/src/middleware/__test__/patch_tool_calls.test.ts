@@ -82,6 +82,7 @@ describe('createPatchToolCallsMiddleware', () => {
       const messages = [
         new AIMessage({
           content: 'Also no tools',
+          // eslint-disable-next-line no-restricted-syntax
           tool_calls: null as any,
         }),
       ];

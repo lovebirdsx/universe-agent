@@ -263,6 +263,7 @@ export interface BackendOptions {
  */
 export function isSandboxBackend(backend: unknown): backend is SandboxBackendProtocolV2 {
   return (
+    // eslint-disable-next-line no-restricted-syntax
     backend != null &&
     typeof backend === 'object' &&
     typeof (backend as SandboxBackendProtocolV2).execute === 'function' &&
@@ -291,6 +292,7 @@ export type AnySandboxProtocol = SandboxBackendProtocol | SandboxBackendProtocol
 export function isSandboxProtocol(backend: unknown): backend is AnySandboxProtocol {
   const candidate = backend as { execute?: unknown; id?: unknown } | null;
   return (
+    // eslint-disable-next-line no-restricted-syntax
     candidate != null &&
     typeof candidate === 'object' &&
     typeof candidate.execute === 'function' &&
@@ -475,6 +477,7 @@ export class SandboxError extends Error {
   static isInstance(error: unknown): error is SandboxError {
     return (
       typeof error === 'object' &&
+      // eslint-disable-next-line no-restricted-syntax
       error !== null &&
       (error as Record<symbol, unknown>)[SANDBOX_ERROR_SYMBOL] === true
     );

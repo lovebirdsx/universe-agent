@@ -302,6 +302,7 @@ function buildCheckResult(run: Run, threadId: string, threadValues: DefaultValue
     if (messages.length > 0) {
       const last = messages[messages.length - 1];
       const rawContent =
+        // eslint-disable-next-line no-restricted-syntax
         typeof last === 'object' && last !== null && 'content' in last
           ? (last as Record<string, unknown>).content
           : last;

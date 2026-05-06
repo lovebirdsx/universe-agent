@@ -414,6 +414,7 @@ function returnCommandWithStateUpdate(
 
   let content: string | ContentBlock[];
 
+  // eslint-disable-next-line no-restricted-syntax
   if (result.structuredResponse != null) {
     content = JSON.stringify(result.structuredResponse);
   } else {
@@ -514,6 +515,7 @@ function getSubagents(options: {
         tools: agentParams.tools ?? defaultTools,
         middleware,
         name: agentParams.name,
+        // eslint-disable-next-line no-restricted-syntax
         ...(agentParams.responseFormat != null && {
           responseFormat: agentParams.responseFormat,
         }),
@@ -605,6 +607,7 @@ function createTaskTool(options: {
       >;
 
       if (!config.toolCall?.id) {
+        // eslint-disable-next-line no-restricted-syntax
         if (result.structuredResponse != null) {
           return JSON.stringify(result.structuredResponse);
         }
@@ -700,6 +703,7 @@ export function createSubAgentMiddleware(options: SubAgentMiddlewareOptions) {
     name: 'subAgentMiddleware',
     tools: [taskTool],
     wrapModelCall: async (request, handler) => {
+      // eslint-disable-next-line no-restricted-syntax
       if (systemPrompt !== null) {
         return handler({
           ...request,

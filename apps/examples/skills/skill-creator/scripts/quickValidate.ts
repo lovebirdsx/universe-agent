@@ -84,6 +84,7 @@ function validateSkill(skillDir: string): ValidationResult {
     return { valid: false, errors, warnings };
   }
 
+  // eslint-disable-next-line no-restricted-syntax
   if (typeof frontmatter !== 'object' || frontmatter === null) {
     errors.push('Frontmatter must be a valid YAML object');
     return { valid: false, errors, warnings };

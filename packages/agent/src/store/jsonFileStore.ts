@@ -32,6 +32,7 @@ function matchesFilter(value: Record<string, unknown>, filter: Record<string, un
   for (const [key, condition] of Object.entries(filter)) {
     const itemValue = value[key];
 
+    // eslint-disable-next-line no-restricted-syntax
     if (condition !== null && typeof condition === 'object' && !Array.isArray(condition)) {
       const ops = condition as Record<string, unknown>;
       for (const [op, expected] of Object.entries(ops)) {
@@ -145,6 +146,7 @@ export class JsonFileStore extends BaseStore {
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }
+    // eslint-disable-next-line no-restricted-syntax
     writeFileSync(this.filePath, JSON.stringify(serialized, null, 2), 'utf-8');
   }
 
@@ -177,13 +179,16 @@ export class JsonFileStore extends BaseStore {
 
   private getOp(op: GetOperation): Item | null {
     const nsMap = this.data.get(namespaceKey(op.namespace));
+    // eslint-disable-next-line no-restricted-syntax
     if (!nsMap) return null;
+    // eslint-disable-next-line no-restricted-syntax
     return nsMap.get(op.key) ?? null;
   }
 
   private putOp(op: PutOperation, markDirty: () => void): void {
     const nsKey = namespaceKey(op.namespace);
 
+    // eslint-disable-next-line no-restricted-syntax
     if (op.value === null) {
       // Delete
       const nsMap = this.data.get(nsKey);
@@ -245,7 +250,7 @@ export class JsonFileStore extends BaseStore {
         if (!matched) continue;
       }
 
-      const truncated = op.maxDepth != null ? ns.slice(0, op.maxDepth) : ns;
+      const truncated = op.maxDepth != null ? ns.slice(0, op.maxDepth) : ns; // eslint-disable-line no-restricted-syntax
 
       // Deduplicate
       if (!allNamespaces.some((existing) => existing.join('::') === truncated.join('::'))) {

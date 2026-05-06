@@ -29,6 +29,7 @@ describe('Protocol Types', () => {
     it('should allow null exitCode', () => {
       const response: ExecuteResponse = {
         output: 'still running',
+        // eslint-disable-next-line no-restricted-syntax
         exitCode: null,
         truncated: false,
       };
@@ -55,6 +56,7 @@ describe('Protocol Types', () => {
       const response: FileDownloadResponse = {
         path: '/test.txt',
         content: new Uint8Array([1, 2, 3]),
+        // eslint-disable-next-line no-restricted-syntax
         error: null,
       };
 
@@ -66,6 +68,7 @@ describe('Protocol Types', () => {
     it('should have correct shape for error', () => {
       const response: FileDownloadResponse = {
         path: '/missing.txt',
+        // eslint-disable-next-line no-restricted-syntax
         content: null,
         error: 'file_not_found',
       };
@@ -80,6 +83,7 @@ describe('Protocol Types', () => {
     it('should have correct shape for success', () => {
       const response: FileUploadResponse = {
         path: '/uploaded.txt',
+        // eslint-disable-next-line no-restricted-syntax
         error: null,
       };
 
