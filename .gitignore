@@ -7,6 +7,7 @@ dist/
 !.env.example
 coverage/
 .next/
+.log/
 out/
 
 # 测试的临时工程文件夹

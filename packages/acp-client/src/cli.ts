@@ -24,7 +24,11 @@ export function createProgram(): Command {
     .version('0.0.0', '-v, --version', '显示版本信息')
     .helpOption('-h, --help', '显示帮助信息')
     .argument('[prompt...]', '单次提示词（省略则进入交互式 REPL）')
-    .option('--command <cmd>', '要启动的服务端命令', 'tsx packages/acp/src/cli.ts --record')
+    .option(
+      '--command <cmd>',
+      '要启动的服务端命令',
+      'tsx packages/acp/src/cli.ts --record -l ./log/acp-server.log',
+    )
     .option('--args <args>', '服务端命令的额外参数（逗号分隔）', '')
     .option('-w, --workspace <dir>', '工作区目录', process.cwd())
     .option('-P, --protocol', '启用协议观测模式（显示所有 JSON-RPC 消息）', false)
